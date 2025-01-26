@@ -6,11 +6,19 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.hibernate.validator.constraints.br.CPF;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table
 @Data
-public class Usuario {
+public class Usuario implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,4 +43,26 @@ public class Usuario {
     @Column(length = 4000)
     private String senha;
 
+    @ManyToMany(mappedBy = "usuariosAlerta")
+    private Set<Alerta> alertas;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+
+        List<GrantedAuthority> list = new ArrayList<GrantedAuthority>();
+
+        list.add(new SimpleGrantedAuthority(perfilAcesso.toString()));
+
+        return list;
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
 }

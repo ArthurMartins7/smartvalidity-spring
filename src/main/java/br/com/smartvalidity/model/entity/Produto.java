@@ -41,4 +41,8 @@ public class Produto {
     @ManyToMany
     @JoinTable(name = "fornecedor_produto", joinColumns = @JoinColumn(name = "id_fornecedor"), inverseJoinColumns = @JoinColumn(name = "id_produto"))
     private Set<Fornecedor> fornecedores;
+
+    @ManyToMany(mappedBy = "produtosAlerta")
+    private Set<Alerta> alertas;
+
 }
