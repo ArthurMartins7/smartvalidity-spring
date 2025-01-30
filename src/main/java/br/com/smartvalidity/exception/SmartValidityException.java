@@ -1,7 +1,9 @@
 package br.com.smartvalidity.exception;
 
-public class SmartValidityException extends RuntimeException {
-    public SmartValidityException(String message) {
-        super(message);
+public class SmartValidityException extends Exception {
+
+    public SmartValidityException(String mensagem) {
+        super(mensagem);
+main
     }
 }
