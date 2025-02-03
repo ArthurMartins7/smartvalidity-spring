@@ -1,9 +1,8 @@
 package br.com.smartvalidity.model.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.hibernate.validator.constraints.EAN;
 
 import java.time.LocalDateTime;
 
@@ -16,26 +15,31 @@ public class ItemProduto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotBlank(message = "O campo 'lote' não pode ser vazio ou apenas espaços em branco.")
+    @NotNull(message = "O lote não pode ser nulo.")
+    @Column(nullable = false)
     private String lote;
 
-    @NotBlank(message = "O campo 'preço de compra' não pode ser vazio ou apenas espaços em branco.")
-    private double precoCompra;
+    @NotNull(message = "O preço de compra não pode ser nulo.")
+    @Column(name = "preco_compra", nullable = false)
+    private Double precoCompra;
 
-    @NotBlank(message = "O campo 'preço de venda' não pode ser vazio ou apenas espaços em branco.")
-    private double precoVenda;
+    @NotNull(message = "O preço de venda não pode ser nulo.")
+    @Column(name = "preco_venda", nullable = false)
+    private Double precoVenda;
 
-    @NotBlank(message = "O campo 'data de fabricacao' não pode ser vazio ou apenas espaços em branco.")
+    @NotNull(message = "A data de fabricação não pode ser nula.")
+    @Column(name = "data_fabricacao", nullable = false)
     private LocalDateTime dataFabricacao;
 
-    @NotBlank(message = "O campo 'data de vencimento' não pode ser vazio ou apenas espaços em branco.")
+    @NotNull(message = "A data de vencimento não pode ser nula.")
+    @Column(name = "data_vencimento", nullable = false)
     private LocalDateTime dataVencimento;
 
-    @NotBlank(message = "O campo 'data de recebimento' não pode ser vazio ou apenas espaços em branco.")
+    @NotNull(message = "A data de recebimento não pode ser nula.")
+    @Column(name = "data_recebimento", nullable = false)
     private LocalDateTime dataRecebimento;
 
-    @ManyToOne()
-    @JoinColumn(name = "id_produto")
+    @ManyToOne
+    @JoinColumn(name = "id_produto", nullable = false)
     private Produto produto;
-
 }
