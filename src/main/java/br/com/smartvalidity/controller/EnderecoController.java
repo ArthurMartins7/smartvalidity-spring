@@ -40,4 +40,10 @@ public class EnderecoController {
         Endereco enderecoAtualizado = enderecoService.atualizar(id, endereco);
         return ResponseEntity.ok(enderecoAtualizado);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarEndereco(@PathVariable Integer id) throws SmartValidityException {
+        enderecoService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }
