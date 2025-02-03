@@ -27,6 +27,7 @@ public class Produto {
     private String marca;
 
     @NotBlank(message = "O campo 'unidade de medida' não pode ser vazio ou apenas espaços em branco.")
+    @Column(nullable = false)
     private String unidadeMedida;
 
     private int quantidade;
