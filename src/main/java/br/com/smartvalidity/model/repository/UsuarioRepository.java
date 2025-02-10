@@ -12,7 +12,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String>, JpaSp
 
     Optional<Usuario> findByEmail(String email);
 
+    Optional<Usuario> findBySenha(String senha);
+
     boolean existsByEmail(String email);
 
     boolean existsByEmailAndIdNot(String email, String id);
+
+
 }

@@ -41,17 +41,7 @@ public class AuthenticationController {
     @PostMapping("/novo-usuario")
     @ResponseStatus(code = HttpStatus.CREATED)
     public Usuario registrarUsuario(@RequestBody Usuario novoUsuario) throws SmartValidityException {
-
-        String senhaCifrada = passwordEncoder.encode(novoUsuario.getSenha());
-
-        novoUsuario.setSenha(senhaCifrada);
-
-        if(novoUsuario.getPerfilAcesso() == null || novoUsuario.getPerfilAcesso().toString().isEmpty()) {
-            novoUsuario.setPerfilAcesso(PerfilAcesso.COMUM);
-        }
-        usuarioService.salvar(novoUsuario);
-
-        return novoUsuario;
+        return this.usuarioService.salvar(novoUsuario);
     }
 
 }
