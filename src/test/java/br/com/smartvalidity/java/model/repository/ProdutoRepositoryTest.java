@@ -51,7 +51,7 @@ public class ProdutoRepositoryTest {
         produtoRepository.deleteAll();
         categoriaRepository.deleteAll();
     }
-    
+
 
     @Test
     @DisplayName("Deve encontrar produtos pela categoria")
