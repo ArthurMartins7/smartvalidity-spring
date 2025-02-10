@@ -6,8 +6,10 @@ import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.enums.PerfilAcesso;
 import br.com.smartvalidity.model.repository.UsuarioRepository;
+import br.com.smartvalidity.model.seletor.UsuarioSeletor;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,6 +38,20 @@ public class UsuarioService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return usuarioRepository.findByEmail(username).orElseThrow(
                 () -> new UsernameNotFoundException("Usuário não encontrado" + username));
+    }
+
+    public List<Usuario> buscarComSeletor(UsuarioSeletor seletor) throws SmartValidityException {
+        this.authorizationService.verificarPerfilAcesso();
+
+        if (seletor.temPaginacao()) {
+            int numeroPagina = seletor.getPagina();
+            int tamanhoPagina = seletor.getLimite();
+
+            PageRequest pagina = PageRequest.of(numeroPagina - 1, tamanhoPagina);
+            return this.usuarioRepository.findAll(seletor, pagina).toList();
+        }
+
+        return this.usuarioRepository.findAll(seletor);
     }
 
     public List<Usuario> listarTodos() throws SmartValidityException {
