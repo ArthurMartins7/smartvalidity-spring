@@ -1,5 +1,6 @@
 package br.com.smartvalidity.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -36,6 +37,7 @@ public class Endereco {
     @NotBlank(message = "O campo 'cep' não pode ser vazio ou apenas espaços em branco.")
     private String cep;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "endereco")
     private Fornecedor fornecedor;
 

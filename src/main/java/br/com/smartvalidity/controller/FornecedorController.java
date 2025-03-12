@@ -21,9 +21,14 @@ public class FornecedorController {
 
     @PostMapping
     public ResponseEntity<Fornecedor> salvarFornecedor(@Valid @RequestBody Fornecedor fornecedor) {
-        Fornecedor novoFornecedor = fornecedorService.salvar(fornecedor);
-        return ResponseEntity.status(201).body(novoFornecedor);
+        try {
+            Fornecedor novoFornecedor = fornecedorService.salvar(fornecedor);
+            return ResponseEntity.status(201).body(novoFornecedor);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
+
 
     @GetMapping
     public ResponseEntity<List<Fornecedor>> listarTodas() {

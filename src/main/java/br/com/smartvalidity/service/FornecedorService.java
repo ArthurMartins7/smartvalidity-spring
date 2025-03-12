@@ -14,10 +14,14 @@ public class FornecedorService {
     @Autowired
     private FornecedorRepository fornecedorRepository;
 
-    public Fornecedor salvar(Fornecedor fornecedor) {
-
-        return fornecedorRepository.save(fornecedor);
+    public Fornecedor salvar(Fornecedor fornecedor) throws SmartValidityException {
+        try {
+            return fornecedorRepository.save(fornecedor);
+        } catch (Exception e) {
+            throw new SmartValidityException("Erro ao salvar fornecedor: " + e.getMessage());
+        }
     }
+
 
     public List<Fornecedor> listarTodos() {
 

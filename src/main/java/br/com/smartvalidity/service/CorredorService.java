@@ -36,7 +36,10 @@ public class CorredorService {
         return corredorRepository.save(corredor);
     }
 
-    public void excluir(Integer id) throws SmartValidityException {
+    public void excluir(Integer id
+
+
+    ) throws SmartValidityException {
         Corredor corredor = buscarPorId(id);
         corredorRepository.delete(corredor);
     }
