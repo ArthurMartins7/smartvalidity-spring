@@ -26,18 +26,18 @@ public class CorredorService {
     public Corredor salvar(Corredor corredor) throws SmartValidityException {
         Set<Usuario> responsaveis = new HashSet<>();
 
-        for (Usuario responsavel : corredor.getResponsaveis()) {
-            Usuario u = this.usuarioService.buscarPorId(responsavel.getId());
-            responsaveis.add(u);
-        }
+//        for (Usuario responsavel : corredor.getResponsaveis()) {
+//            Usuario u = this.usuarioService.buscarPorId(responsavel.getId());
+//            responsaveis.add(u);
+//        }
 
-        corredor.setResponsaveis(responsaveis);
+//        corredor.setResponsaveis(responsaveis);
         return corredorRepository.save(corredor);
     }
 
     @Transactional(readOnly = true)
     public List<Corredor> listarTodos() {
-        return corredorRepository.findAllWithCategorias();
+        return corredorRepository.findAll();
     }
 
     public Corredor buscarPorId(Integer id) throws SmartValidityException {
@@ -49,7 +49,7 @@ public class CorredorService {
         Corredor corredor = buscarPorId(id);
 
         corredor.setNome(corredorAtualizado.getNome());
-        corredor.setResponsaveis(corredorAtualizado.getResponsaveis());
+//        corredor.setResponsaveis(corredorAtualizado.getResponsaveis());
 
         return corredorRepository.save(corredor);
     }

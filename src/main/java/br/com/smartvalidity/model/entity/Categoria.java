@@ -20,10 +20,11 @@ public class Categoria {
     @NotBlank(message = "O nome não pode ser vazio ou apenas espaços em branco.")
     private String nome;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "id_corredor")
     private Corredor corredor;
 
-    @OneToMany(mappedBy = "categoria")
-    private Set<Produto> produtos;
+
+
 }
