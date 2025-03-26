@@ -44,7 +44,7 @@ public class Usuario implements UserDetails {
     private String senha;
 
     @ManyToMany(mappedBy = "usuariosAlerta")
-    private Set<Alerta> alertas;
+    private List<Alerta> alertas;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
