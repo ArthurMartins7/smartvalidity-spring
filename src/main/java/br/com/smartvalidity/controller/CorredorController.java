@@ -18,13 +18,13 @@ public class CorredorController {
     private CorredorService corredorService;
 
     @PostMapping
-    public ResponseEntity<Corredor> salvarCorredor(@Valid @RequestBody Corredor corredor) {
+    public ResponseEntity<Corredor> salvarCorredor(@Valid @RequestBody Corredor corredor) throws SmartValidityException {
         Corredor novoCorredor = corredorService.salvar(corredor);
         return ResponseEntity.status(201).body(novoCorredor);
     }
 
     @GetMapping
-    public ResponseEntity<List<Corredor>> listarTodOs() {
+    public ResponseEntity<List<Corredor>> listarTodos() {
         return ResponseEntity.ok(corredorService.listarTodos());
     }
 
