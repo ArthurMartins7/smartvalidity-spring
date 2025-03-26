@@ -19,8 +19,6 @@ public class ProdutoSeletor extends BaseSeletor implements Specification<Produto
     private String descricao;
     private String marca;
     private String unidadeMedida;
-    private Integer quantidadeMinima;
-    private Integer quantidadeMaxima;
     private Categoria categoria;
 
     @Override
@@ -44,13 +42,6 @@ public class ProdutoSeletor extends BaseSeletor implements Specification<Produto
             predicates.add(cb.like(root.get("unidadeMedida"), "%" + this.getUnidadeMedida() + "%"));
         }
 
-        if (this.getQuantidadeMinima() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("quantidade"), this.getQuantidadeMinima()));
-        }
-
-        if (this.getQuantidadeMaxima() != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("quantidade"), this.getQuantidadeMaxima()));
-        }
 
         if (this.getCategoria() != null) {
             predicates.add(cb.equal(root.get("categoria"), this.getCategoria()));

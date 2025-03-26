@@ -14,34 +14,33 @@ public class ProdutoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
-    public Produto salvar(Produto produto) {
-        return produtoRepository.save(produto);
+    public List<Produto> buscarTodos() {
+        return produtoRepository.findAll();
     }
 
-    public Produto buscarPorId(Integer id) throws SmartValidityException {
+    public Produto buscarPorId(String id) throws SmartValidityException {
         return produtoRepository.findById(id)
                 .orElseThrow(() -> new SmartValidityException("Produto não encontrado com o ID: " + id));
     }
 
-    public List<Produto> listarTodos() {
-        return produtoRepository.findAll();
+    public Produto salvar(Produto produto) {
+        return produtoRepository.save(produto);
     }
 
-    public Produto atualizar(Integer id, Produto produtoAtualizado) throws SmartValidityException {
+    public Produto atualizar(String id, Produto produtoAtualizado) throws SmartValidityException {
         Produto produto = buscarPorId(id);
 
         produto.setCodigoBarras(produtoAtualizado.getCodigoBarras());
         produto.setDescricao(produtoAtualizado.getDescricao());
         produto.setMarca(produtoAtualizado.getMarca());
         produto.setUnidadeMedida(produtoAtualizado.getUnidadeMedida());
-        produto.setQuantidade(produtoAtualizado.getQuantidade());
         produto.setCategoria(produtoAtualizado.getCategoria());
         produto.setFornecedores(produtoAtualizado.getFornecedores());
 
         return produtoRepository.save(produto);
     }
 
-    public void excluir(Integer id) throws SmartValidityException {
+    public void excluir(String id) throws SmartValidityException {
         Produto produto = buscarPorId(id);
         produtoRepository.delete(produto);
     }
