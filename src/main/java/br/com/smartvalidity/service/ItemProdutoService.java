@@ -14,16 +14,16 @@ public class ItemProdutoService {
     @Autowired
     private ItemProdutoRepository itemProdutoRepository;
 
-    public List<ItemProduto> listarTodos() {
+    public List<ItemProduto> buscarTodos() {
         return itemProdutoRepository.findAll();
     }
 
-    public ItemProduto buscarPorId(Integer id) throws SmartValidityException {
+    public ItemProduto buscarPorId(String id) throws SmartValidityException {
         return itemProdutoRepository.findById(id)
                 .orElseThrow(() -> new SmartValidityException("ItemProduto não encontrado com o ID: " + id));
     }
 
-    public List<ItemProduto> buscarPorProduto(Integer produtoId) {
+    public List<ItemProduto> buscarPorProduto(String produtoId) {
         return itemProdutoRepository.findByProdutoId(produtoId);
     }
 
@@ -31,11 +31,11 @@ public class ItemProdutoService {
         return itemProdutoRepository.save(itemProduto);
     }
 
-    public ItemProduto atualizar(Integer id, ItemProduto itemProdutoAtualizado) throws SmartValidityException {
+    public ItemProduto atualizar(String id, ItemProduto itemProdutoAtualizado) throws SmartValidityException {
         ItemProduto itemProduto = buscarPorId(id);
 
         itemProduto.setLote(itemProdutoAtualizado.getLote());
-        itemProduto.setPrecoCompra(itemProdutoAtualizado.getPrecoCompra());
+        itemProduto.setQuantidade(itemProdutoAtualizado.getQuantidade());
         itemProduto.setPrecoVenda(itemProdutoAtualizado.getPrecoVenda());
         itemProduto.setDataFabricacao(itemProdutoAtualizado.getDataFabricacao());
         itemProduto.setDataVencimento(itemProdutoAtualizado.getDataVencimento());
@@ -45,7 +45,7 @@ public class ItemProdutoService {
         return itemProdutoRepository.save(itemProduto);
     }
 
-    public void excluir(Integer id) throws SmartValidityException {
+    public void excluir(String id) throws SmartValidityException {
         ItemProduto itemProduto = buscarPorId(id);
         itemProdutoRepository.delete(itemProduto);
     }

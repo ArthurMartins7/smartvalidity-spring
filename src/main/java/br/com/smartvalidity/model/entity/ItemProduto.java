@@ -12,16 +12,16 @@ import java.time.LocalDateTime;
 public class ItemProduto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @NotNull(message = "O lote não pode ser nulo.")
     @Column(nullable = false)
     private String lote;
 
-    @NotNull(message = "O preço de compra não pode ser nulo.")
-    @Column(name = "preco_compra", nullable = false)
-    private Double precoCompra;
+    @NotNull(message = "A quantidade não pode ser nula.")
+    @Column(nullable = false)
+    private Integer quantidade;
 
     @NotNull(message = "O preço de venda não pode ser nulo.")
     @Column(name = "preco_venda", nullable = false)

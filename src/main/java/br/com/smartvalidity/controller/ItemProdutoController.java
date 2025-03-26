@@ -18,35 +18,35 @@ public class ItemProdutoController {
     private ItemProdutoService itemProdutoService;
 
     @GetMapping
-    public ResponseEntity<List<ItemProduto>> listarTodos() {
-        return ResponseEntity.ok(itemProdutoService.listarTodos());
+    public ResponseEntity<List<ItemProduto>> buscarTodos() {
+        return ResponseEntity.ok(itemProdutoService.buscarTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ItemProduto> buscarPorId(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<ItemProduto> buscarPorId(@PathVariable String id) throws SmartValidityException {
         ItemProduto itemProduto = itemProdutoService.buscarPorId(id);
         return ResponseEntity.ok(itemProduto);
     }
 
     @GetMapping("/produto/{produtoId}")
-    public ResponseEntity<List<ItemProduto>> buscarPorProduto(@PathVariable Integer produtoId) {
+    public ResponseEntity<List<ItemProduto>> buscarPorProduto(@PathVariable String produtoId) {
         return ResponseEntity.ok(itemProdutoService.buscarPorProduto(produtoId));
     }
 
     @PostMapping
-    public ResponseEntity<ItemProduto> criarItemProduto(@Valid @RequestBody ItemProduto itemProduto) {
+    public ResponseEntity<ItemProduto> salvar(@Valid @RequestBody ItemProduto itemProduto) {
         ItemProduto novoItemProduto = itemProdutoService.salvar(itemProduto);
         return ResponseEntity.status(201).body(novoItemProduto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ItemProduto> atualizarItemProduto(@PathVariable Integer id, @Valid @RequestBody ItemProduto itemProduto) throws SmartValidityException {
+    public ResponseEntity<ItemProduto> atualizar(@PathVariable String id, @Valid @RequestBody ItemProduto itemProduto) throws SmartValidityException {
         ItemProduto itemAtualizado = itemProdutoService.atualizar(id, itemProduto);
         return ResponseEntity.ok(itemAtualizado);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarItemProduto(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<Void> excluir(@PathVariable String id) throws SmartValidityException {
         itemProdutoService.excluir(id);
         return ResponseEntity.noContent().build();
     }
