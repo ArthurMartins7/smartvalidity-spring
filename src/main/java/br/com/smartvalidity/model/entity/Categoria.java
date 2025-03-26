@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -14,8 +15,8 @@ import java.util.Set;
 public class Categoria {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @NotBlank(message = "O nome não pode ser vazio ou apenas espaços em branco.")
     private String nome;
@@ -25,5 +26,5 @@ public class Categoria {
     private Corredor corredor;
 
     @OneToMany(mappedBy = "categoria")
-    private Set<Produto> produtos;
+    private List<Produto> produtos;
 }

@@ -14,11 +14,11 @@ public class CategoriaService {
     @Autowired
     private CategoriaRepository categoriaRepository;
 
-    public List<Categoria> listarTodas() {
+    public List<Categoria> buscarTodas() {
         return categoriaRepository.findAll();
     }
 
-    public Categoria buscarPorId(Integer id) throws SmartValidityException {
+    public Categoria buscarPorId(String id) throws SmartValidityException {
         return categoriaRepository.findById(id)
                 .orElseThrow(() -> new SmartValidityException("Categoria não encontrada com o ID: " + id));
     }
@@ -27,7 +27,7 @@ public class CategoriaService {
         return categoriaRepository.save(categoria);
     }
 
-    public Categoria atualizar(Integer id, Categoria categoriaAtualizada) throws SmartValidityException {
+    public Categoria atualizar(String id, Categoria categoriaAtualizada) throws SmartValidityException {
         Categoria categoria = buscarPorId(id);
 
         categoria.setNome(categoriaAtualizada.getNome());
@@ -36,7 +36,7 @@ public class CategoriaService {
         return categoriaRepository.save(categoria);
     }
 
-    public void excluir(Integer id) throws SmartValidityException {
+    public void excluir(String id) throws SmartValidityException {
         Categoria categoria = buscarPorId(id);
         categoriaRepository.delete(categoria);
     }
