@@ -23,6 +23,7 @@ public class Categoria {
 
     @ManyToOne
     @JoinColumn(name = "id_corredor")
+    @JsonBackReference
     private Corredor corredor;
 
     @OneToMany(mappedBy = "categoria")

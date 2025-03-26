@@ -18,8 +18,8 @@ import java.util.List;
 public class ItemProdutoSeletor extends BaseSeletor implements Specification<ItemProduto> {
 
     private String lote;
-    private Double precoCompraMinimo;
-    private Double precoCompraMaximo;
+    private Integer quantidadeMinima;
+    private Integer quantidadeMaxima;
     private Double precoVendaMinimo;
     private Double precoVendaMaximo;
     private LocalDateTime dataFabricacaoInicio;
@@ -39,12 +39,12 @@ public class ItemProdutoSeletor extends BaseSeletor implements Specification<Ite
             predicates.add(cb.like(root.get("lote"), "%" + this.getLote() + "%"));
         }
 
-        if (this.getPrecoCompraMinimo() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("precoCompra"), this.getPrecoCompraMinimo()));
+        if (this.getQuantidadeMinima() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("quantidade"), this.getQuantidadeMinima()));
         }
 
-        if (this.getPrecoCompraMaximo() != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("precoCompra"), this.getPrecoCompraMaximo()));
+        if (this.getQuantidadeMaxima() != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("quantidade"), this.getQuantidadeMaxima()));
         }
 
         if (this.getPrecoVendaMinimo() != null) {
