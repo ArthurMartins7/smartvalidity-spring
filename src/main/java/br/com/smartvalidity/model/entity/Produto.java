@@ -1,19 +1,22 @@
 package br.com.smartvalidity.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.hibernate.validator.constraints.EAN;
 
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table
 @Data
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id",
+        scope = Produto.class
+)
 public class Produto {
 
     @Id
@@ -40,13 +43,14 @@ public class Produto {
     @OneToMany(mappedBy = "produto")
     private List<ItemProduto> itensProduto;
 
-    @JsonIgnore
     @ManyToMany
-    @JsonManagedReference
-    @JoinTable(name = "fornecedor_produto", joinColumns = @JoinColumn(name = "id_fornecedor"), inverseJoinColumns = @JoinColumn(name = "id_produto"))
+    @JoinTable(
+            name = "fornecedor_produto",
+            joinColumns = @JoinColumn(name = "id_produto"),
+            inverseJoinColumns = @JoinColumn(name = "id_fornecedor")
+    )
     private List<Fornecedor> fornecedores;
 
     @ManyToMany(mappedBy = "produtosAlerta")
     private List<Alerta> alertas;
-
 }

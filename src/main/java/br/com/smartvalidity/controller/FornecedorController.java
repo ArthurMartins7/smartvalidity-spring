@@ -3,7 +3,9 @@ package br.com.smartvalidity.controller;
 
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.entity.Fornecedor;
+import br.com.smartvalidity.model.seletor.FornecedorSeletor;
 import br.com.smartvalidity.service.FornecedorService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,19 @@ public class FornecedorController {
     public ResponseEntity<List<Fornecedor>> listarTodas() {
 
         return ResponseEntity.ok(fornecedorService.listarTodos());
+    }
+
+    @Operation(summary = "Pesquisar fornecedores com filtros",
+            description = "Retorna uma lista de fornecedores que atendem aos critérios especificados no seletor.")
+    @PostMapping("/filtro")
+    public List<Fornecedor> pesquisarComSeletor(@RequestBody FornecedorSeletor seletor) {
+        return fornecedorService.pesquisarComSeletor(seletor);
+    }
+
+    @PostMapping("/contar")
+    public ResponseEntity<Long> contarTotalRegistros(@RequestBody FornecedorSeletor seletor) {
+        long total = fornecedorService.contarTotalRegistros(seletor);
+        return ResponseEntity.ok(total);
     }
 
     @GetMapping("/{id}")

@@ -1,6 +1,7 @@
 package br.com.smartvalidity.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -11,6 +12,10 @@ import java.util.List;
 @Entity
 @Table
 @Data
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id"
+)
 public class Fornecedor {
 
     @Id
@@ -30,9 +35,6 @@ public class Fornecedor {
     @JoinColumn(name = "id_endereco", referencedColumnName = "id")
     private Endereco endereco;
 
-
-    @ManyToMany(mappedBy = "fornecedores")
-    @JsonManagedReference
+    @ManyToMany(mappedBy = "fornecedores", fetch = FetchType.EAGER)
     private List<Produto> produtos;
-
 }
