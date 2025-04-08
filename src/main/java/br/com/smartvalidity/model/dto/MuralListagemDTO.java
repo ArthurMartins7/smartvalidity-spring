@@ -25,6 +25,7 @@ public class MuralListagemDTO {
     private LocalDateTime dataValidade;
     private String lote;
     private String status;
+    private Boolean inspecionado;
     
     @Data
     @Builder

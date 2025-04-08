@@ -6,9 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.MuralListagemDTO;
 import br.com.smartvalidity.service.MuralListagemService;
 
@@ -49,5 +52,19 @@ public class MuralListagemController {
     @GetMapping("/vencidos")
     public ResponseEntity<List<MuralListagemDTO>> getVencidos() {
         return ResponseEntity.ok(muralListagemService.getVencidos());
+    }
+    
+    /**
+     * Endpoint para marcar um item como inspecionado
+     * @param id ID do item a ser marcado
+     * @return Item atualizado
+     */
+    @PutMapping("/inspecionar/{id}")
+    public ResponseEntity<MuralListagemDTO> marcarInspecionado(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok(muralListagemService.marcarInspecionado(id));
+        } catch (SmartValidityException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 } 

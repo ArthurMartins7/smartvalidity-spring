@@ -38,6 +38,9 @@ public class ItemProduto {
     @NotNull(message = "A data de recebimento não pode ser nula.")
     @Column(name = "data_recebimento", nullable = false)
     private LocalDateTime dataRecebimento;
+    
+    @Column(nullable = false)
+    private Boolean inspecionado = false;
 
     @ManyToOne
     @JoinColumn(name = "id_produto", nullable = false)

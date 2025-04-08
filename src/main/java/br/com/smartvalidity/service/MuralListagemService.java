@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.smartvalidity.model.dto.MuralListagemDTO;
 import br.com.smartvalidity.model.entity.ItemProduto;
+import br.com.smartvalidity.exception.SmartValidityException;
 
 @Service
 public class MuralListagemService {
@@ -90,6 +91,7 @@ public class MuralListagemService {
                 .dataValidade(item.getDataVencimento())
                 .lote(item.getLote())
                 .status(status)
+                .inspecionado(item.getInspecionado())
                 .build();
     }
     
@@ -105,5 +107,18 @@ public class MuralListagemService {
         } else {
             return "proximo";
         }
+    }
+    
+    /**
+     * Marca um item como inspecionado
+     * @param id ID do item a ser marcado
+     * @return O item atualizado
+     * @throws SmartValidityException Se o item não for encontrado
+     */
+    public MuralListagemDTO marcarInspecionado(String id) throws SmartValidityException {
+        ItemProduto item = itemProdutoService.buscarPorId(id);
+        item.setInspecionado(!item.getInspecionado()); // Toggle o status de inspeção
+        itemProdutoService.salvar(item);
+        return mapToDTO(item);
     }
 } 
