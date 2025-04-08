@@ -1,15 +1,16 @@
 package br.com.smartvalidity.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.MuralListagemDTO;
 import br.com.smartvalidity.model.entity.ItemProduto;
-import br.com.smartvalidity.exception.SmartValidityException;
 
 @Service
 public class MuralListagemService {
@@ -89,7 +90,10 @@ public class MuralListagemService {
                         !item.getProduto().getFornecedores().isEmpty() ? 
                         item.getProduto().getFornecedores().get(0).getNome() : "")
                 .dataValidade(item.getDataVencimento())
+                .dataFabricacao(item.getDataFabricacao())
+                .dataRecebimento(item.getDataRecebimento())
                 .lote(item.getLote())
+                .precoVenda(item.getPrecoVenda())
                 .status(status)
                 .inspecionado(item.getInspecionado())
                 .build();
@@ -119,6 +123,41 @@ public class MuralListagemService {
         ItemProduto item = itemProdutoService.buscarPorId(id);
         item.setInspecionado(!item.getInspecionado()); // Toggle o status de inspeção
         itemProdutoService.salvar(item);
+        return mapToDTO(item);
+    }
+    
+    /**
+     * Marca vários itens como inspecionados
+     * @param ids Lista de IDs dos itens a serem marcados
+     * @return Lista de itens atualizados
+     * @throws SmartValidityException Se algum item não for encontrado
+     */
+    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids) throws SmartValidityException {
+        List<MuralListagemDTO> itensAtualizados = new ArrayList<>();
+        
+        for (String id : ids) {
+            try {
+                ItemProduto item = itemProdutoService.buscarPorId(id);
+                item.setInspecionado(true); // Marca como inspecionado
+                itemProdutoService.salvar(item);
+                itensAtualizados.add(mapToDTO(item));
+            } catch (SmartValidityException e) {
+                // Loga o erro mas continua processando os outros IDs
+                System.err.println("Erro ao marcar item " + id + " como inspecionado: " + e.getMessage());
+            }
+        }
+        
+        return itensAtualizados;
+    }
+    
+    /**
+     * Busca um item específico por ID
+     * @param id ID do item a ser buscado
+     * @return O item encontrado
+     * @throws SmartValidityException Se o item não for encontrado
+     */
+    public MuralListagemDTO getItemById(String id) throws SmartValidityException {
+        ItemProduto item = itemProdutoService.buscarPorId(id);
         return mapToDTO(item);
     }
 } 

@@ -23,7 +23,10 @@ public class MuralListagemDTO {
     private String corredor;
     private String fornecedor;
     private LocalDateTime dataValidade;
+    private LocalDateTime dataFabricacao;
+    private LocalDateTime dataRecebimento;
     private String lote;
+    private Double precoVenda;
     private String status;
     private Boolean inspecionado;
     
