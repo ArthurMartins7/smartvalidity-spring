@@ -1,9 +1,12 @@
 package br.com.smartvalidity.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.hibernate.validator.constraints.br.CNPJ;
+
+import java.util.List;
 
 @Entity
 @Table
@@ -26,4 +29,10 @@ public class Fornecedor {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_endereco", referencedColumnName = "id")
     private Endereco endereco;
+
+
+    @ManyToMany(mappedBy = "fornecedores")
+    @JsonManagedReference
+    private List<Produto> produtos;
+
 }

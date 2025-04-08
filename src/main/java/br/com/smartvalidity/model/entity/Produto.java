@@ -1,5 +1,8 @@
 package br.com.smartvalidity.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -37,7 +40,9 @@ public class Produto {
     @OneToMany(mappedBy = "produto")
     private List<ItemProduto> itensProduto;
 
+    @JsonIgnore
     @ManyToMany
+    @JsonManagedReference
     @JoinTable(name = "fornecedor_produto", joinColumns = @JoinColumn(name = "id_fornecedor"), inverseJoinColumns = @JoinColumn(name = "id_produto"))
     private List<Fornecedor> fornecedores;
 
