@@ -2,6 +2,7 @@ package br.com.smartvalidity.controller;
 
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.entity.Corredor;
+import br.com.smartvalidity.model.seletor.CorredorSeletor;
 import br.com.smartvalidity.service.CorredorService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +20,31 @@ public class CorredorController {
 
     @PostMapping
     public ResponseEntity<Corredor> salvarCorredor(@Valid @RequestBody Corredor corredor) throws SmartValidityException {
-        Corredor novoCorredor = corredorService.salvar(corredor);
-        return ResponseEntity.status(201).body(novoCorredor);
+        Corredor novo = corredorService.salvar(corredor);
+        return ResponseEntity.status(201).body(novo);
     }
 
     @GetMapping
     public ResponseEntity<List<Corredor>> listarTodos() {
         return ResponseEntity.ok(corredorService.listarTodos());
+    }
+
+    @PostMapping("/filtro")
+    public ResponseEntity<List<Corredor>> pesquisarComFiltro(@RequestBody CorredorSeletor seletor) {
+        List<Corredor> resultado = corredorService.pesquisarComSeletor(seletor);
+        return ResponseEntity.ok(resultado);
+    }
+
+    @PostMapping("/filtro/paginas")
+    public ResponseEntity<Integer> contarPaginas(@RequestBody CorredorSeletor seletor) {
+        int paginas = corredorService.contarPaginas(seletor);
+        return ResponseEntity.ok(paginas);
+    }
+
+    @PostMapping("/contar")
+    public ResponseEntity<Long> contarTotalRegistros(@RequestBody CorredorSeletor seletor) {
+        long total = corredorService.contarTotalRegistros(seletor);
+        return ResponseEntity.ok(total);
     }
 
     @GetMapping("/{id}")
@@ -35,13 +54,13 @@ public class CorredorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Corredor> atualizarCorredor(@PathVariable Integer id, @Valid @RequestBody Corredor corredor) throws SmartValidityException {
-        Corredor corredorAtualizado = corredorService.atualizar(id, corredor);
-        return ResponseEntity.ok(corredorAtualizado);
+    public ResponseEntity<Corredor> atualizar(@PathVariable Integer id, @Valid @RequestBody Corredor corredor) throws SmartValidityException {
+        Corredor atualizado = corredorService.atualizar(id, corredor);
+        return ResponseEntity.ok(atualizado);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCorredor(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<Void> excluir(@PathVariable Integer id) throws SmartValidityException {
         corredorService.excluir(id);
         return ResponseEntity.noContent().build();
     }
