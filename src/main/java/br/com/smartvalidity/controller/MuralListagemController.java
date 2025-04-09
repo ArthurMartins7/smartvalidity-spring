@@ -1,6 +1,7 @@
 package br.com.smartvalidity.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.MuralListagemDTO;
 import br.com.smartvalidity.service.MuralListagemService;
+import lombok.Data;
 
 /**
  * Controller para o mural de listagem de produtos
@@ -58,26 +60,39 @@ public class MuralListagemController {
     /**
      * Endpoint para marcar um item como inspecionado
      * @param id ID do item a ser marcado
+     * @param dados Dados contendo o motivo da inspeção
      * @return Item atualizado
      */
     @PutMapping("/inspecionar/{id}")
-    public ResponseEntity<MuralListagemDTO> marcarInspecionado(@PathVariable String id) {
+    public ResponseEntity<MuralListagemDTO> marcarInspecionado(
+            @PathVariable String id, 
+            @RequestBody(required = false) Map<String, String> dados) {
         try {
-            return ResponseEntity.ok(muralListagemService.marcarInspecionado(id));
+            String motivo = (dados != null) ? dados.get("motivo") : null;
+            return ResponseEntity.ok(muralListagemService.marcarInspecionado(id, motivo));
         } catch (SmartValidityException e) {
             return ResponseEntity.notFound().build();
         }
     }
     
     /**
+     * Classe para representar a requisição com IDs e motivo
+     */
+    @Data // Usa Lombok para gerar getters, setters, toString, equals e hashCode
+    public static class InspecionarLoteRequest {
+        private List<String> ids;
+        private String motivo;
+    }
+    
+    /**
      * Endpoint para marcar vários itens como inspecionados
-     * @param ids Lista de IDs dos itens a serem marcados
+     * @param request Request contendo IDs dos itens e motivo da inspeção
      * @return Lista de itens atualizados
      */
     @PutMapping("/inspecionar-lote")
-    public ResponseEntity<List<MuralListagemDTO>> marcarVariosInspecionados(@RequestBody List<String> ids) {
+    public ResponseEntity<List<MuralListagemDTO>> marcarVariosInspecionados(@RequestBody InspecionarLoteRequest request) {
         try {
-            return ResponseEntity.ok(muralListagemService.marcarVariosInspecionados(ids));
+            return ResponseEntity.ok(muralListagemService.marcarVariosInspecionados(request.getIds(), request.getMotivo()));
         } catch (SmartValidityException e) {
             return ResponseEntity.badRequest().build();
         }

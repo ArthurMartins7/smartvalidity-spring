@@ -29,6 +29,7 @@ public class MuralListagemDTO {
     private Double precoVenda;
     private String status;
     private Boolean inspecionado;
+    private String motivoInspecao;
     
     @Data
     @Builder

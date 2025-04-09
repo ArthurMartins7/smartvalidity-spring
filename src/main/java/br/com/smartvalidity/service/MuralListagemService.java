@@ -96,6 +96,7 @@ public class MuralListagemService {
                 .precoVenda(item.getPrecoVenda())
                 .status(status)
                 .inspecionado(item.getInspecionado())
+                .motivoInspecao(item.getMotivoInspecao())
                 .build();
     }
     
@@ -114,31 +115,56 @@ public class MuralListagemService {
     }
     
     /**
-     * Marca um item como inspecionado
+     * Método base para marcar um item como inspecionado
      * @param id ID do item a ser marcado
+     * @param motivo Motivo da inspeção (opcional)
      * @return O item atualizado
      * @throws SmartValidityException Se o item não for encontrado
      */
-    public MuralListagemDTO marcarInspecionado(String id) throws SmartValidityException {
+    private MuralListagemDTO marcarItemInspecionado(String id, String motivo) throws SmartValidityException {
         ItemProduto item = itemProdutoService.buscarPorId(id);
-        item.setInspecionado(!item.getInspecionado()); // Toggle o status de inspeção
+        item.setInspecionado(true);
+        item.setMotivoInspecao(motivo);
         itemProdutoService.salvar(item);
         return mapToDTO(item);
     }
     
     /**
-     * Marca vários itens como inspecionados
+     * Marca um item como inspecionado
+     * @param id ID do item a ser marcado
+     * @param motivo Motivo da inspeção
+     * @return O item atualizado
+     * @throws SmartValidityException Se o item não for encontrado
+     */
+    public MuralListagemDTO marcarInspecionado(String id, String motivo) throws SmartValidityException {
+        return marcarItemInspecionado(id, motivo);
+    }
+    
+    /**
+     * Marca um item como inspecionado (método de compatibilidade)
+     * @param id ID do item a ser marcado
+     * @return O item atualizado
+     * @throws SmartValidityException Se o item não for encontrado
+     */
+    public MuralListagemDTO marcarInspecionado(String id) throws SmartValidityException {
+        return marcarItemInspecionado(id, null);
+    }
+    
+    /**
+     * Método base para marcar vários itens como inspecionados
      * @param ids Lista de IDs dos itens a serem marcados
+     * @param motivo Motivo da inspeção (opcional)
      * @return Lista de itens atualizados
      * @throws SmartValidityException Se algum item não for encontrado
      */
-    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids) throws SmartValidityException {
+    private List<MuralListagemDTO> marcarVariosItensInspecionados(List<String> ids, String motivo) throws SmartValidityException {
         List<MuralListagemDTO> itensAtualizados = new ArrayList<>();
         
         for (String id : ids) {
             try {
                 ItemProduto item = itemProdutoService.buscarPorId(id);
-                item.setInspecionado(true); // Marca como inspecionado
+                item.setInspecionado(true);
+                item.setMotivoInspecao(motivo);
                 itemProdutoService.salvar(item);
                 itensAtualizados.add(mapToDTO(item));
             } catch (SmartValidityException e) {
@@ -148,6 +174,27 @@ public class MuralListagemService {
         }
         
         return itensAtualizados;
+    }
+    
+    /**
+     * Marca vários itens como inspecionados
+     * @param ids Lista de IDs dos itens a serem marcados
+     * @param motivo Motivo da inspeção
+     * @return Lista de itens atualizados
+     * @throws SmartValidityException Se algum item não for encontrado
+     */
+    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids, String motivo) throws SmartValidityException {
+        return marcarVariosItensInspecionados(ids, motivo);
+    }
+    
+    /**
+     * Marca vários itens como inspecionados (método de compatibilidade)
+     * @param ids Lista de IDs dos itens a serem marcados
+     * @return Lista de itens atualizados
+     * @throws SmartValidityException Se algum item não for encontrado
+     */
+    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids) throws SmartValidityException {
+        return marcarVariosItensInspecionados(ids, null);
     }
     
     /**
