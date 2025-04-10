@@ -23,6 +23,11 @@ public class ProdutoService {
                 .orElseThrow(() -> new SmartValidityException("Produto não encontrado com o ID: " + id));
     }
 
+    public List<Produto> buscarPorCategoria(String categoriaId) {
+        return produtoRepository.findByCategoriaId(categoriaId);
+    }
+
+
     public Produto salvar(Produto produto) {
         return produtoRepository.save(produto);
     }
@@ -34,6 +39,7 @@ public class ProdutoService {
         produto.setDescricao(produtoAtualizado.getDescricao());
         produto.setMarca(produtoAtualizado.getMarca());
         produto.setUnidadeMedida(produtoAtualizado.getUnidadeMedida());
+        produto.setQuantidade(produtoAtualizado.getQuantidade());
         produto.setCategoria(produtoAtualizado.getCategoria());
         produto.setFornecedores(produtoAtualizado.getFornecedores());
 
