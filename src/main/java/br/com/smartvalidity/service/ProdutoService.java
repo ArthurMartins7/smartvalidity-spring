@@ -28,6 +28,7 @@ public class ProdutoService {
     }
 
 
+
     public Produto salvar(Produto produto) {
         return produtoRepository.save(produto);
     }
@@ -39,7 +40,6 @@ public class ProdutoService {
         produto.setDescricao(produtoAtualizado.getDescricao());
         produto.setMarca(produtoAtualizado.getMarca());
         produto.setUnidadeMedida(produtoAtualizado.getUnidadeMedida());
-        produto.setQuantidade(produtoAtualizado.getQuantidade());
         produto.setCategoria(produtoAtualizado.getCategoria());
         produto.setFornecedores(produtoAtualizado.getFornecedores());
 
