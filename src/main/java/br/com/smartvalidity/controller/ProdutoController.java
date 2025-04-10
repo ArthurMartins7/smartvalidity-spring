@@ -1,6 +1,7 @@
 package br.com.smartvalidity.controller;
 
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.ProdutoDTO;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.service.ProdutoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +19,10 @@ public class ProdutoController {
     private ProdutoService produtoService;
 
     @GetMapping
-    public ResponseEntity<List<Produto>> buscarTodos() {
-        return ResponseEntity.ok(produtoService.buscarTodos());
+    public ResponseEntity<List<ProdutoDTO>> listarTodos() {
+        return ResponseEntity.ok(produtoService.listarTodosDTO());
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Produto> buscarPorId(@PathVariable String id) throws SmartValidityException {
