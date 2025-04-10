@@ -23,6 +23,12 @@ public class ProdutoService {
                 .orElseThrow(() -> new SmartValidityException("Produto não encontrado com o ID: " + id));
     }
 
+    public List<Produto> buscarPorCategoria(String categoriaId) {
+        return produtoRepository.findByCategoriaId(categoriaId);
+    }
+
+
+
     public Produto salvar(Produto produto) {
         return produtoRepository.save(produto);
     }

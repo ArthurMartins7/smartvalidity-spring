@@ -28,6 +28,14 @@ public class ProdutoController {
         return ResponseEntity.ok(produto);
     }
 
+    @GetMapping("/categoria/{categoriaId}")
+    public ResponseEntity<List<Produto>> buscarPorCategoria(@PathVariable String categoriaId) {
+        List<Produto> produtos = produtoService.buscarPorCategoria(categoriaId);
+        return ResponseEntity.ok(produtos);
+    }
+
+
+
     @PostMapping
     public ResponseEntity<Produto> salvar(@Valid @RequestBody Produto produto) throws SmartValidityException {
         Produto novoProduto = produtoService.salvar(produto);
