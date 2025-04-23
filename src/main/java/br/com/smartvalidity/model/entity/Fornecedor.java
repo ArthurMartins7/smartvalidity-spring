@@ -1,6 +1,7 @@
 package br.com.smartvalidity.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -36,5 +37,6 @@ public class Fornecedor {
     private Endereco endereco;
 
     @ManyToMany(mappedBy = "fornecedores", fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<Produto> produtos;
 }

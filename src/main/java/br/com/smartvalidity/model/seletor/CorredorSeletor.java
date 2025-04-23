@@ -14,33 +14,37 @@ import java.util.Set;
 public class CorredorSeletor extends BaseSeletor implements Specification<Corredor> {
 
     private String nome;
+    private String responsavel;
+    private String responsavelId;
     private Set<Usuario> responsaveis;
-
 
     @Override
     public Predicate toPredicate(Root<Corredor> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
 
+        // Filtro por nome
         if (this.getNome() != null && !this.getNome().trim().isEmpty()) {
             predicates.add(cb.like(cb.lower(root.get("nome")), "%" + this.getNome().toLowerCase() + "%"));
         }
 
-        if (this.getResponsaveis() != null && !this.getResponsaveis().isEmpty()) {
-            Join<Object, Object> join = root.join("responsaveis");
+        // Filtro por responsável (usando responsavelId)
+        if (this.getResponsavelId() != null && !this.getResponsavelId().trim().isEmpty()) {
+            Join<Corredor, Usuario> responsaveisJoin = root.join("responsaveis");
+            predicates.add(cb.equal(responsaveisJoin.get("id"), this.getResponsavelId()));
+            query.distinct(true);
+        }
 
-            CriteriaBuilder.In<Object> inClause = cb.in(join.get("id"));
+        // Filtro por conjunto de responsáveis (mantido para compatibilidade)
+        if (this.getResponsaveis() != null && !this.getResponsaveis().isEmpty()) {
+            Join<Corredor, Usuario> responsaveisJoin = root.join("responsaveis");
+            CriteriaBuilder.In<Object> inClause = cb.in(responsaveisJoin.get("id"));
             for (Usuario usuario : this.getResponsaveis()) {
                 inClause.value(usuario.getId());
             }
-
             predicates.add(inClause);
-
-            // 👇 Isso aqui evita duplicatas e garante o join correto
             query.distinct(true);
         }
 
         return cb.and(predicates.toArray(new Predicate[0]));
     }
-
-
 }
