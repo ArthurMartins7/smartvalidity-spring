@@ -57,7 +57,7 @@ public class CorredorController {
             throw new SmartValidityException("Usuário não encontrado");
         }
 
-        if(usuarioAutenticado.getPerfilAcesso() == PerfilAcesso.ADMIN) {
+        if(usuarioAutenticado.getPerfilAcesso() != PerfilAcesso.ADMIN) {
             throw new SmartValidityException("Usuário sem permissão de acesso");
         }
 
