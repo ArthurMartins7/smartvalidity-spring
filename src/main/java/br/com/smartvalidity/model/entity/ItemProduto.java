@@ -26,10 +26,6 @@ public class ItemProduto {
     @Column(nullable = false)
     private String lote;
 
-    @NotNull(message = "A quantidade não pode ser nula.")
-    @Column(nullable = false)
-    private Integer quantidade;
-
     @NotNull(message = "O preço de venda não pode ser nulo.")
     @Column(name = "preco_venda", nullable = false)
     private Double precoVenda;

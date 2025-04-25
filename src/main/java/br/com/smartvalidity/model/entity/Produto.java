@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.EAN;
 
@@ -35,6 +36,10 @@ public class Produto {
 
     @NotBlank(message = "O campo 'unidade de medida' não pode ser vazio ou apenas espaços em branco.")
     private String unidadeMedida;
+
+    @NotNull(message = "A quantidade não pode ser nula.")
+    @Column(nullable = false)
+    private Integer quantidade;
 
     @ManyToOne
     @JoinColumn(name = "id_categoria")

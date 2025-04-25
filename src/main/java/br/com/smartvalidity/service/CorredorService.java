@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,6 +17,29 @@ public class CorredorService {
 
     @Autowired
     private CorredorRepository corredorRepository;
+
+    @Autowired
+    private ImagemService imagemService;
+
+    public List<Corredor> pesquisarComSeletor(CorredorSeletor seletor) {
+        if (seletor != null && seletor.temPaginacao()) {
+            PageRequest pageRequest = PageRequest.of(seletor.getPagina() - 1, seletor.getLimite());
+            return corredorRepository.findAll(seletor, pageRequest).getContent();
+        }
+        return corredorRepository.findAll(seletor);
+    }
+
+
+
+    public void salvarImagemCorredor(MultipartFile imagem, Integer idCorredor) throws SmartValidityException {
+        Corredor corredorComNovaImagem = corredorRepository
+                .findById(idCorredor)
+                .orElseThrow(() -> new SmartValidityException("Corredor não encontrada"));
+
+        String imagemBase64 = imagemService.processarImagem(imagem);
+        corredorComNovaImagem.setImagemEmBase64(imagemBase64);
+        corredorRepository.save(corredorComNovaImagem);
+    }
 
     public Corredor salvar(Corredor corredor) throws SmartValidityException {
         try {
@@ -29,26 +53,28 @@ public class CorredorService {
         return corredorRepository.findAll();
     }
 
-    public List<Corredor> pesquisarComSeletor(CorredorSeletor seletor) {
-        if (seletor != null && seletor.temPaginacao()) {
-            PageRequest pageRequest = PageRequest.of(seletor.getPagina() - 1, seletor.getLimite());
-            return corredorRepository.findAll(seletor, pageRequest).getContent();
-        }
-        return corredorRepository.findAll(seletor);
-    }
-
     public int contarPaginas(CorredorSeletor seletor) {
         if (seletor != null && seletor.temPaginacao()) {
             PageRequest pageRequest = PageRequest.of(0, seletor.getLimite());
-            Page<Corredor> resultado = corredorRepository.findAll(seletor, pageRequest);
+            Page<Corredor> resultado = corredorRepository.findByFiltros(
+                    seletor.getNome(),
+                    seletor.getResponsavelId(),
+                    pageRequest
+            );
             return resultado.getTotalPages();
         }
-        long total = corredorRepository.count(seletor);
+        long total = corredorRepository.count();
         return total > 0 ? 1 : 0;
     }
 
     public long contarTotalRegistros(CorredorSeletor seletor) {
-        return corredorRepository.count(seletor);
+        if (seletor.getResponsavelId() != null) {
+            return corredorRepository.findByFiltros(
+                    seletor.getNome(),
+                    seletor.getResponsavelId()
+            ).size();
+        }
+        return corredorRepository.count();
     }
 
     public Corredor buscarPorId(Integer id) throws SmartValidityException {
@@ -58,10 +84,8 @@ public class CorredorService {
 
     public Corredor atualizar(Integer id, Corredor corredorAtualizado) throws SmartValidityException {
         Corredor existente = buscarPorId(id);
-
         existente.setNome(corredorAtualizado.getNome());
         existente.setResponsaveis(corredorAtualizado.getResponsaveis());
-
         return corredorRepository.save(existente);
     }
 

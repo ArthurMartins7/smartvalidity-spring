@@ -22,6 +22,9 @@ public class Corredor {
     @NotBlank(message = "O campo 'nome' não pode ser vazio ou apenas espaços em branco.")
     private String nome;
 
+    @Column(columnDefinition = "LONGTEXT")
+    private String imagemEmBase64;
+
     @ManyToMany
     @JoinTable(name = "corredor_usuario", joinColumns = @JoinColumn(name = "id_usuario"), inverseJoinColumns = @JoinColumn(name = "id_corredor"))
     private List<Usuario> responsaveis;
