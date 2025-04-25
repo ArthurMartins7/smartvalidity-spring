@@ -28,43 +28,6 @@ public class CorredorController {
     @Autowired
     private CorredorService corredorService;
 
-    @Autowired
-    private AuthenticationService authService;
-
-    @Operation(
-            summary = "Upload de Imagem para Corredor",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Arquivo de imagem a ser enviado",
-                    required = true,
-                    content = @Content(
-                            mediaType = "multipart/form-data",
-                            schema = @Schema(type = "string", format = "binary")
-                    )
-            ),
-            description = "Realiza o upload de uma imagem associada a uma carta específica."
-    )
-    @PostMapping("/{id}/upload")
-    public void fazerUploadCorredor(@RequestParam("imagem") MultipartFile imagem,
-                                 @PathVariable Integer id)
-            throws SmartValidityException, IOException {
-
-        if(imagem == null) {
-            throw new SmartValidityException("Arquivo inválido");
-        }
-
-        Usuario usuarioAutenticado = authService.getUsuarioAutenticado();
-        if(usuarioAutenticado == null) {
-            throw new SmartValidityException("Usuário não encontrado");
-        }
-
-        if(usuarioAutenticado.getPerfilAcesso() == PerfilAcesso.ADMIN) {
-            throw new SmartValidityException("Usuário sem permissão de acesso");
-        }
-
-        corredorService.salvarImagemCorredor(imagem, id);
-    }
-
-
     @PostMapping
     public ResponseEntity<Corredor> salvarCorredor(@Valid @RequestBody Corredor corredor) throws SmartValidityException {
         Corredor novo = corredorService.salvar(corredor);
