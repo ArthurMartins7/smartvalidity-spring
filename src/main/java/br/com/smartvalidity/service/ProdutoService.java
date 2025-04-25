@@ -2,9 +2,14 @@ package br.com.smartvalidity.service;
 
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.ProdutoDTO;
+import br.com.smartvalidity.model.entity.Fornecedor;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.repository.ProdutoRepository;
+import br.com.smartvalidity.model.seletor.FornecedorSeletor;
+import br.com.smartvalidity.model.seletor.ProdutoSeletor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -86,6 +91,35 @@ public class ProdutoService {
     public Produto salvar(Produto produto) {
         return produtoRepository.save(produto);
     }
+
+    public List<Produto> pesquisarComSeletor(ProdutoSeletor seletor) {
+        if (seletor != null && seletor.temPaginacao()) {
+            int pageNumber = seletor.getPagina();
+            int pageSize = seletor.getLimite();
+
+            PageRequest pagina = PageRequest.of(pageNumber - 1, pageSize);
+            return produtoRepository.findAll(seletor, pagina).getContent();
+        }
+        return produtoRepository.findAll(seletor);
+    }
+
+    public int contarPaginas(ProdutoSeletor seletor) {
+        if (seletor != null && seletor.temPaginacao()) {
+            int pageSize = seletor.getLimite();
+            PageRequest pagina = PageRequest.of(0, pageSize);
+
+            Page<Produto> paginaResultado = produtoRepository.findAll(seletor, pagina);
+            return paginaResultado.getTotalPages();
+        }
+
+        long totalRegistros = produtoRepository.count(seletor);
+        return totalRegistros > 0 ? 1 : 0;
+    }
+
+    public long contarTotalRegistros(ProdutoSeletor seletor) {
+        return produtoRepository.count(seletor);
+    }
+
 
     public Produto atualizar(String id, Produto produtoAtualizado) throws SmartValidityException {
         Produto produto = buscarPorId(id);
