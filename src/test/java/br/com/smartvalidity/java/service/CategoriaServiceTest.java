@@ -74,7 +74,7 @@ public class CategoriaServiceTest {
 
     @Test
     @DisplayName("Deve salvar uma nova categoria com sucesso")
-    public void testSalvarCategoria_Sucesso() {
+    public void testSalvarCategoria_Sucesso() throws SmartValidityException {
         when(categoriaRepository.save(categoria)).thenReturn(categoria);
 
         Categoria resultado = categoriaService.salvar(categoria);

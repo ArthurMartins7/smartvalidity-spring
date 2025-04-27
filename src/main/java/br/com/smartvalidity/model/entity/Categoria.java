@@ -1,9 +1,11 @@
 package br.com.smartvalidity.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Set;
 
@@ -21,7 +23,7 @@ public class Categoria {
     private String nome;
 
     @ManyToOne
-    @JoinColumn(name = "id_corredor")
+    @JoinColumn(name = "corredor_id")
     private Corredor corredor;
 
     @OneToMany(mappedBy = "categoria")

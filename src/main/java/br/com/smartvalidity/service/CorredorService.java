@@ -35,9 +35,8 @@ public class CorredorService {
         return corredorRepository.save(corredor);
     }
 
-    @Transactional(readOnly = true)
     public List<Corredor> listarTodos() {
-        return corredorRepository.findAllWithCategorias();
+        return corredorRepository.findAll();
     }
 
     public Corredor buscarPorId(Integer id) throws SmartValidityException {

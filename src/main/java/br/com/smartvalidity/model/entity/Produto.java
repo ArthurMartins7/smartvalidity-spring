@@ -2,6 +2,7 @@ package br.com.smartvalidity.model.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.EAN;
 
@@ -32,7 +33,8 @@ public class Produto {
     private int quantidade;
 
     @ManyToOne
-    @JoinColumn(name = "id_categoria")
+    @JoinColumn(name = "id_categoria", nullable = false)
+    @NotNull(message = "O campo 'categoria' é obrigatório.")
     private Categoria categoria;
 
     @OneToMany(mappedBy = "produto")

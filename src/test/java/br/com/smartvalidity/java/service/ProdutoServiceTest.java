@@ -44,7 +44,7 @@ public class ProdutoServiceTest {
 
     @Test
     @DisplayName("Deve salvar um produto com sucesso")
-    public void testSalvarProdutoComSucesso() {
+    public void testSalvarProdutoComSucesso() throws SmartValidityException {
         when(produtoRepository.save(any(Produto.class))).thenReturn(produto);
         Produto produtoSalvo = produtoService.salvar(produto);
 

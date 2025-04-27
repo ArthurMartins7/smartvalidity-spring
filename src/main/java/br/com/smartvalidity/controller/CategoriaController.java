@@ -29,7 +29,7 @@ public class CategoriaController {
     }
 
     @PostMapping
-    public ResponseEntity<Categoria> criarCategoria(@Valid @RequestBody Categoria categoria) {
+    public ResponseEntity<Categoria> criarCategoria(@Valid @RequestBody Categoria categoria) throws SmartValidityException {
         Categoria novaCategoria = categoriaService.salvar(categoria);
         return ResponseEntity.status(201).body(novaCategoria);
     }

@@ -1,6 +1,7 @@
 package br.com.smartvalidity.service;
 
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.entity.Categoria;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,12 @@ public class ProdutoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
-    public Produto salvar(Produto produto) {
+    @Autowired
+    CategoriaService categoriaService;
+
+    public Produto salvar(Produto produto) throws SmartValidityException {
+        Categoria c = categoriaService.buscarPorId(produto.getCategoria().getId());
+        produto.setCategoria(c);
         return produtoRepository.save(produto);
     }
 
