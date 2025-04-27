@@ -6,5 +6,5 @@ import jakarta.persistence.Enumerated;
 
 public enum PerfilAcesso {
     ADMIN,
-    COMUM
+    OPERADOR
 }

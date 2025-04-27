@@ -24,7 +24,7 @@ public class CorredorService {
     private UsuarioService usuarioService;
 
     public Corredor salvar(Corredor corredor) throws SmartValidityException {
-        Set<Usuario> responsaveis = new HashSet<>();
+        List<Usuario> responsaveis = new ArrayList<>();
 
         for (Usuario responsavel : corredor.getResponsaveis()) {
             Usuario u = this.usuarioService.buscarPorId(responsavel.getId());

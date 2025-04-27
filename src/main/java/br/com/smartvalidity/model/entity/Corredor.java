@@ -1,9 +1,13 @@
 package br.com.smartvalidity.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -19,11 +23,9 @@ public class Corredor {
     private String nome;
 
     @ManyToMany
-    @JoinTable(name = "corredor_usuario",
-            joinColumns = @JoinColumn(name = "id_corredor"),
-            inverseJoinColumns = @JoinColumn(name = "id_usuario"))
-    private Set<Usuario> responsaveis;
+    @JoinTable(name = "corredor_usuario", joinColumns = @JoinColumn(name = "id_usuario"), inverseJoinColumns = @JoinColumn(name = "id_corredor"))
+    private List<Usuario> responsaveis;
 
     @OneToMany(mappedBy = "corredor")
-    private Set<Categoria> categorias;
+    private List<Categoria> categorias;
 }

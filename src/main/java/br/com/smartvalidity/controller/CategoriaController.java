@@ -18,30 +18,30 @@ public class CategoriaController {
     private CategoriaService categoriaService;
 
     @GetMapping
-    public ResponseEntity<List<Categoria>> listarTodas() {
-        return ResponseEntity.ok(categoriaService.listarTodas());
+    public ResponseEntity<List<Categoria>> buscarTodas() {
+        return ResponseEntity.ok(categoriaService.buscarTodas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Categoria> buscarPorId(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<Categoria> buscarPorId(@PathVariable String id) throws SmartValidityException {
         Categoria categoria = categoriaService.buscarPorId(id);
         return ResponseEntity.ok(categoria);
     }
 
     @PostMapping
-    public ResponseEntity<Categoria> criarCategoria(@Valid @RequestBody Categoria categoria) throws SmartValidityException {
+    public ResponseEntity<Categoria> salvar(@Valid @RequestBody Categoria categoria) {
         Categoria novaCategoria = categoriaService.salvar(categoria);
         return ResponseEntity.status(201).body(novaCategoria);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Categoria> atualizarCategoria(@PathVariable Integer id, @Valid @RequestBody Categoria categoria) throws SmartValidityException {
+    public ResponseEntity<Categoria> atualizar(@PathVariable String id, @Valid @RequestBody Categoria categoria) throws SmartValidityException {
         Categoria categoriaAtualizada = categoriaService.atualizar(id, categoria);
         return ResponseEntity.ok(categoriaAtualizada);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCategoria(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<Void> excluir(@PathVariable String id) throws SmartValidityException {
         categoriaService.excluir(id);
         return ResponseEntity.noContent().build();
     }

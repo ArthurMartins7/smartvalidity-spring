@@ -73,7 +73,7 @@ public class UsuarioService implements UserDetailsService {
         }
 
         if(novoUsuario.getPerfilAcesso() == null || novoUsuario.getPerfilAcesso().toString().isEmpty()) {
-            novoUsuario.setPerfilAcesso(PerfilAcesso.COMUM);
+            novoUsuario.setPerfilAcesso(PerfilAcesso.OPERADOR);
         }
 
         return usuarioRepository.save(novoUsuario);

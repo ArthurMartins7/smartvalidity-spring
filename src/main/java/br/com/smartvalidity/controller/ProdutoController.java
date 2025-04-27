@@ -18,30 +18,30 @@ public class ProdutoController {
     private ProdutoService produtoService;
 
     @GetMapping
-    public ResponseEntity<List<Produto>> listarTodos() {
-        return ResponseEntity.ok(produtoService.listarTodos());
+    public ResponseEntity<List<Produto>> buscarTodos() {
+        return ResponseEntity.ok(produtoService.buscarTodos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<Produto> buscarPorId(@PathVariable String id) throws SmartValidityException {
         Produto produto = produtoService.buscarPorId(id);
         return ResponseEntity.ok(produto);
     }
 
     @PostMapping
-    public ResponseEntity<Produto> criarProduto(@Valid @RequestBody Produto produto) throws SmartValidityException {
+    public ResponseEntity<Produto> salvar(@Valid @RequestBody Produto produto) throws SmartValidityException {
         Produto novoProduto = produtoService.salvar(produto);
         return ResponseEntity.status(201).body(novoProduto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizarProduto(@PathVariable Integer id, @Valid @RequestBody Produto produto) throws SmartValidityException {
+    public ResponseEntity<Produto> atualizar(@PathVariable String id, @Valid @RequestBody Produto produto) throws SmartValidityException {
         Produto produtoAtualizado = produtoService.atualizar(id, produto);
         return ResponseEntity.ok(produtoAtualizado);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarProduto(@PathVariable Integer id) throws SmartValidityException {
+    public ResponseEntity<Void> excluir(@PathVariable String id) throws SmartValidityException {
         produtoService.excluir(id);
         return ResponseEntity.noContent().build();
     }

@@ -24,7 +24,7 @@ public class CorredorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Corredor>> buscarTodos() {
+    public ResponseEntity<List<Corredor>> listarTodos() {
         return ResponseEntity.ok(corredorService.listarTodos());
     }
 
