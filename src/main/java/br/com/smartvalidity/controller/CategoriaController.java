@@ -41,7 +41,7 @@ public class CategoriaController {
     }
 
     @GetMapping("/{id}/corredor")
-    public ResponseEntity<Integer> buscarCorredorId(@PathVariable String id) throws SmartValidityException {
+    public ResponseEntity<String> buscarCorredorId(@PathVariable String id) throws SmartValidityException {
         Categoria categoria = categoriaService.buscarPorId(id);
         return ResponseEntity.ok(categoria.getCorredor().getId());
     }
