@@ -35,7 +35,6 @@ public class ItemProdutoService {
         ItemProduto itemProduto = buscarPorId(id);
 
         itemProduto.setLote(itemProdutoAtualizado.getLote());
-        itemProduto.setQuantidade(itemProdutoAtualizado.getQuantidade());
         itemProduto.setPrecoVenda(itemProdutoAtualizado.getPrecoVenda());
         itemProduto.setDataFabricacao(itemProdutoAtualizado.getDataFabricacao());
         itemProduto.setDataVencimento(itemProdutoAtualizado.getDataVencimento());

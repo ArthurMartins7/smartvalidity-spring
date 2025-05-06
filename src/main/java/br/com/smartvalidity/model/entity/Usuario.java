@@ -48,13 +48,13 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        List<GrantedAuthority> list = new ArrayList<GrantedAuthority>();
-
-        list.add(new SimpleGrantedAuthority(perfilAcesso.toString()));
-
+        List<GrantedAuthority> list = new ArrayList<>();
+        if (perfilAcesso != null) {
+            list.add(new SimpleGrantedAuthority(perfilAcesso.toString()));
+        }
         return list;
     }
+
 
     @Override
     public String getPassword() {
