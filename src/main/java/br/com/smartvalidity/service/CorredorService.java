@@ -31,7 +31,7 @@ public class CorredorService {
 
 
 
-    public void salvarImagemCorredor(MultipartFile imagem, Integer idCorredor) throws SmartValidityException {
+    public void salvarImagemCorredor(MultipartFile imagem, String idCorredor) throws SmartValidityException {
         Corredor corredorComNovaImagem = corredorRepository
                 .findById(idCorredor)
                 .orElseThrow(() -> new SmartValidityException("Corredor não encontrada"));
@@ -77,19 +77,19 @@ public class CorredorService {
         return corredorRepository.count();
     }
 
-    public Corredor buscarPorId(Integer id) throws SmartValidityException {
+    public Corredor buscarPorId(String id) throws SmartValidityException {
         return corredorRepository.findById(id)
                 .orElseThrow(() -> new SmartValidityException("Corredor não encontrado com o ID: " + id));
     }
 
-    public Corredor atualizar(Integer id, Corredor corredorAtualizado) throws SmartValidityException {
+    public Corredor atualizar(String id, Corredor corredorAtualizado) throws SmartValidityException {
         Corredor existente = buscarPorId(id);
         existente.setNome(corredorAtualizado.getNome());
         existente.setResponsaveis(corredorAtualizado.getResponsaveis());
         return corredorRepository.save(existente);
     }
 
-    public void excluir(Integer id) throws SmartValidityException {
+    public void excluir(String id) throws SmartValidityException {
         Corredor existente = buscarPorId(id);
         corredorRepository.delete(existente);
     }

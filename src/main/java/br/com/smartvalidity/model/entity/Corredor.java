@@ -16,8 +16,8 @@ import java.util.Set;
 public class Corredor {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @NotBlank(message = "O campo 'nome' não pode ser vazio ou apenas espaços em branco.")
     private String nome;
@@ -26,7 +26,7 @@ public class Corredor {
     private String imagemEmBase64;
 
     @ManyToMany
-    @JoinTable(name = "corredor_usuario", joinColumns = @JoinColumn(name = "id_usuario"), inverseJoinColumns = @JoinColumn(name = "id_corredor"))
+    @JoinTable(name = "corredor_usuario", joinColumns = @JoinColumn(name = "id_corredor"), inverseJoinColumns = @JoinColumn(name = "id_usuario"))
     private List<Usuario> responsaveis;
 
     @OneToMany(mappedBy = "corredor")

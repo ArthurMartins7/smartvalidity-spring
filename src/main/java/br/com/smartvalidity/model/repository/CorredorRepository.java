@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CorredorRepository extends JpaRepository<Corredor, Integer>, JpaSpecificationExecutor<Corredor> {
+public interface CorredorRepository extends JpaRepository<Corredor, String>, JpaSpecificationExecutor<Corredor> {
 
     @Query("SELECT DISTINCT c FROM Corredor c LEFT JOIN FETCH c.categorias")
     List<Corredor> findAllWithCategorias();

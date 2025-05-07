@@ -8,6 +8,7 @@ import java.util.UUID;
 
 @Data
 public class ProdutoDTO {
+
     private UUID id;
     private String codigoBarras;
     private String descricao;
@@ -20,4 +21,5 @@ public class ProdutoDTO {
 
     // Lista de fornecedores com estrutura completa
     private List<Map<String, Object>> fornecedores;
+
 }
