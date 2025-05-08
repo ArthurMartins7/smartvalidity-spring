@@ -3,6 +3,8 @@ package br.com.smartvalidity.service;
 import br.com.smartvalidity.model.dto.ProdutoDTO;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class BaixaValidataService {
 
@@ -12,4 +14,5 @@ public class BaixaValidataService {
 
         return produtoDTO;
     }
+
 }
