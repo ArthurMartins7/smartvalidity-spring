@@ -13,11 +13,6 @@ import java.util.List;
 @Entity
 @Table
 @Data
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id",
-        scope = Produto.class
-)
 public class Produto {
 
     @Id

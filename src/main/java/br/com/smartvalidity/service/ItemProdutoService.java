@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ItemProdutoService {
@@ -25,6 +26,14 @@ public class ItemProdutoService {
 
     public List<ItemProduto> buscarPorProduto(String produtoId) {
         return itemProdutoRepository.findByProdutoId(produtoId);
+    }
+
+    public List<ItemProduto> buscarPorLote(final String lote) throws SmartValidityException {
+        List<ItemProduto> itens = this.itemProdutoRepository.findByLote(lote);
+
+        Optional.ofNullable(itens).orElseThrow(() -> new SmartValidityException("Não existe nenhum produto no estoque com esse lote."));
+
+        return itens;
     }
 
     public ItemProduto salvar(ItemProduto itemProduto) {

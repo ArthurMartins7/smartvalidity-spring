@@ -11,4 +11,6 @@ import java.util.List;
 public interface ItemProdutoRepository extends JpaRepository<ItemProduto, String>, JpaSpecificationExecutor<ItemProduto> {
 
     List<ItemProduto> findByProdutoId(String produtoId);
+
+    List<ItemProduto> findByLote(String lote);
 }
