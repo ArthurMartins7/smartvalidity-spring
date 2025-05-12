@@ -1,5 +1,6 @@
 package br.com.smartvalidity.controller;
 
+import br.com.smartvalidity.model.dto.EstoqueDTO;
 import br.com.smartvalidity.model.dto.ProdutoDTO;
 import br.com.smartvalidity.service.BaixaValidataService;
 import br.com.smartvalidity.service.WebhookService;
@@ -25,9 +26,17 @@ public class WebhookController {
         return baixaValidataService.getBaixaEstoque(produtoDTO);
     }
 
+    /*
     @PostMapping("/baixa-validata")
-    public ResponseEntity<List<Object>> getItensVendidos(@RequestBody final List<Object> itensVendidos) {
-        List<Object> response = webhookService.getProdutosVendidos(itensVendidos);
+    public ResponseEntity<List<Object>> getItensVendidos1(@RequestBody final List<Object> itensVendidos) {
+        List<Object> response = webhookService.getProdutosVendidos1(itensVendidos);
+        return ResponseEntity.ok(response);
+    }
+     */
+
+    @PostMapping("/baixa-validata")
+    public ResponseEntity<List<EstoqueDTO>> getItensVendidos(@RequestBody final List<EstoqueDTO> itensVendidos) {
+        List<EstoqueDTO> response = webhookService.getProdutosVendidos(itensVendidos);
         return ResponseEntity.ok(response);
     }
 
