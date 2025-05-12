@@ -31,7 +31,7 @@ public class MuralListagemService {
                     LocalDateTime vencimento = item.getDataVencimento();
                     return vencimento.isAfter(hoje) && vencimento.isBefore(limite);
                 })
-                .map(this::mapToDTO)
+                .map(this::mapToDTO) //TODO: Pesquisar sobre Method Reference
                 .collect(Collectors.toList());
     }
 
@@ -69,26 +69,34 @@ public class MuralListagemService {
      */
     private MuralListagemDTO mapToDTO(ItemProduto item) {
         String status = determinarStatus(item.getDataVencimento());
+
+        MuralListagemDTO.ProdutoDTO produtoDTO = MuralListagemDTO.ProdutoDTO.builder()
+                .id(item.getProduto() != null ? item.getProduto().getId() : "")
+                .nome(item.getProduto() != null ? item.getProduto().getDescricao() : "")
+                .descricao(item.getProduto() != null ? item.getProduto().getDescricao() : "")
+                .codigoBarras(item.getProduto() != null ? item.getProduto().getCodigoBarras() : "")
+                .marca(item.getProduto() != null ? item.getProduto().getMarca() : "")
+                .unidadeMedida(item.getProduto() != null ? item.getProduto().getUnidadeMedida() : "")
+                .build();
         
+        String categoria = item.getProduto() != null && item.getProduto().getCategoria() != null ?
+                item.getProduto().getCategoria().getNome() : "";
+
+        String corredor = item.getProduto() != null && item.getProduto().getCategoria() != null &&
+                item.getProduto().getCategoria().getCorredor() != null ?
+                item.getProduto().getCategoria().getCorredor().getNome() : "";
+
+        String fornecedor = item.getProduto() != null && item.getProduto().getFornecedores() != null &&
+                !item.getProduto().getFornecedores().isEmpty() ?
+                item.getProduto().getFornecedores().get(0).getNome() : "";
+
         return MuralListagemDTO.builder()
                 .id(item.getId())
                 .itemProduto(item.getProduto() != null ? item.getProduto().getDescricao() : "")
-                .produto(MuralListagemDTO.ProdutoDTO.builder()
-                        .id(item.getProduto() != null ? item.getProduto().getId() : "")
-                        .nome(item.getProduto() != null ? item.getProduto().getDescricao() : "")
-                        .descricao(item.getProduto() != null ? item.getProduto().getDescricao() : "")
-                        .codigoBarras(item.getProduto() != null ? item.getProduto().getCodigoBarras() : "")
-                        .marca(item.getProduto() != null ? item.getProduto().getMarca() : "")
-                        .unidadeMedida(item.getProduto() != null ? item.getProduto().getUnidadeMedida() : "")
-                        .build())
-                .categoria(item.getProduto() != null && item.getProduto().getCategoria() != null ? 
-                        item.getProduto().getCategoria().getNome() : "")
-                .corredor(item.getProduto() != null && item.getProduto().getCategoria() != null && 
-                        item.getProduto().getCategoria().getCorredor() != null ? 
-                        item.getProduto().getCategoria().getCorredor().getNome() : "")
-                .fornecedor(item.getProduto() != null && item.getProduto().getFornecedores() != null && 
-                        !item.getProduto().getFornecedores().isEmpty() ? 
-                        item.getProduto().getFornecedores().get(0).getNome() : "")
+                .produto(produtoDTO)
+                .categoria(categoria)
+                .corredor(corredor)
+                .fornecedor(fornecedor)
                 .dataValidade(item.getDataVencimento())
                 .dataFabricacao(item.getDataFabricacao())
                 .dataRecebimento(item.getDataRecebimento())
@@ -99,7 +107,7 @@ public class MuralListagemService {
                 .motivoInspecao(item.getMotivoInspecao())
                 .build();
     }
-    
+
     /**
      * Determina o status do item com base na data de validade
      */
