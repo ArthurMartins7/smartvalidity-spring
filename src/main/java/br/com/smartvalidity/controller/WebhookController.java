@@ -1,5 +1,6 @@
 package br.com.smartvalidity.controller;
 
+import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.EstoqueDTO;
 import br.com.smartvalidity.model.dto.ProdutoDTO;
 import br.com.smartvalidity.service.BaixaValidataService;
@@ -35,7 +36,7 @@ public class WebhookController {
      */
 
     @PostMapping("/baixa-validata")
-    public ResponseEntity<List<EstoqueDTO>> getItensVendidos(@RequestBody final List<EstoqueDTO> itensVendidos) {
+    public ResponseEntity<List<EstoqueDTO>> getItensVendidos(@RequestBody final List<EstoqueDTO> itensVendidos) throws SmartValidityException {
         List<EstoqueDTO> response = webhookService.getProdutosVendidos(itensVendidos);
         return ResponseEntity.ok(response);
     }

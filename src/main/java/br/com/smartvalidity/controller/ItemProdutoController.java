@@ -34,7 +34,7 @@ public class ItemProdutoController {
     }
 
     @PostMapping
-    public ResponseEntity<ItemProduto> salvar(@Valid @RequestBody ItemProduto itemProduto) {
+    public ResponseEntity<ItemProduto> salvar(@Valid @RequestBody ItemProduto itemProduto) throws SmartValidityException {
         ItemProduto novoItemProduto = itemProdutoService.salvar(itemProduto);
         return ResponseEntity.status(201).body(novoItemProduto);
     }
