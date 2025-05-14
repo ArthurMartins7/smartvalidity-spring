@@ -31,4 +31,12 @@ public class MuralFiltroDTO {
     private String sortBy;
     private String sortDirection;
     private String status; // Pode ser: "proximo", "hoje", "vencido"
+    
+    // Campos para paginação
+    private Integer pagina;
+    private Integer limite;
+    
+    public boolean temPaginacao() {
+        return this.limite != null && this.limite > 0 && this.pagina != null && this.pagina > 0;
+    }
 } 

@@ -173,6 +173,28 @@ public class MuralListagemController {
     }
     
     /**
+     * Endpoint para contar o número total de páginas com base no filtro
+     * @param filtro Parâmetros de filtro
+     * @return Número total de páginas
+     */
+    @PostMapping("/contar-paginas")
+    public ResponseEntity<Integer> contarPaginas(@RequestBody MuralFiltroDTO filtro) {
+        int totalPaginas = muralListagemService.contarPaginas(filtro);
+        return ResponseEntity.ok(totalPaginas);
+    }
+    
+    /**
+     * Endpoint para contar o número total de registros com base no filtro
+     * @param filtro Parâmetros de filtro
+     * @return Número total de registros
+     */
+    @PostMapping("/contar-registros")
+    public ResponseEntity<Long> contarTotalRegistros(@RequestBody MuralFiltroDTO filtro) {
+        long totalRegistros = muralListagemService.contarTotalRegistros(filtro);
+        return ResponseEntity.ok(totalRegistros);
+    }
+    
+    /**
      * Classe para representar as opções de filtro
      */
     @Data

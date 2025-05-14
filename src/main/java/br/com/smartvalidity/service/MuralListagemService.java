@@ -82,7 +82,20 @@ public class MuralListagemService {
         List<MuralListagemDTO> itensFiltrados = aplicarFiltros(dtos, filtro);
         
         // Aplicar ordenação
-        return ordenarItens(itensFiltrados, filtro.getSortBy(), filtro.getSortDirection());
+        List<MuralListagemDTO> itensOrdenados = ordenarItens(itensFiltrados, filtro.getSortBy(), filtro.getSortDirection());
+        
+        // Aplicar paginação se necessário
+        if (filtro.temPaginacao()) {
+            int inicio = (filtro.getPagina() - 1) * filtro.getLimite();
+            int fim = Math.min(inicio + filtro.getLimite(), itensOrdenados.size());
+            
+            // Validar os índices para evitar erros
+            if (inicio >= 0 && inicio < itensOrdenados.size()) {
+                return itensOrdenados.subList(inicio, fim);
+            }
+        }
+        
+        return itensOrdenados;
     }
     
     /**
@@ -583,5 +596,36 @@ public class MuralListagemService {
     public MuralListagemDTO getItemById(String id) throws SmartValidityException {
         ItemProduto item = itemProdutoService.buscarPorId(id);
         return mapToDTO(item);
+    }
+
+    /**
+     * Conta o número total de páginas com base no filtro e no limite de itens por página
+     * @param filtro Objeto com os parâmetros de filtro
+     * @return Número total de páginas
+     */
+    public int contarPaginas(MuralFiltroDTO filtro) {
+        if (filtro != null && filtro.temPaginacao()) {
+            long totalRegistros = contarTotalRegistros(filtro);
+            return (int) Math.ceil((double) totalRegistros / filtro.getLimite());
+        }
+        // Se não tiver paginação, tudo cabe em uma página
+        return 1;
+    }
+    
+    /**
+     * Conta o número total de registros que atendem aos critérios de filtro
+     * @param filtro Objeto com os parâmetros de filtro
+     * @return Número total de registros
+     */
+    public long contarTotalRegistros(MuralFiltroDTO filtro) {
+        List<ItemProduto> itens = itemProdutoService.buscarTodos();
+        List<MuralListagemDTO> dtos = itens.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+        
+        // Aplicar filtros
+        List<MuralListagemDTO> itensFiltrados = aplicarFiltros(dtos, filtro);
+        
+        return itensFiltrados.size();
     }
 } 
