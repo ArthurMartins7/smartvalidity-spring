@@ -1,5 +1,7 @@
 package br.com.smartvalidity.model.entity;
 
+import br.com.smartvalidity.model.enums.FrequenciaDisparo;
+import br.com.smartvalidity.model.enums.SituacaoValidade;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,6 +26,11 @@ public class Alerta {
     private String descricao;
 
     private LocalDateTime dataHoraDisparo;
+
+    private boolean isDisparoRecorrente;
+
+    @Enumerated(EnumType.STRING)
+    private FrequenciaDisparo frequenciaDisparo;
 
     @ManyToMany
     @JoinTable(
