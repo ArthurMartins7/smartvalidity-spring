@@ -7,10 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO para transferência de dados do mural de validades
- * Contém todas as informações necessárias para exibir os itens no mural
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,12 +26,13 @@ public class MuralListagemDTO {
     private String status;
     private Boolean inspecionado;
     private String motivoInspecao;
-    
+
+    //TODO: Entender melhor o uso
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ProdutoDTO {
+    public static class ProdutoDTO { //
         private String id;
         private String nome;
         private String descricao;

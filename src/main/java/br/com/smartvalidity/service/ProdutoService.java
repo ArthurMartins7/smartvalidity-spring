@@ -81,7 +81,6 @@ public class ProdutoService {
 
                 dto.setFornecedores(fornecedores);
             }
-
             return dto;
         }).toList();
     }

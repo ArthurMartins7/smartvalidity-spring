@@ -15,11 +15,7 @@ public class ProdutoDTO {
     private String marca;
     private String unidadeMedida;
     private int quantidade;
-
-    // Simples: categoria com id e nome
-    private Map<String, Object> categoria;
-
-    // Lista de fornecedores com estrutura completa
-    private List<Map<String, Object>> fornecedores;
+    private Map<String, Object> categoria; //TODO: Entender o uso do Map
+    private List<Map<String, Object>> fornecedores; //TODO: Entender a relação com o front
 
 }
