@@ -8,12 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.MuralFiltroDTO;
 import br.com.smartvalidity.model.dto.MuralListagemDTO;
 import br.com.smartvalidity.service.MuralListagemService;
 import lombok.Data;
@@ -110,5 +112,42 @@ public class MuralListagemController {
         } catch (SmartValidityException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+    
+    /**
+     * Endpoint para buscar itens com filtros
+     * @param filtro Parâmetros de filtro
+     * @return Lista de itens filtrados
+     */
+    @PostMapping("/filtrar")
+    public ResponseEntity<List<MuralListagemDTO>> buscarComFiltro(@RequestBody MuralFiltroDTO filtro) {
+        return ResponseEntity.ok(muralListagemService.buscarComFiltro(filtro));
+    }
+    
+    /**
+     * Classe para representar as opções de filtro
+     */
+    @Data
+    public static class FiltroOpcoesResponse {
+        private List<String> marcas;
+        private List<String> corredores;
+        private List<String> categorias;
+        private List<String> fornecedores;
+        private List<String> lotes;
+    }
+    
+    /**
+     * Endpoint para obter todas as opções disponíveis para filtros
+     * @return Opções de filtro
+     */
+    @GetMapping("/filtro-opcoes")
+    public ResponseEntity<FiltroOpcoesResponse> getFiltroOpcoes() {
+        FiltroOpcoesResponse opcoes = new FiltroOpcoesResponse();
+        opcoes.setMarcas(muralListagemService.getMarcasDisponiveis());
+        opcoes.setCorredores(muralListagemService.getCorredoresDisponiveis());
+        opcoes.setCategorias(muralListagemService.getCategoriasDisponiveis());
+        opcoes.setFornecedores(muralListagemService.getFornecedoresDisponiveis());
+        opcoes.setLotes(muralListagemService.getLotesDisponiveis());
+        return ResponseEntity.ok(opcoes);
     }
 } 

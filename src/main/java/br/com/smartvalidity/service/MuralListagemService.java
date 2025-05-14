@@ -2,13 +2,16 @@ package br.com.smartvalidity.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.MuralFiltroDTO;
 import br.com.smartvalidity.model.dto.MuralListagemDTO;
 import br.com.smartvalidity.model.entity.ItemProduto;
 
@@ -61,6 +64,339 @@ public class MuralListagemService {
         return itens.stream()
                 .filter(item -> item.getDataVencimento().isBefore(hoje))
                 .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca filtrada de itens
+     * @param filtro Objeto com os parâmetros de filtro
+     * @return Lista de itens filtrados
+     */
+    public List<MuralListagemDTO> buscarComFiltro(MuralFiltroDTO filtro) {
+        List<ItemProduto> itens = itemProdutoService.buscarTodos();
+        List<MuralListagemDTO> dtos = itens.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+        
+        // Aplicar filtros
+        List<MuralListagemDTO> itensFiltrados = aplicarFiltros(dtos, filtro);
+        
+        // Aplicar ordenação
+        return ordenarItens(itensFiltrados, filtro.getSortBy(), filtro.getSortDirection());
+    }
+    
+    /**
+     * Aplica filtros aos itens
+     */
+    private List<MuralListagemDTO> aplicarFiltros(List<MuralListagemDTO> itens, MuralFiltroDTO filtro) {
+        if (filtro == null) {
+            return itens;
+        }
+        
+        List<MuralListagemDTO> resultado = new ArrayList<>(itens);
+        
+        // Aplicar filtro de busca textual
+        if (StringUtils.hasText(filtro.getSearchTerm())) {
+            resultado = aplicarFiltroBusca(resultado, filtro.getSearchTerm());
+        }
+        
+        // Aplicar filtros de texto (marca, corredor, categoria, fornecedor, lote)
+        resultado = aplicarFiltrosTexto(resultado, filtro);
+        
+        // Aplicar filtros de data
+        resultado = aplicarFiltrosData(resultado, filtro);
+        
+        // Aplicar filtro de inspeção
+        if (filtro.getInspecionado() != null) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getInspecionado().equals(item.getInspecionado()))
+                    .collect(Collectors.toList());
+        }
+        
+        // Aplicar filtro de status
+        if (StringUtils.hasText(filtro.getStatus())) {
+            LocalDateTime hoje = LocalDateTime.now();
+            LocalDateTime limite = hoje.plusDays(15);
+            
+            resultado = resultado.stream()
+                    .filter(item -> {
+                        LocalDateTime vencimento = item.getDataValidade();
+                        
+                        switch (filtro.getStatus()) {
+                            case "proximo":
+                                // Filtrar produtos próximos a vencer (com data futura, mas dentro de 15 dias)
+                                return vencimento.isAfter(hoje) && 
+                                      !vencimento.toLocalDate().isEqual(hoje.toLocalDate()) &&
+                                      vencimento.isBefore(limite);
+                            case "hoje":
+                                // Filtrar produtos que vencem hoje exatamente
+                                return vencimento.toLocalDate().isEqual(hoje.toLocalDate());
+                            case "vencido":
+                                // Filtrar produtos vencidos (data anterior a hoje)
+                                return vencimento.isBefore(hoje);
+                            default:
+                                // Caso padrão, usa o status
+                                return filtro.getStatus().equals(item.getStatus());
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+        
+        return resultado;
+    }
+    
+    /**
+     * Aplica filtros de texto (marca, corredor, categoria, fornecedor, lote)
+     */
+    private List<MuralListagemDTO> aplicarFiltrosTexto(List<MuralListagemDTO> itens, MuralFiltroDTO filtro) {
+        List<MuralListagemDTO> resultado = new ArrayList<>(itens);
+        
+        if (StringUtils.hasText(filtro.getMarca())) {
+            resultado = resultado.stream()
+                    .filter(item -> item.getProduto() != null && 
+                            filtro.getMarca().equals(item.getProduto().getMarca()))
+                    .collect(Collectors.toList());
+        }
+        
+        if (StringUtils.hasText(filtro.getCorredor())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getCorredor().equals(item.getCorredor()))
+                    .collect(Collectors.toList());
+        }
+        
+        if (StringUtils.hasText(filtro.getCategoria())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getCategoria().equals(item.getCategoria()))
+                    .collect(Collectors.toList());
+        }
+        
+        if (StringUtils.hasText(filtro.getFornecedor())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getFornecedor().equals(item.getFornecedor()))
+                    .collect(Collectors.toList());
+        }
+        
+        if (StringUtils.hasText(filtro.getLote())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getLote().equals(item.getLote()))
+                    .collect(Collectors.toList());
+        }
+        
+        return resultado;
+    }
+    
+    /**
+     * Aplica filtros de data (dataVencimento, dataFabricacao, dataRecebimento)
+     */
+    private List<MuralListagemDTO> aplicarFiltrosData(List<MuralListagemDTO> itens, MuralFiltroDTO filtro) {
+        List<MuralListagemDTO> resultado = new ArrayList<>(itens);
+        
+        // Filtro de data de vencimento
+        if (filtro.getDataVencimentoInicio() != null || filtro.getDataVencimentoFim() != null) {
+            resultado = resultado.stream()
+                    .filter(item -> {
+                        LocalDateTime dataVencimento = item.getDataValidade();
+                        boolean aposInicio = filtro.getDataVencimentoInicio() == null || 
+                                dataVencimento.isAfter(filtro.getDataVencimentoInicio()) || 
+                                dataVencimento.isEqual(filtro.getDataVencimentoInicio());
+                        boolean antesFim = filtro.getDataVencimentoFim() == null || 
+                                dataVencimento.isBefore(filtro.getDataVencimentoFim()) || 
+                                dataVencimento.isEqual(filtro.getDataVencimentoFim());
+                        return aposInicio && antesFim;
+                    })
+                    .collect(Collectors.toList());
+        }
+        
+        // Filtro de data de fabricação
+        if (filtro.getDataFabricacaoInicio() != null || filtro.getDataFabricacaoFim() != null) {
+            resultado = resultado.stream()
+                    .filter(item -> {
+                        LocalDateTime dataFabricacao = item.getDataFabricacao();
+                        if (dataFabricacao == null) {
+                            return false;
+                        }
+                        boolean aposInicio = filtro.getDataFabricacaoInicio() == null || 
+                                dataFabricacao.isAfter(filtro.getDataFabricacaoInicio()) || 
+                                dataFabricacao.isEqual(filtro.getDataFabricacaoInicio());
+                        boolean antesFim = filtro.getDataFabricacaoFim() == null || 
+                                dataFabricacao.isBefore(filtro.getDataFabricacaoFim()) || 
+                                dataFabricacao.isEqual(filtro.getDataFabricacaoFim());
+                        return aposInicio && antesFim;
+                    })
+                    .collect(Collectors.toList());
+        }
+        
+        // Filtro de data de recebimento
+        if (filtro.getDataRecebimentoInicio() != null || filtro.getDataRecebimentoFim() != null) {
+            resultado = resultado.stream()
+                    .filter(item -> {
+                        LocalDateTime dataRecebimento = item.getDataRecebimento();
+                        if (dataRecebimento == null) {
+                            return false;
+                        }
+                        boolean aposInicio = filtro.getDataRecebimentoInicio() == null || 
+                                dataRecebimento.isAfter(filtro.getDataRecebimentoInicio()) || 
+                                dataRecebimento.isEqual(filtro.getDataRecebimentoInicio());
+                        boolean antesFim = filtro.getDataRecebimentoFim() == null || 
+                                dataRecebimento.isBefore(filtro.getDataRecebimentoFim()) || 
+                                dataRecebimento.isEqual(filtro.getDataRecebimentoFim());
+                        return aposInicio && antesFim;
+                    })
+                    .collect(Collectors.toList());
+        }
+        
+        return resultado;
+    }
+    
+    /**
+     * Aplica o filtro de busca textual em múltiplos campos
+     */
+    private List<MuralListagemDTO> aplicarFiltroBusca(List<MuralListagemDTO> itens, String termo) {
+        if (!StringUtils.hasText(termo)) {
+            return itens;
+        }
+        
+        String termoBusca = termo.toLowerCase();
+        return itens.stream()
+                .filter(item -> 
+                    // Nome do produto
+                    (item.getProduto() != null && item.getProduto().getNome() != null && 
+                            item.getProduto().getNome().toLowerCase().contains(termoBusca)) ||
+                    // Código de barras
+                    (item.getProduto() != null && item.getProduto().getCodigoBarras() != null && 
+                            item.getProduto().getCodigoBarras().toLowerCase().contains(termoBusca)) ||
+                    // Marca
+                    (item.getProduto() != null && item.getProduto().getMarca() != null && 
+                            item.getProduto().getMarca().toLowerCase().contains(termoBusca)) ||
+                    // Lote
+                    (item.getLote() != null && item.getLote().toLowerCase().contains(termoBusca))
+                )
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Ordena os itens pelo campo especificado
+     */
+    private List<MuralListagemDTO> ordenarItens(List<MuralListagemDTO> itens, String campo, String direcao) {
+        if (!StringUtils.hasText(campo)) {
+            return itens; // Sem ordenação
+        }
+        
+        boolean ascendente = !"desc".equalsIgnoreCase(direcao);
+        
+        Comparator<MuralListagemDTO> comparator = null;
+        
+        switch (campo.toLowerCase()) {
+            case "nome":
+                comparator = Comparator.comparing(item -> 
+                    item.getProduto() != null ? 
+                    (item.getProduto().getNome() != null ? item.getProduto().getNome().toLowerCase() : "") : "");
+                break;
+            case "marca":
+                comparator = Comparator.comparing(item -> 
+                    item.getProduto() != null ? 
+                    (item.getProduto().getMarca() != null ? item.getProduto().getMarca().toLowerCase() : "") : "");
+                break;
+            case "categoria":
+                comparator = Comparator.comparing(item -> 
+                    item.getCategoria() != null ? item.getCategoria().toLowerCase() : "");
+                break;
+            case "corredor":
+                comparator = Comparator.comparing(item -> 
+                    item.getCorredor() != null ? item.getCorredor().toLowerCase() : "");
+                break;
+            case "fornecedor":
+                comparator = Comparator.comparing(item -> 
+                    item.getFornecedor() != null ? item.getFornecedor().toLowerCase() : "");
+                break;
+            case "dataVencimento":
+                comparator = Comparator.comparing(item -> item.getDataValidade());
+                break;
+            case "status":
+                comparator = Comparator.comparing(item -> item.getStatus());
+                break;
+            default:
+                // Por padrão, ordena por nome
+                comparator = Comparator.comparing(item -> 
+                    item.getProduto() != null ? 
+                    (item.getProduto().getNome() != null ? item.getProduto().getNome().toLowerCase() : "") : "");
+        }
+        
+        // Inverte a ordenação se for descendente
+        if (!ascendente) {
+            comparator = comparator.reversed();
+        }
+        
+        return itens.stream()
+                .sorted(comparator)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Obtém todas as marcas distintas dos produtos disponíveis
+     */
+    public List<String> getMarcasDisponiveis() {
+        return itemProdutoService.buscarTodos().stream()
+                .filter(item -> item.getProduto() != null && StringUtils.hasText(item.getProduto().getMarca()))
+                .map(item -> item.getProduto().getMarca())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Obtém todos os corredores distintos dos produtos disponíveis
+     */
+    public List<String> getCorredoresDisponiveis() {
+        return itemProdutoService.buscarTodos().stream()
+                .filter(item -> item.getProduto() != null && 
+                        item.getProduto().getCategoria() != null && 
+                        item.getProduto().getCategoria().getCorredor() != null && 
+                        StringUtils.hasText(item.getProduto().getCategoria().getCorredor().getNome()))
+                .map(item -> item.getProduto().getCategoria().getCorredor().getNome())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Obtém todas as categorias distintas dos produtos disponíveis
+     */
+    public List<String> getCategoriasDisponiveis() {
+        return itemProdutoService.buscarTodos().stream()
+                .filter(item -> item.getProduto() != null && 
+                        item.getProduto().getCategoria() != null && 
+                        StringUtils.hasText(item.getProduto().getCategoria().getNome()))
+                .map(item -> item.getProduto().getCategoria().getNome())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Obtém todos os fornecedores distintos dos produtos disponíveis
+     */
+    public List<String> getFornecedoresDisponiveis() {
+        return itemProdutoService.buscarTodos().stream()
+                .filter(item -> item.getProduto() != null && 
+                        item.getProduto().getFornecedores() != null && 
+                        !item.getProduto().getFornecedores().isEmpty() &&
+                        StringUtils.hasText(item.getProduto().getFornecedores().get(0).getNome()))
+                .map(item -> item.getProduto().getFornecedores().get(0).getNome())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Obtém todos os lotes distintos dos produtos disponíveis
+     */
+    public List<String> getLotesDisponiveis() {
+        return itemProdutoService.buscarTodos().stream()
+                .filter(item -> StringUtils.hasText(item.getLote()))
+                .map(item -> item.getLote())
+                .distinct()
+                .sorted()
                 .collect(Collectors.toList());
     }
 
