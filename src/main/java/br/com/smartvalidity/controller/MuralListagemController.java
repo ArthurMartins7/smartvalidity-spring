@@ -1,9 +1,11 @@
 package br.com.smartvalidity.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,14 +68,33 @@ public class MuralListagemController {
      * @return Item atualizado
      */
     @PutMapping("/inspecionar/{id}")
-    public ResponseEntity<MuralListagemDTO> marcarInspecionado(
+    public ResponseEntity<?> marcarInspecionado(
             @PathVariable String id, 
             @RequestBody(required = false) Map<String, String> dados) {
         try {
+            // Validação do motivo da inspeção
             String motivo = (dados != null) ? dados.get("motivo") : null;
-            return ResponseEntity.ok(muralListagemService.marcarInspecionado(id, motivo));
+            
+            if (motivo == null || motivo.trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("message", "O motivo da inspeção é obrigatório");
+                errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+            
+            MuralListagemDTO itemAtualizado = muralListagemService.marcarInspecionado(id, motivo);
+            return ResponseEntity.ok(itemAtualizado);
         } catch (SmartValidityException e) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Ocorreu um erro ao processar a solicitação");
+            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
     
@@ -92,11 +113,38 @@ public class MuralListagemController {
      * @return Lista de itens atualizados
      */
     @PutMapping("/inspecionar-lote")
-    public ResponseEntity<List<MuralListagemDTO>> marcarVariosInspecionados(@RequestBody InspecionarLoteRequest request) {
+    public ResponseEntity<?> marcarVariosInspecionados(@RequestBody InspecionarLoteRequest request) {
         try {
-            return ResponseEntity.ok(muralListagemService.marcarVariosInspecionados(request.getIds(), request.getMotivo()));
+            // Validação dos IDs
+            if (request.getIds() == null || request.getIds().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("message", "Nenhum item selecionado para inspeção");
+                errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+            
+            // Validação do motivo
+            if (request.getMotivo() == null || request.getMotivo().trim().isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("message", "O motivo da inspeção é obrigatório");
+                errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+            
+            List<MuralListagemDTO> itensAtualizados = muralListagemService.marcarVariosInspecionados(
+                    request.getIds(), request.getMotivo());
+            return ResponseEntity.ok(itensAtualizados);
         } catch (SmartValidityException e) {
-            return ResponseEntity.badRequest().build();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Ocorreu um erro ao processar a solicitação");
+            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
     

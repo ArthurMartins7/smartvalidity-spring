@@ -1,15 +1,15 @@
 package br.com.smartvalidity.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.entity.ItemProduto;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.repository.ItemProdutoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ItemProdutoService {
@@ -118,5 +118,40 @@ public class ItemProdutoService {
             this.excluir(item.getId());
         }
 
+    }
+
+    /**
+     * Salva um item que foi marcado como inspecionado, com tratamento transacional específico
+     * 
+     * @param itemProduto O item de produto a ser salvo como inspecionado
+     * @return O item de produto salvo
+     * @throws SmartValidityException Se ocorrer algum erro durante o salvamento
+     */
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    public ItemProduto salvarItemInspecionado(ItemProduto itemProduto) throws SmartValidityException {
+        try {
+            // Verificação adicional para garantir que o item existe
+            if (itemProduto.getId() != null) {
+                ItemProduto itemExistente = itemProdutoRepository.findById(itemProduto.getId())
+                    .orElseThrow(() -> new SmartValidityException("ItemProduto não encontrado com o ID: " + itemProduto.getId()));
+                
+                // Atualizar apenas os campos necessários para inspeção
+                itemExistente.setInspecionado(itemProduto.getInspecionado());
+                itemExistente.setMotivoInspecao(itemProduto.getMotivoInspecao());
+                
+                // Salvar o item
+                return itemProdutoRepository.save(itemExistente);
+            } else {
+                throw new SmartValidityException("ID do item não pode ser nulo para inspeção");
+            }
+        } catch (Exception e) {
+            if (e instanceof SmartValidityException) {
+                throw (SmartValidityException) e;
+            }
+            // Logar o erro para diagnóstico
+            System.err.println("Erro ao salvar item inspecionado: " + e.getMessage());
+            e.printStackTrace();
+            throw new SmartValidityException("Erro ao salvar item inspecionado: " + e.getMessage());
+        }
     }
 }

@@ -471,11 +471,29 @@ public class MuralListagemService {
      * @throws SmartValidityException Se o item não for encontrado
      */
     private MuralListagemDTO marcarItemInspecionado(String id, String motivo) throws SmartValidityException {
-        ItemProduto item = itemProdutoService.buscarPorId(id);
-        item.setInspecionado(true);
-        item.setMotivoInspecao(motivo);
-        itemProdutoService.salvar(item);
-        return mapToDTO(item);
+        try {
+            ItemProduto item = itemProdutoService.buscarPorId(id);
+            
+            // Validação do motivo
+            if (motivo == null || motivo.trim().isEmpty()) {
+                throw new SmartValidityException("O motivo da inspeção é obrigatório");
+            }
+            
+            item.setInspecionado(true);
+            item.setMotivoInspecao(motivo);
+            
+            // Salvar o item com tratamento de exceções
+            ItemProduto itemSalvo = itemProdutoService.salvarItemInspecionado(item);
+            return mapToDTO(itemSalvo);
+        } catch (Exception e) {
+            if (e instanceof SmartValidityException) {
+                throw (SmartValidityException) e;
+            }
+            // Logar o erro para diagnóstico
+            System.err.println("Erro ao marcar item como inspecionado: " + e.getMessage());
+            e.printStackTrace();
+            throw new SmartValidityException("Erro ao marcar item como inspecionado: " + e.getMessage());
+        }
     }
     
     /**
@@ -507,6 +525,11 @@ public class MuralListagemService {
      * @throws SmartValidityException Se algum item não for encontrado
      */
     private List<MuralListagemDTO> marcarVariosItensInspecionados(List<String> ids, String motivo) throws SmartValidityException {
+        // Validação do motivo
+        if (motivo == null || motivo.trim().isEmpty()) {
+            throw new SmartValidityException("O motivo da inspeção é obrigatório");
+        }
+        
         List<MuralListagemDTO> itensAtualizados = new ArrayList<>();
         
         for (String id : ids) {
@@ -514,12 +537,17 @@ public class MuralListagemService {
                 ItemProduto item = itemProdutoService.buscarPorId(id);
                 item.setInspecionado(true);
                 item.setMotivoInspecao(motivo);
-                itemProdutoService.salvar(item);
-                itensAtualizados.add(mapToDTO(item));
-            } catch (SmartValidityException e) {
+                ItemProduto itemSalvo = itemProdutoService.salvarItemInspecionado(item);
+                itensAtualizados.add(mapToDTO(itemSalvo));
+            } catch (Exception e) {
                 // Loga o erro mas continua processando os outros IDs
                 System.err.println("Erro ao marcar item " + id + " como inspecionado: " + e.getMessage());
+                e.printStackTrace();
             }
+        }
+        
+        if (itensAtualizados.isEmpty() && !ids.isEmpty()) {
+            throw new SmartValidityException("Não foi possível marcar nenhum dos itens como inspecionado");
         }
         
         return itensAtualizados;
