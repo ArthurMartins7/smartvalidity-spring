@@ -292,6 +292,11 @@ public class MuralListagemService {
                     item.getProduto() != null ? 
                     (item.getProduto().getNome() != null ? item.getProduto().getNome().toLowerCase() : "") : "");
                 break;
+            case "descricao":
+                comparator = Comparator.comparing(item -> 
+                    item.getProduto() != null ? 
+                    (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
+                break;
             case "marca":
                 comparator = Comparator.comparing(item -> 
                     item.getProduto() != null ? 
