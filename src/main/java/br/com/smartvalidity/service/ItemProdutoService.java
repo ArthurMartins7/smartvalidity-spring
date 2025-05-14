@@ -135,9 +135,11 @@ public class ItemProdutoService {
                 ItemProduto itemExistente = itemProdutoRepository.findById(itemProduto.getId())
                     .orElseThrow(() -> new SmartValidityException("ItemProduto não encontrado com o ID: " + itemProduto.getId()));
                 
-                // Atualizar apenas os campos necessários para inspeção
+                // Atualizar os campos necessários para inspeção
                 itemExistente.setInspecionado(itemProduto.getInspecionado());
                 itemExistente.setMotivoInspecao(itemProduto.getMotivoInspecao());
+                itemExistente.setUsuarioInspecao(itemProduto.getUsuarioInspecao());
+                itemExistente.setDataHoraInspecao(itemProduto.getDataHoraInspecao());
                 
                 // Salvar o item
                 return itemProdutoRepository.save(itemExistente);

@@ -26,6 +26,8 @@ public class MuralListagemDTO {
     private String status;
     private Boolean inspecionado;
     private String motivoInspecao;
+    private String usuarioInspecao;
+    private LocalDateTime dataHoraInspecao;
 
     //TODO: Entender melhor o uso
     @Data
@@ -40,4 +42,4 @@ public class MuralListagemDTO {
         private String marca;
         private String unidadeMedida;
     }
-} 
+}

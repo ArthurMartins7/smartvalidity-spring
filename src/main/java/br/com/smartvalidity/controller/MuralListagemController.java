@@ -64,7 +64,7 @@ public class MuralListagemController {
     /**
      * Endpoint para marcar um item como inspecionado
      * @param id ID do item a ser marcado
-     * @param dados Dados contendo o motivo da inspeção
+     * @param dados Dados contendo o motivo da inspeção e o usuário que fez a inspeção
      * @return Item atualizado
      */
     @PutMapping("/inspecionar/{id}")
@@ -74,6 +74,7 @@ public class MuralListagemController {
         try {
             // Validação do motivo da inspeção
             String motivo = (dados != null) ? dados.get("motivo") : null;
+            String usuarioInspecao = (dados != null) ? dados.get("usuarioInspecao") : null;
             
             if (motivo == null || motivo.trim().isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
@@ -82,7 +83,7 @@ public class MuralListagemController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
             }
             
-            MuralListagemDTO itemAtualizado = muralListagemService.marcarInspecionado(id, motivo);
+            MuralListagemDTO itemAtualizado = muralListagemService.marcarInspecionado(id, motivo, usuarioInspecao);
             return ResponseEntity.ok(itemAtualizado);
         } catch (SmartValidityException e) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -105,11 +106,12 @@ public class MuralListagemController {
     public static class InspecionarLoteRequest {
         private List<String> ids;
         private String motivo;
+        private String usuarioInspecao;
     }
     
     /**
      * Endpoint para marcar vários itens como inspecionados
-     * @param request Request contendo IDs dos itens e motivo da inspeção
+     * @param request Request contendo IDs dos itens, motivo da inspeção e usuário que fez a inspeção
      * @return Lista de itens atualizados
      */
     @PutMapping("/inspecionar-lote")
@@ -132,7 +134,7 @@ public class MuralListagemController {
             }
             
             List<MuralListagemDTO> itensAtualizados = muralListagemService.marcarVariosInspecionados(
-                    request.getIds(), request.getMotivo());
+                    request.getIds(), request.getMotivo(), request.getUsuarioInspecao());
             return ResponseEntity.ok(itensAtualizados);
         } catch (SmartValidityException e) {
             Map<String, Object> errorResponse = new HashMap<>();

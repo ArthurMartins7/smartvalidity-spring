@@ -272,9 +272,9 @@ public class MuralListagemService {
         String termoBusca = termo.toLowerCase();
         return itens.stream()
                 .filter(item -> 
-                    // Nome do produto
-                    (item.getProduto() != null && item.getProduto().getNome() != null && 
-                            item.getProduto().getNome().toLowerCase().contains(termoBusca)) ||
+                    // Descrição do produto (usada como nome também)
+                    (item.getProduto() != null && item.getProduto().getDescricao() != null && 
+                            item.getProduto().getDescricao().toLowerCase().contains(termoBusca)) ||
                     // Código de barras
                     (item.getProduto() != null && item.getProduto().getCodigoBarras() != null && 
                             item.getProduto().getCodigoBarras().toLowerCase().contains(termoBusca)) ||
@@ -303,7 +303,7 @@ public class MuralListagemService {
             case "nome":
                 comparator = Comparator.comparing(item -> 
                     item.getProduto() != null ? 
-                    (item.getProduto().getNome() != null ? item.getProduto().getNome().toLowerCase() : "") : "");
+                    (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
                 break;
             case "descricao":
                 comparator = Comparator.comparing(item -> 
@@ -334,10 +334,10 @@ public class MuralListagemService {
                 comparator = Comparator.comparing(item -> item.getStatus());
                 break;
             default:
-                // Por padrão, ordena por nome
+                // Por padrão, ordena por descrição (já que não temos nome)
                 comparator = Comparator.comparing(item -> 
                     item.getProduto() != null ? 
-                    (item.getProduto().getNome() != null ? item.getProduto().getNome().toLowerCase() : "") : "");
+                    (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
         }
         
         // Inverte a ordenação se for descendente
@@ -423,7 +423,7 @@ public class MuralListagemService {
      */
     private MuralListagemDTO mapToDTO(ItemProduto item) {
         String status = determinarStatus(item.getDataVencimento());
-
+        
         MuralListagemDTO.ProdutoDTO produtoDTO = MuralListagemDTO.ProdutoDTO.builder()
                 .id(item.getProduto() != null ? item.getProduto().getId() : "")
                 .nome(item.getProduto() != null ? item.getProduto().getDescricao() : "")
@@ -459,6 +459,8 @@ public class MuralListagemService {
                 .status(status)
                 .inspecionado(item.getInspecionado())
                 .motivoInspecao(item.getMotivoInspecao())
+                .usuarioInspecao(item.getUsuarioInspecao())
+                .dataHoraInspecao(item.getDataHoraInspecao())
                 .build();
     }
 
@@ -479,11 +481,12 @@ public class MuralListagemService {
     /**
      * Método base para marcar um item como inspecionado
      * @param id ID do item a ser marcado
-     * @param motivo Motivo da inspeção (opcional)
+     * @param motivo Motivo da inspeção
+     * @param usuarioInspecao Nome do usuário que realizou a inspeção
      * @return O item atualizado
      * @throws SmartValidityException Se o item não for encontrado
      */
-    private MuralListagemDTO marcarItemInspecionado(String id, String motivo) throws SmartValidityException {
+    private MuralListagemDTO marcarItemInspecionado(String id, String motivo, String usuarioInspecao) throws SmartValidityException {
         try {
             ItemProduto item = itemProdutoService.buscarPorId(id);
             
@@ -492,8 +495,23 @@ public class MuralListagemService {
                 throw new SmartValidityException("O motivo da inspeção é obrigatório");
             }
             
+            // Determinar o nome do usuário que está realizando a inspeção
+            String nomeUsuario = usuarioInspecao;
+            if (nomeUsuario == null || nomeUsuario.trim().isEmpty()) {
+                // Tentar obter o usuário autenticado através de outra abordagem como fallback
+                try {
+                    nomeUsuario = System.getProperty("user.name");
+                } catch (Exception e) {
+                    // Em caso de erro, usar um valor padrão
+                    nomeUsuario = "Sistema";
+                }
+            }
+            
+            // Marcar o item como inspecionado
             item.setInspecionado(true);
             item.setMotivoInspecao(motivo);
+            item.setUsuarioInspecao(nomeUsuario);
+            item.setDataHoraInspecao(LocalDateTime.now());
             
             // Salvar o item com tratamento de exceções
             ItemProduto itemSalvo = itemProdutoService.salvarItemInspecionado(item);
@@ -513,11 +531,23 @@ public class MuralListagemService {
      * Marca um item como inspecionado
      * @param id ID do item a ser marcado
      * @param motivo Motivo da inspeção
+     * @param usuarioInspecao Nome do usuário que realizou a inspeção
+     * @return O item atualizado
+     * @throws SmartValidityException Se o item não for encontrado
+     */
+    public MuralListagemDTO marcarInspecionado(String id, String motivo, String usuarioInspecao) throws SmartValidityException {
+        return marcarItemInspecionado(id, motivo, usuarioInspecao);
+    }
+    
+    /**
+     * Marca um item como inspecionado (método de compatibilidade)
+     * @param id ID do item a ser marcado
+     * @param motivo Motivo da inspeção
      * @return O item atualizado
      * @throws SmartValidityException Se o item não for encontrado
      */
     public MuralListagemDTO marcarInspecionado(String id, String motivo) throws SmartValidityException {
-        return marcarItemInspecionado(id, motivo);
+        return marcarItemInspecionado(id, motivo, null);
     }
     
     /**
@@ -527,21 +557,37 @@ public class MuralListagemService {
      * @throws SmartValidityException Se o item não for encontrado
      */
     public MuralListagemDTO marcarInspecionado(String id) throws SmartValidityException {
-        return marcarItemInspecionado(id, null);
+        return marcarItemInspecionado(id, null, null);
     }
     
     /**
      * Método base para marcar vários itens como inspecionados
      * @param ids Lista de IDs dos itens a serem marcados
-     * @param motivo Motivo da inspeção (opcional)
+     * @param motivo Motivo da inspeção
+     * @param usuarioInspecao Nome do usuário que realizou a inspeção
      * @return Lista de itens atualizados
      * @throws SmartValidityException Se algum item não for encontrado
      */
-    private List<MuralListagemDTO> marcarVariosItensInspecionados(List<String> ids, String motivo) throws SmartValidityException {
+    private List<MuralListagemDTO> marcarVariosItensInspecionados(List<String> ids, String motivo, String usuarioInspecao) throws SmartValidityException {
         // Validação do motivo
         if (motivo == null || motivo.trim().isEmpty()) {
             throw new SmartValidityException("O motivo da inspeção é obrigatório");
         }
+        
+        // Determinar o nome do usuário que está realizando a inspeção
+        String nomeUsuario = usuarioInspecao;
+        if (nomeUsuario == null || nomeUsuario.trim().isEmpty()) {
+            // Tentar obter o usuário autenticado através de outra abordagem como fallback
+            try {
+                nomeUsuario = System.getProperty("user.name");
+            } catch (Exception e) {
+                // Em caso de erro, usar um valor padrão
+                nomeUsuario = "Sistema";
+            }
+        }
+        
+        // Data e hora da inspeção (mesma para todos os itens do lote)
+        LocalDateTime dataHoraInspecao = LocalDateTime.now();
         
         List<MuralListagemDTO> itensAtualizados = new ArrayList<>();
         
@@ -550,6 +596,9 @@ public class MuralListagemService {
                 ItemProduto item = itemProdutoService.buscarPorId(id);
                 item.setInspecionado(true);
                 item.setMotivoInspecao(motivo);
+                item.setUsuarioInspecao(nomeUsuario);
+                item.setDataHoraInspecao(dataHoraInspecao);
+                
                 ItemProduto itemSalvo = itemProdutoService.salvarItemInspecionado(item);
                 itensAtualizados.add(mapToDTO(itemSalvo));
             } catch (Exception e) {
@@ -570,11 +619,23 @@ public class MuralListagemService {
      * Marca vários itens como inspecionados
      * @param ids Lista de IDs dos itens a serem marcados
      * @param motivo Motivo da inspeção
+     * @param usuarioInspecao Nome do usuário que realizou a inspeção
+     * @return Lista de itens atualizados
+     * @throws SmartValidityException Se algum item não for encontrado
+     */
+    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids, String motivo, String usuarioInspecao) throws SmartValidityException {
+        return marcarVariosItensInspecionados(ids, motivo, usuarioInspecao);
+    }
+    
+    /**
+     * Marca vários itens como inspecionados (método de compatibilidade)
+     * @param ids Lista de IDs dos itens a serem marcados
+     * @param motivo Motivo da inspeção
      * @return Lista de itens atualizados
      * @throws SmartValidityException Se algum item não for encontrado
      */
     public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids, String motivo) throws SmartValidityException {
-        return marcarVariosItensInspecionados(ids, motivo);
+        return marcarVariosItensInspecionados(ids, motivo, null);
     }
     
     /**
@@ -584,7 +645,7 @@ public class MuralListagemService {
      * @throws SmartValidityException Se algum item não for encontrado
      */
     public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids) throws SmartValidityException {
-        return marcarVariosItensInspecionados(ids, null);
+        return marcarVariosItensInspecionados(ids, null, null);
     }
     
     /**
