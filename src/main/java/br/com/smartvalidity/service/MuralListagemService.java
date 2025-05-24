@@ -299,55 +299,73 @@ public class MuralListagemService {
      */
     private List<MuralListagemDTO> ordenarItens(List<MuralListagemDTO> itens, String campo, String direcao) {
         if (!StringUtils.hasText(campo)) {
-            return itens; // Sem ordenação
+            return itens;
         }
         
-        boolean ascendente = !"desc".equalsIgnoreCase(direcao);
+        boolean ascendente = "asc".equalsIgnoreCase(direcao);
         
-        Comparator<MuralListagemDTO> comparator = null;
+        Comparator<MuralListagemDTO> comparator;
         
         switch (campo.toLowerCase()) {
-            case "nome":
-                comparator = Comparator.comparing(item -> 
-                    item.getProduto() != null ? 
-                    (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
+            case "datavencimento":
+                comparator = (item1, item2) -> {
+                    // Se ambos são nulos, são iguais
+                    if (item1.getDataValidade() == null && item2.getDataValidade() == null) {
+                        return 0;
+                    }
+                    // Se apenas item1 é nulo, ele vem depois
+                    if (item1.getDataValidade() == null) {
+                        return 1;
+                    }
+                    // Se apenas item2 é nulo, ele vem depois
+                    if (item2.getDataValidade() == null) {
+                        return -1;
+                    }
+
+                    // Compara diretamente as datas
+                    return item1.getDataValidade().compareTo(item2.getDataValidade());
+                };
                 break;
+                
+            case "nome":
             case "descricao":
                 comparator = Comparator.comparing(item -> 
                     item.getProduto() != null ? 
                     (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
                 break;
+                
             case "marca":
                 comparator = Comparator.comparing(item -> 
                     item.getProduto() != null ? 
                     (item.getProduto().getMarca() != null ? item.getProduto().getMarca().toLowerCase() : "") : "");
                 break;
+                
             case "categoria":
                 comparator = Comparator.comparing(item -> 
                     item.getCategoria() != null ? item.getCategoria().toLowerCase() : "");
                 break;
+                
             case "corredor":
                 comparator = Comparator.comparing(item -> 
                     item.getCorredor() != null ? item.getCorredor().toLowerCase() : "");
                 break;
+                
             case "fornecedor":
                 comparator = Comparator.comparing(item -> 
                     item.getFornecedor() != null ? item.getFornecedor().toLowerCase() : "");
                 break;
-            case "dataVencimento":
-                comparator = Comparator.comparing(item -> item.getDataValidade());
-                break;
+                
             case "status":
                 comparator = Comparator.comparing(item -> item.getStatus());
                 break;
+                
             default:
-                // Por padrão, ordena por descrição (já que não temos nome)
                 comparator = Comparator.comparing(item -> 
                     item.getProduto() != null ? 
                     (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
         }
         
-        // Inverte a ordenação se for descendente
+        // Aplica a direção da ordenação de forma consistente
         if (!ascendente) {
             comparator = comparator.reversed();
         }
