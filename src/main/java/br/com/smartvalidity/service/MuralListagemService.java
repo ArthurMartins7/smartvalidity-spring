@@ -87,12 +87,19 @@ public class MuralListagemService {
         // Aplicar paginação se necessário
         if (filtro.temPaginacao()) {
             int inicio = (filtro.getPagina() - 1) * filtro.getLimite();
+            
+            // Garantir que o índice inicial não seja negativo
+            inicio = Math.max(0, inicio);
+            
+            // Se o índice inicial for maior que o tamanho da lista, retornar lista vazia
+            if (inicio >= itensOrdenados.size()) {
+                return new ArrayList<>();
+            }
+            
+            // Calcular o índice final garantindo que não ultrapasse o tamanho da lista
             int fim = Math.min(inicio + filtro.getLimite(), itensOrdenados.size());
             
-            // Validar os índices para evitar erros
-            if (inicio >= 0 && inicio < itensOrdenados.size()) {
-                return itensOrdenados.subList(inicio, fim);
-            }
+            return itensOrdenados.subList(inicio, fim);
         }
         
         return itensOrdenados;
