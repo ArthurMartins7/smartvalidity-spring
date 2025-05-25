@@ -27,6 +27,8 @@ public class MuralFiltroDTO {
     private LocalDateTime dataRecebimentoInicio;
     private LocalDateTime dataRecebimentoFim;
     private Boolean inspecionado;
+    private String motivoInspecao;
+    private String usuarioInspecao;
     private String searchTerm;
     private String sortBy;
     private String sortDirection;

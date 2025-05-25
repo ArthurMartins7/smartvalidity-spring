@@ -206,6 +206,17 @@ public class MuralListagemController {
         private List<String> categorias;
         private List<String> fornecedores;
         private List<String> lotes;
+        private List<String> usuariosInspecao;
+    }
+    
+    /**
+     * Endpoint para obter a lista de usuários que já realizaram inspeções
+     * @return Lista de usuários
+     */
+    @GetMapping("/usuarios-inspecao")
+    public ResponseEntity<List<String>> getUsuariosInspecao() {
+        List<String> usuarios = muralListagemService.getUsuariosInspecaoDisponiveis();
+        return ResponseEntity.ok(usuarios);
     }
     
     /**
@@ -214,12 +225,13 @@ public class MuralListagemController {
      */
     @GetMapping("/filtro-opcoes")
     public ResponseEntity<FiltroOpcoesResponse> getFiltroOpcoes() {
-        FiltroOpcoesResponse opcoes = new FiltroOpcoesResponse();
-        opcoes.setMarcas(muralListagemService.getMarcasDisponiveis());
-        opcoes.setCorredores(muralListagemService.getCorredoresDisponiveis());
-        opcoes.setCategorias(muralListagemService.getCategoriasDisponiveis());
-        opcoes.setFornecedores(muralListagemService.getFornecedoresDisponiveis());
-        opcoes.setLotes(muralListagemService.getLotesDisponiveis());
-        return ResponseEntity.ok(opcoes);
+        FiltroOpcoesResponse response = new FiltroOpcoesResponse();
+        response.setMarcas(muralListagemService.getMarcasDisponiveis());
+        response.setCorredores(muralListagemService.getCorredoresDisponiveis());
+        response.setCategorias(muralListagemService.getCategoriasDisponiveis());
+        response.setFornecedores(muralListagemService.getFornecedoresDisponiveis());
+        response.setLotes(muralListagemService.getLotesDisponiveis());
+        response.setUsuariosInspecao(muralListagemService.getUsuariosInspecaoDisponiveis());
+        return ResponseEntity.ok(response);
     }
 } 

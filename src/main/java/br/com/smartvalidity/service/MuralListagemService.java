@@ -115,6 +115,14 @@ public class MuralListagemService {
         
         List<MuralListagemDTO> resultado = new ArrayList<>(itens);
         
+        // Validar e sanitizar os novos campos de filtro
+        if (filtro.getMotivoInspecao() != null) {
+            filtro.setMotivoInspecao(filtro.getMotivoInspecao().trim());
+        }
+        if (filtro.getUsuarioInspecao() != null) {
+            filtro.setUsuarioInspecao(filtro.getUsuarioInspecao().trim());
+        }
+        
         // Aplicar filtro de busca textual
         if (StringUtils.hasText(filtro.getSearchTerm())) {
             resultado = aplicarFiltroBusca(resultado, filtro.getSearchTerm());
@@ -199,6 +207,19 @@ public class MuralListagemService {
         if (StringUtils.hasText(filtro.getLote())) {
             resultado = resultado.stream()
                     .filter(item -> filtro.getLote().equals(item.getLote()))
+                    .collect(Collectors.toList());
+        }
+
+        // Novos filtros
+        if (StringUtils.hasText(filtro.getMotivoInspecao())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getMotivoInspecao().equals(item.getMotivoInspecao()))
+                    .collect(Collectors.toList());
+        }
+
+        if (StringUtils.hasText(filtro.getUsuarioInspecao())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getUsuarioInspecao().equals(item.getUsuarioInspecao()))
                     .collect(Collectors.toList());
         }
         
@@ -357,6 +378,16 @@ public class MuralListagemService {
                 
             case "status":
                 comparator = Comparator.comparing(item -> item.getStatus());
+                break;
+                
+            case "motivoInspecao":
+                comparator = Comparator.comparing(item -> 
+                    item.getMotivoInspecao() != null ? item.getMotivoInspecao().toLowerCase() : "");
+                break;
+                
+            case "usuarioInspecao":
+                comparator = Comparator.comparing(item -> 
+                    item.getUsuarioInspecao() != null ? item.getUsuarioInspecao().toLowerCase() : "");
                 break;
                 
             default:
@@ -713,5 +744,37 @@ public class MuralListagemService {
         List<MuralListagemDTO> itensFiltrados = aplicarFiltros(dtos, filtro);
         
         return itensFiltrados.size();
+    }
+
+    // Cache para usuários de inspeção
+    private List<String> usuariosInspecaoCache;
+    private LocalDateTime ultimaAtualizacaoCache;
+    private static final long CACHE_DURACAO_MINUTOS = 5;
+
+    /**
+     * Obtém a lista de usuários que já realizaram inspeções
+     * @return Lista de usuários que já realizaram inspeções
+     */
+    public List<String> getUsuariosInspecaoDisponiveis() {
+        // Se o cache estiver válido, retorna os dados do cache
+        if (usuariosInspecaoCache != null && 
+            ultimaAtualizacaoCache != null && 
+            ultimaAtualizacaoCache.plusMinutes(CACHE_DURACAO_MINUTOS).isAfter(LocalDateTime.now())) {
+            return usuariosInspecaoCache;
+        }
+
+        // Caso contrário, busca os dados novamente
+        List<String> usuarios = itemProdutoService.buscarTodos().stream()
+                .filter(item -> StringUtils.hasText(item.getUsuarioInspecao()))
+                .map(ItemProduto::getUsuarioInspecao)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+
+        // Atualiza o cache
+        usuariosInspecaoCache = usuarios;
+        ultimaAtualizacaoCache = LocalDateTime.now();
+
+        return usuarios;
     }
 } 
