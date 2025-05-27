@@ -1,4 +1,4 @@
-package br.com.smartvalidity.web.dto;
+package br.com.smartvalidity.model.dto;
 
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.enums.FrequenciaDisparo;
