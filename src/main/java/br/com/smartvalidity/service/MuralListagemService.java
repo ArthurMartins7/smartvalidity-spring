@@ -170,6 +170,29 @@ public class MuralListagemService {
                     .collect(Collectors.toList());
         }
         
+        // Novos filtros
+        if (StringUtils.hasText(filtro.getMotivoInspecao())) {
+            resultado = resultado.stream()
+                    .filter(item -> {
+                        if ("Outro".equals(filtro.getMotivoInspecao())) {
+                            // Se o filtro for "Outro", retorna true se o motivo não for "Avaria/Quebra" nem "Promoção"
+                            return item.getMotivoInspecao() != null && 
+                                   !item.getMotivoInspecao().equals("Avaria/Quebra") && 
+                                   !item.getMotivoInspecao().equals("Promoção");
+                        } else {
+                            // Para outros motivos, faz a comparação exata
+                            return filtro.getMotivoInspecao().equals(item.getMotivoInspecao());
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        if (StringUtils.hasText(filtro.getUsuarioInspecao())) {
+            resultado = resultado.stream()
+                    .filter(item -> filtro.getUsuarioInspecao().equals(item.getUsuarioInspecao()))
+                    .collect(Collectors.toList());
+        }
+        
         return resultado;
     }
     
@@ -207,19 +230,6 @@ public class MuralListagemService {
         if (StringUtils.hasText(filtro.getLote())) {
             resultado = resultado.stream()
                     .filter(item -> filtro.getLote().equals(item.getLote()))
-                    .collect(Collectors.toList());
-        }
-
-        // Novos filtros
-        if (StringUtils.hasText(filtro.getMotivoInspecao())) {
-            resultado = resultado.stream()
-                    .filter(item -> filtro.getMotivoInspecao().equals(item.getMotivoInspecao()))
-                    .collect(Collectors.toList());
-        }
-
-        if (StringUtils.hasText(filtro.getUsuarioInspecao())) {
-            resultado = resultado.stream()
-                    .filter(item -> filtro.getUsuarioInspecao().equals(item.getUsuarioInspecao()))
                     .collect(Collectors.toList());
         }
         
@@ -752,26 +762,48 @@ public class MuralListagemService {
     private static final long CACHE_DURACAO_MINUTOS = 5;
 
     /**
+     * Formata um nome para Camel Case
+     * @param nome Nome a ser formatado
+     * @return Nome formatado em Camel Case
+     */
+    private String formatarNomeCamelCase(String nome) {
+        if (nome == null || nome.trim().isEmpty()) {
+            return nome;
+        }
+
+        String[] palavras = nome.trim().toLowerCase().split("\\s+");
+        StringBuilder resultado = new StringBuilder();
+
+        for (String palavra : palavras) {
+            if (!palavra.isEmpty()) {
+                resultado.append(palavra.substring(0, 1).toUpperCase())
+                        .append(palavra.substring(1))
+                        .append(" ");
+            }
+        }
+
+        return resultado.toString().trim();
+    }
+
+    /**
      * Obtém a lista de usuários que já realizaram inspeções
      * @return Lista de usuários que já realizaram inspeções
      */
     public List<String> getUsuariosInspecaoDisponiveis() {
-        // Se o cache estiver válido, retorna os dados do cache
         if (usuariosInspecaoCache != null && 
             ultimaAtualizacaoCache != null && 
             ultimaAtualizacaoCache.plusMinutes(CACHE_DURACAO_MINUTOS).isAfter(LocalDateTime.now())) {
             return usuariosInspecaoCache;
         }
 
-        // Caso contrário, busca os dados novamente
         List<String> usuarios = itemProdutoService.buscarTodos().stream()
                 .filter(item -> StringUtils.hasText(item.getUsuarioInspecao()))
                 .map(ItemProduto::getUsuarioInspecao)
                 .distinct()
+                .map(this::formatarNomeCamelCase)
                 .sorted()
                 .collect(Collectors.toList());
 
-        // Atualiza o cache
         usuariosInspecaoCache = usuarios;
         ultimaAtualizacaoCache = LocalDateTime.now();
 
