@@ -1,7 +1,9 @@
 package br.com.smartvalidity.controller;
 
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.ItemProdutoDTO;
 import br.com.smartvalidity.model.entity.ItemProduto;
+import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.service.ItemProdutoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,13 +36,38 @@ public class ItemProdutoController {
     }
 
     @PostMapping
-    public ResponseEntity<ItemProduto> salvar(@Valid @RequestBody ItemProduto itemProduto) throws SmartValidityException {
+    public ResponseEntity<ItemProduto> salvar(@Valid @RequestBody ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
+        ItemProduto itemProduto = new ItemProduto();
+        itemProduto.setLote(itemProdutoDTO.getLote());
+        itemProduto.setPrecoVenda(itemProdutoDTO.getPrecoVenda());
+        itemProduto.setDataFabricacao(itemProdutoDTO.getDataFabricacao());
+        itemProduto.setDataVencimento(itemProdutoDTO.getDataVencimento());
+        itemProduto.setDataRecebimento(itemProdutoDTO.getDataRecebimento());
+        itemProduto.setInspecionado(itemProdutoDTO.getInspecionado() != null ? itemProdutoDTO.getInspecionado() : false);
+        itemProduto.setMotivoInspecao(itemProdutoDTO.getMotivoInspecao());
+        itemProduto.setUsuarioInspecao(itemProdutoDTO.getUsuarioInspecao());
+        itemProduto.setDataHoraInspecao(itemProdutoDTO.getDataHoraInspecao());
+        itemProduto.setProduto(itemProdutoDTO.getProduto());
+        
         ItemProduto novoItemProduto = itemProdutoService.salvar(itemProduto);
         return ResponseEntity.status(201).body(novoItemProduto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ItemProduto> atualizar(@PathVariable String id, @Valid @RequestBody ItemProduto itemProduto) throws SmartValidityException {
+    public ResponseEntity<ItemProduto> atualizar(@PathVariable String id, @Valid @RequestBody ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
+        ItemProduto itemProduto = new ItemProduto();
+        itemProduto.setId(id);
+        itemProduto.setLote(itemProdutoDTO.getLote());
+        itemProduto.setPrecoVenda(itemProdutoDTO.getPrecoVenda());
+        itemProduto.setDataFabricacao(itemProdutoDTO.getDataFabricacao());
+        itemProduto.setDataVencimento(itemProdutoDTO.getDataVencimento());
+        itemProduto.setDataRecebimento(itemProdutoDTO.getDataRecebimento());
+        itemProduto.setInspecionado(itemProdutoDTO.getInspecionado() != null ? itemProdutoDTO.getInspecionado() : false);
+        itemProduto.setMotivoInspecao(itemProdutoDTO.getMotivoInspecao());
+        itemProduto.setUsuarioInspecao(itemProdutoDTO.getUsuarioInspecao());
+        itemProduto.setDataHoraInspecao(itemProdutoDTO.getDataHoraInspecao());
+        itemProduto.setProduto(itemProdutoDTO.getProduto());
+        
         ItemProduto itemAtualizado = itemProdutoService.atualizar(id, itemProduto);
         return ResponseEntity.ok(itemAtualizado);
     }

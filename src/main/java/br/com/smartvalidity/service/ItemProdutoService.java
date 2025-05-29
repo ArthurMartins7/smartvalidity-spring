@@ -46,12 +46,18 @@ public class ItemProdutoService {
     }
 
     public ItemProduto salvar(final ItemProduto itemProduto) throws SmartValidityException {
+        if (itemProduto == null) {
+            throw new SmartValidityException("ItemProduto não pode ser nulo");
+        }
+        
+        if (itemProduto.getProduto() == null || itemProduto.getProduto().getId() == null) {
+            throw new SmartValidityException("Produto não pode ser nulo e deve ter um ID válido");
+        }
+
         Produto produto = this.produtoService.buscarPorId(itemProduto.getProduto().getId());
-
         itemProduto.setProduto(produto);
-
         produto.setQuantidade(produto.getQuantidade() + 1);
-
+        this.produtoService.salvar(produto);
         return itemProdutoRepository.save(itemProduto);
     }
 
