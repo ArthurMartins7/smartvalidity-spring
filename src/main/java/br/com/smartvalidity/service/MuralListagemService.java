@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -808,5 +809,29 @@ public class MuralListagemService {
         ultimaAtualizacaoCache = LocalDateTime.now();
 
         return usuarios;
+    }
+
+    /**
+     * Busca itens por seus IDs
+     * @param ids Lista de IDs dos itens a serem buscados
+     * @return Lista de DTOs dos itens encontrados
+     */
+    public List<MuralListagemDTO> buscarPorIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        return ids.stream()
+            .map(id -> {
+                try {
+                    ItemProduto item = itemProdutoService.buscarPorId(id);
+                    return mapToDTO(item);
+                } catch (Exception e) {
+                    System.err.println("Erro ao buscar item " + id + ": " + e.getMessage());
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 } 

@@ -234,4 +234,19 @@ public class MuralListagemController {
         response.setUsuariosInspecao(muralListagemService.getUsuariosInspecaoDisponiveis());
         return ResponseEntity.ok(response);
     }
+    
+    /**
+     * Endpoint para buscar itens por seus IDs
+     * @param ids Lista de IDs dos itens a serem buscados
+     * @return Lista de itens encontrados
+     */
+    @PostMapping("/buscar-por-ids")
+    public ResponseEntity<List<MuralListagemDTO>> buscarPorIds(@RequestBody List<String> ids) {
+        try {
+            List<MuralListagemDTO> itens = muralListagemService.buscarPorIds(ids);
+            return ResponseEntity.ok(itens);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 } 
