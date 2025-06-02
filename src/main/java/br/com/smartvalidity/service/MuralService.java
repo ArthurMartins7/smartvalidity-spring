@@ -153,7 +153,6 @@ public class MuralService {
             resultado = resultado.stream()
                     .filter(item -> {
                         LocalDateTime vencimento = item.getDataValidade();
-                        
                         switch (filtro.getStatus()) {
                             case "proximo":
                                 return vencimento.isAfter(hoje) && 
@@ -162,7 +161,7 @@ public class MuralService {
                             case "hoje":
                                 return vencimento.toLocalDate().isEqual(hoje.toLocalDate());
                             case "vencido":
-                                return vencimento.isBefore(hoje);
+                                return vencimento.toLocalDate().isBefore(hoje.toLocalDate());
                             default:
                                 return filtro.getStatus().equals(item.getStatus());
                         }
@@ -488,7 +487,7 @@ public class MuralService {
 
     private String determinarStatus(LocalDateTime dataVencimento) {
         LocalDateTime hoje = LocalDateTime.now();
-        if (dataVencimento.isBefore(hoje)) {
+        if (dataVencimento.toLocalDate().isBefore(hoje.toLocalDate())) {
             return "vencido";
         } else if (dataVencimento.toLocalDate().isEqual(hoje.toLocalDate())) {
             return "hoje";
