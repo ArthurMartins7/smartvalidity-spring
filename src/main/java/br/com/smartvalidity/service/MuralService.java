@@ -2,30 +2,63 @@ package br.com.smartvalidity.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import br.com.smartvalidity.exception.SmartValidityException;
-import br.com.smartvalidity.model.dto.MuralFiltroDTO;
-import br.com.smartvalidity.model.dto.MuralListagemDTO;
+import br.com.smartvalidity.model.dto.MuralDTO;
 import br.com.smartvalidity.model.entity.ItemProduto;
 
 @Service
-public class MuralListagemService {
+public class MuralService {
+    private static final Logger logger = LoggerFactory.getLogger(MuralService.class);
 
     @Autowired
     private ItemProdutoService itemProdutoService;
 
-    /**
-     * Busca os itens próximos a vencer (até 15 dias)
-     */
-    public List<MuralListagemDTO> getProximosVencer() {
+    @Autowired
+    private ExcelService excelService;
+
+    private static final List<String> MOTIVOS_INSPECAO_VALIDOS = Arrays.asList(
+        "Avaria/Quebra",
+        "Promoção",
+        "Outro"
+    );
+
+    private void validarMotivoInspecao(String motivo, String motivoCustomizado) throws SmartValidityException {
+        if (!StringUtils.hasText(motivo)) {
+            throw new SmartValidityException("O motivo da inspeção é obrigatório");
+        }
+
+        if (!MOTIVOS_INSPECAO_VALIDOS.contains(motivo)) {
+            throw new SmartValidityException("Motivo de inspeção inválido");
+        }
+
+        if ("Outro".equals(motivo) && !StringUtils.hasText(motivoCustomizado)) {
+            throw new SmartValidityException("É necessário informar um motivo customizado quando selecionada a opção 'Outro'");
+        }
+    }
+
+
+    private String obterMotivoFinal(String motivo, String motivoCustomizado) {
+        return "Outro".equals(motivo) ? motivoCustomizado : motivo;
+    }
+
+    public List<String> getMotivosInspecaoValidos() {
+        return MOTIVOS_INSPECAO_VALIDOS;
+    }
+
+
+    public List<MuralDTO.Listagem> getProximosVencer() {
         List<ItemProduto> itens = itemProdutoService.buscarTodos();
         LocalDateTime hoje = LocalDateTime.now();
         LocalDateTime limite = hoje.plusDays(15);
@@ -35,14 +68,11 @@ public class MuralListagemService {
                     LocalDateTime vencimento = item.getDataVencimento();
                     return vencimento.isAfter(hoje) && vencimento.isBefore(limite);
                 })
-                .map(this::mapToDTO) //TODO: Pesquisar sobre Method Reference
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Busca os itens que vencem hoje
-     */
-    public List<MuralListagemDTO> getVencemHoje() {
+    public List<MuralDTO.Listagem> getVencemHoje() {
         List<ItemProduto> itens = itemProdutoService.buscarTodos();
         LocalDateTime hoje = LocalDateTime.now();
         
@@ -55,10 +85,7 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Busca os itens já vencidos
-     */
-    public List<MuralListagemDTO> getVencidos() {
+    public List<MuralDTO.Listagem> getVencidos() {
         List<ItemProduto> itens = itemProdutoService.buscarTodos();
         LocalDateTime hoje = LocalDateTime.now();
         
@@ -68,55 +95,37 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Busca filtrada de itens
-     * @param filtro Objeto com os parâmetros de filtro
-     * @return Lista de itens filtrados
-     */
-    public List<MuralListagemDTO> buscarComFiltro(MuralFiltroDTO filtro) {
+    public List<MuralDTO.Listagem> buscarComFiltro(MuralDTO.Filtro filtro) {
         List<ItemProduto> itens = itemProdutoService.buscarTodos();
-        List<MuralListagemDTO> dtos = itens.stream()
+        List<MuralDTO.Listagem> dtos = itens.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
         
-        // Aplicar filtros
-        List<MuralListagemDTO> itensFiltrados = aplicarFiltros(dtos, filtro);
+        List<MuralDTO.Listagem> itensFiltrados = aplicarFiltros(dtos, filtro);
+        List<MuralDTO.Listagem> itensOrdenados = ordenarItens(itensFiltrados, filtro.getSortBy(), filtro.getSortDirection());
         
-        // Aplicar ordenação
-        List<MuralListagemDTO> itensOrdenados = ordenarItens(itensFiltrados, filtro.getSortBy(), filtro.getSortDirection());
-        
-        // Aplicar paginação se necessário
         if (filtro.temPaginacao()) {
             int inicio = (filtro.getPagina() - 1) * filtro.getLimite();
-            
-            // Garantir que o índice inicial não seja negativo
             inicio = Math.max(0, inicio);
             
-            // Se o índice inicial for maior que o tamanho da lista, retornar lista vazia
             if (inicio >= itensOrdenados.size()) {
                 return new ArrayList<>();
             }
             
-            // Calcular o índice final garantindo que não ultrapasse o tamanho da lista
             int fim = Math.min(inicio + filtro.getLimite(), itensOrdenados.size());
-            
             return itensOrdenados.subList(inicio, fim);
         }
         
         return itensOrdenados;
     }
     
-    /**
-     * Aplica filtros aos itens
-     */
-    private List<MuralListagemDTO> aplicarFiltros(List<MuralListagemDTO> itens, MuralFiltroDTO filtro) {
+    private List<MuralDTO.Listagem> aplicarFiltros(List<MuralDTO.Listagem> itens, MuralDTO.Filtro filtro) {
         if (filtro == null) {
             return itens;
         }
         
-        List<MuralListagemDTO> resultado = new ArrayList<>(itens);
+        List<MuralDTO.Listagem> resultado = new ArrayList<>(itens);
         
-        // Validar e sanitizar os novos campos de filtro
         if (filtro.getMotivoInspecao() != null) {
             filtro.setMotivoInspecao(filtro.getMotivoInspecao().trim());
         }
@@ -124,25 +133,19 @@ public class MuralListagemService {
             filtro.setUsuarioInspecao(filtro.getUsuarioInspecao().trim());
         }
         
-        // Aplicar filtro de busca textual
         if (StringUtils.hasText(filtro.getSearchTerm())) {
             resultado = aplicarFiltroBusca(resultado, filtro.getSearchTerm());
         }
         
-        // Aplicar filtros de texto (marca, corredor, categoria, fornecedor, lote)
         resultado = aplicarFiltrosTexto(resultado, filtro);
-        
-        // Aplicar filtros de data
         resultado = aplicarFiltrosData(resultado, filtro);
         
-        // Aplicar filtro de inspeção
         if (filtro.getInspecionado() != null) {
             resultado = resultado.stream()
                     .filter(item -> filtro.getInspecionado().equals(item.getInspecionado()))
                     .collect(Collectors.toList());
         }
         
-        // Aplicar filtro de status
         if (StringUtils.hasText(filtro.getStatus())) {
             LocalDateTime hoje = LocalDateTime.now();
             LocalDateTime limite = hoje.plusDays(15);
@@ -153,35 +156,28 @@ public class MuralListagemService {
                         
                         switch (filtro.getStatus()) {
                             case "proximo":
-                                // Filtrar produtos próximos a vencer (com data futura, mas dentro de 15 dias)
                                 return vencimento.isAfter(hoje) && 
                                       !vencimento.toLocalDate().isEqual(hoje.toLocalDate()) &&
                                       vencimento.isBefore(limite);
                             case "hoje":
-                                // Filtrar produtos que vencem hoje exatamente
                                 return vencimento.toLocalDate().isEqual(hoje.toLocalDate());
                             case "vencido":
-                                // Filtrar produtos vencidos (data anterior a hoje)
                                 return vencimento.isBefore(hoje);
                             default:
-                                // Caso padrão, usa o status
                                 return filtro.getStatus().equals(item.getStatus());
                         }
                     })
                     .collect(Collectors.toList());
         }
         
-        // Novos filtros
         if (StringUtils.hasText(filtro.getMotivoInspecao())) {
             resultado = resultado.stream()
                     .filter(item -> {
                         if ("Outro".equals(filtro.getMotivoInspecao())) {
-                            // Se o filtro for "Outro", retorna true se o motivo não for "Avaria/Quebra" nem "Promoção"
                             return item.getMotivoInspecao() != null && 
                                    !item.getMotivoInspecao().equals("Avaria/Quebra") && 
                                    !item.getMotivoInspecao().equals("Promoção");
                         } else {
-                            // Para outros motivos, faz a comparação exata
                             return filtro.getMotivoInspecao().equals(item.getMotivoInspecao());
                         }
                     })
@@ -197,11 +193,8 @@ public class MuralListagemService {
         return resultado;
     }
     
-    /**
-     * Aplica filtros de texto (marca, corredor, categoria, fornecedor, lote)
-     */
-    private List<MuralListagemDTO> aplicarFiltrosTexto(List<MuralListagemDTO> itens, MuralFiltroDTO filtro) {
-        List<MuralListagemDTO> resultado = new ArrayList<>(itens);
+    private List<MuralDTO.Listagem> aplicarFiltrosTexto(List<MuralDTO.Listagem> itens, MuralDTO.Filtro filtro) {
+        List<MuralDTO.Listagem> resultado = new ArrayList<>(itens);
         
         if (StringUtils.hasText(filtro.getMarca())) {
             resultado = resultado.stream()
@@ -237,13 +230,9 @@ public class MuralListagemService {
         return resultado;
     }
     
-    /**
-     * Aplica filtros de data (dataVencimento, dataFabricacao, dataRecebimento)
-     */
-    private List<MuralListagemDTO> aplicarFiltrosData(List<MuralListagemDTO> itens, MuralFiltroDTO filtro) {
-        List<MuralListagemDTO> resultado = new ArrayList<>(itens);
+    private List<MuralDTO.Listagem> aplicarFiltrosData(List<MuralDTO.Listagem> itens, MuralDTO.Filtro filtro) {
+        List<MuralDTO.Listagem> resultado = new ArrayList<>(itens);
         
-        // Filtro de data de vencimento
         if (filtro.getDataVencimentoInicio() != null || filtro.getDataVencimentoFim() != null) {
             resultado = resultado.stream()
                     .filter(item -> {
@@ -259,7 +248,6 @@ public class MuralListagemService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro de data de fabricação
         if (filtro.getDataFabricacaoInicio() != null || filtro.getDataFabricacaoFim() != null) {
             resultado = resultado.stream()
                     .filter(item -> {
@@ -278,7 +266,6 @@ public class MuralListagemService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro de data de recebimento
         if (filtro.getDataRecebimentoInicio() != null || filtro.getDataRecebimentoFim() != null) {
             resultado = resultado.stream()
                     .filter(item -> {
@@ -300,10 +287,7 @@ public class MuralListagemService {
         return resultado;
     }
     
-    /**
-     * Aplica o filtro de busca textual em múltiplos campos
-     */
-    private List<MuralListagemDTO> aplicarFiltroBusca(List<MuralListagemDTO> itens, String termo) {
+    private List<MuralDTO.Listagem> aplicarFiltroBusca(List<MuralDTO.Listagem> itens, String termo) {
         if (!StringUtils.hasText(termo)) {
             return itens;
         }
@@ -311,50 +295,39 @@ public class MuralListagemService {
         String termoBusca = termo.toLowerCase();
         return itens.stream()
                 .filter(item -> 
-                    // Descrição do produto (usada como nome também)
                     (item.getProduto() != null && item.getProduto().getDescricao() != null && 
                             item.getProduto().getDescricao().toLowerCase().contains(termoBusca)) ||
-                    // Código de barras
                     (item.getProduto() != null && item.getProduto().getCodigoBarras() != null && 
                             item.getProduto().getCodigoBarras().toLowerCase().contains(termoBusca)) ||
-                    // Marca
                     (item.getProduto() != null && item.getProduto().getMarca() != null && 
                             item.getProduto().getMarca().toLowerCase().contains(termoBusca)) ||
-                    // Lote
                     (item.getLote() != null && item.getLote().toLowerCase().contains(termoBusca))
                 )
                 .collect(Collectors.toList());
     }
     
-    /**
-     * Ordena os itens pelo campo especificado
-     */
-    private List<MuralListagemDTO> ordenarItens(List<MuralListagemDTO> itens, String campo, String direcao) {
+    private List<MuralDTO.Listagem> ordenarItens(List<MuralDTO.Listagem> itens, String campo, String direcao) {
         if (!StringUtils.hasText(campo)) {
             return itens;
         }
         
         boolean ascendente = "asc".equalsIgnoreCase(direcao);
         
-        Comparator<MuralListagemDTO> comparator;
+        Comparator<MuralDTO.Listagem> comparator;
         
         switch (campo.toLowerCase()) {
             case "datavencimento":
                 comparator = (item1, item2) -> {
-                    // Se ambos são nulos, são iguais
                     if (item1.getDataValidade() == null && item2.getDataValidade() == null) {
                         return 0;
                     }
-                    // Se apenas item1 é nulo, ele vem depois
                     if (item1.getDataValidade() == null) {
                         return 1;
                     }
-                    // Se apenas item2 é nulo, ele vem depois
                     if (item2.getDataValidade() == null) {
                         return -1;
                     }
 
-                    // Compara diretamente as datas
                     return item1.getDataValidade().compareTo(item2.getDataValidade());
                 };
                 break;
@@ -407,7 +380,6 @@ public class MuralListagemService {
                     (item.getProduto().getDescricao() != null ? item.getProduto().getDescricao().toLowerCase() : "") : "");
         }
         
-        // Aplica a direção da ordenação de forma consistente
         if (!ascendente) {
             comparator = comparator.reversed();
         }
@@ -417,9 +389,7 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * Obtém todas as marcas distintas dos produtos disponíveis
-     */
+
     public List<String> getMarcasDisponiveis() {
         return itemProdutoService.buscarTodos().stream()
                 .filter(item -> item.getProduto() != null && StringUtils.hasText(item.getProduto().getMarca()))
@@ -429,9 +399,6 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * Obtém todos os corredores distintos dos produtos disponíveis
-     */
     public List<String> getCorredoresDisponiveis() {
         return itemProdutoService.buscarTodos().stream()
                 .filter(item -> item.getProduto() != null && 
@@ -444,9 +411,6 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * Obtém todas as categorias distintas dos produtos disponíveis
-     */
     public List<String> getCategoriasDisponiveis() {
         return itemProdutoService.buscarTodos().stream()
                 .filter(item -> item.getProduto() != null && 
@@ -458,9 +422,6 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * Obtém todos os fornecedores distintos dos produtos disponíveis
-     */
     public List<String> getFornecedoresDisponiveis() {
         return itemProdutoService.buscarTodos().stream()
                 .filter(item -> item.getProduto() != null && 
@@ -473,9 +434,6 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * Obtém todos os lotes distintos dos produtos disponíveis
-     */
     public List<String> getLotesDisponiveis() {
         return itemProdutoService.buscarTodos().stream()
                 .filter(item -> StringUtils.hasText(item.getLote()))
@@ -485,13 +443,10 @@ public class MuralListagemService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Mapeia um ItemProduto para MuralListagemDTO
-     */
-    private MuralListagemDTO mapToDTO(ItemProduto item) {
+    private MuralDTO.Listagem mapToDTO(ItemProduto item) {
         String status = determinarStatus(item.getDataVencimento());
         
-        MuralListagemDTO.ProdutoDTO produtoDTO = MuralListagemDTO.ProdutoDTO.builder()
+        MuralDTO.Produto produtoDTO = MuralDTO.Produto.builder()
                 .id(item.getProduto() != null ? item.getProduto().getId() : "")
                 .nome(item.getProduto() != null ? item.getProduto().getDescricao() : "")
                 .descricao(item.getProduto() != null ? item.getProduto().getDescricao() : "")
@@ -511,7 +466,7 @@ public class MuralListagemService {
                 !item.getProduto().getFornecedores().isEmpty() ?
                 item.getProduto().getFornecedores().get(0).getNome() : "";
 
-        return MuralListagemDTO.builder()
+        return MuralDTO.Listagem.builder()
                 .id(item.getId())
                 .itemProduto(item.getProduto() != null ? item.getProduto().getDescricao() : "")
                 .produto(produtoDTO)
@@ -531,9 +486,6 @@ public class MuralListagemService {
                 .build();
     }
 
-    /**
-     * Determina o status do item com base na data de validade
-     */
     private String determinarStatus(LocalDateTime dataVencimento) {
         LocalDateTime hoje = LocalDateTime.now();
         if (dataVencimento.isBefore(hoje)) {
@@ -545,131 +497,76 @@ public class MuralListagemService {
         }
     }
     
-    /**
-     * Método base para marcar um item como inspecionado
-     * @param id ID do item a ser marcado
-     * @param motivo Motivo da inspeção
-     * @param usuarioInspecao Nome do usuário que realizou a inspeção
-     * @return O item atualizado
-     * @throws SmartValidityException Se o item não for encontrado
-     */
-    private MuralListagemDTO marcarItemInspecionado(String id, String motivo, String usuarioInspecao) throws SmartValidityException {
+    private MuralDTO.Listagem marcarItemInspecionado(String id, String motivo, String motivoCustomizado, String usuarioInspecao) throws SmartValidityException {
         try {
+            validarMotivoInspecao(motivo, motivoCustomizado);
+            
             ItemProduto item = itemProdutoService.buscarPorId(id);
             
-            // Validação do motivo
-            if (motivo == null || motivo.trim().isEmpty()) {
-                throw new SmartValidityException("O motivo da inspeção é obrigatório");
-            }
+            String motivoFinal = obterMotivoFinal(motivo, motivoCustomizado);
             
-            // Determinar o nome do usuário que está realizando a inspeção
             String nomeUsuario = usuarioInspecao;
             if (nomeUsuario == null || nomeUsuario.trim().isEmpty()) {
-                // Tentar obter o usuário autenticado através de outra abordagem como fallback
                 try {
                     nomeUsuario = System.getProperty("user.name");
                 } catch (Exception e) {
-                    // Em caso de erro, usar um valor padrão
                     nomeUsuario = "Sistema";
                 }
             }
             
-            // Marcar o item como inspecionado
             item.setInspecionado(true);
-            item.setMotivoInspecao(motivo);
+            item.setMotivoInspecao(motivoFinal);
             item.setUsuarioInspecao(nomeUsuario);
             item.setDataHoraInspecao(LocalDateTime.now());
             
-            // Salvar o item com tratamento de exceções
             ItemProduto itemSalvo = itemProdutoService.salvarItemInspecionado(item);
             return mapToDTO(itemSalvo);
         } catch (Exception e) {
             if (e instanceof SmartValidityException) {
                 throw (SmartValidityException) e;
             }
-            // Logar o erro para diagnóstico
             System.err.println("Erro ao marcar item como inspecionado: " + e.getMessage());
             e.printStackTrace();
             throw new SmartValidityException("Erro ao marcar item como inspecionado: " + e.getMessage());
         }
     }
     
-    /**
-     * Marca um item como inspecionado
-     * @param id ID do item a ser marcado
-     * @param motivo Motivo da inspeção
-     * @param usuarioInspecao Nome do usuário que realizou a inspeção
-     * @return O item atualizado
-     * @throws SmartValidityException Se o item não for encontrado
-     */
-    public MuralListagemDTO marcarInspecionado(String id, String motivo, String usuarioInspecao) throws SmartValidityException {
-        return marcarItemInspecionado(id, motivo, usuarioInspecao);
+    public MuralDTO.Listagem marcarInspecionado(String id, String motivo, String motivoCustomizado, String usuarioInspecao) throws SmartValidityException {
+        return marcarItemInspecionado(id, motivo, motivoCustomizado, usuarioInspecao);
     }
-    
-    /**
-     * Marca um item como inspecionado (método de compatibilidade)
-     * @param id ID do item a ser marcado
-     * @param motivo Motivo da inspeção
-     * @return O item atualizado
-     * @throws SmartValidityException Se o item não for encontrado
-     */
-    public MuralListagemDTO marcarInspecionado(String id, String motivo) throws SmartValidityException {
-        return marcarItemInspecionado(id, motivo, null);
-    }
-    
-    /**
-     * Marca um item como inspecionado (método de compatibilidade)
-     * @param id ID do item a ser marcado
-     * @return O item atualizado
-     * @throws SmartValidityException Se o item não for encontrado
-     */
-    public MuralListagemDTO marcarInspecionado(String id) throws SmartValidityException {
-        return marcarItemInspecionado(id, null, null);
-    }
-    
-    /**
-     * Método base para marcar vários itens como inspecionados
-     * @param ids Lista de IDs dos itens a serem marcados
-     * @param motivo Motivo da inspeção
-     * @param usuarioInspecao Nome do usuário que realizou a inspeção
-     * @return Lista de itens atualizados
-     * @throws SmartValidityException Se algum item não for encontrado
-     */
-    private List<MuralListagemDTO> marcarVariosItensInspecionados(List<String> ids, String motivo, String usuarioInspecao) throws SmartValidityException {
-        // Validação do motivo
-        if (motivo == null || motivo.trim().isEmpty()) {
-            throw new SmartValidityException("O motivo da inspeção é obrigatório");
+
+    private List<MuralDTO.Listagem> marcarVariosItensInspecionados(List<String> ids, String motivo, String motivoCustomizado, String usuarioInspecao) throws SmartValidityException {
+        if (ids == null || ids.isEmpty()) {
+            throw new SmartValidityException("Nenhum item selecionado para inspeção");
         }
         
-        // Determinar o nome do usuário que está realizando a inspeção
+        validarMotivoInspecao(motivo, motivoCustomizado);
+        String motivoFinal = obterMotivoFinal(motivo, motivoCustomizado);
+        
         String nomeUsuario = usuarioInspecao;
         if (nomeUsuario == null || nomeUsuario.trim().isEmpty()) {
-            // Tentar obter o usuário autenticado através de outra abordagem como fallback
             try {
                 nomeUsuario = System.getProperty("user.name");
             } catch (Exception e) {
-                // Em caso de erro, usar um valor padrão
                 nomeUsuario = "Sistema";
             }
         }
         
-        // Data e hora da inspeção (mesma para todos os itens do lote)
         LocalDateTime dataHoraInspecao = LocalDateTime.now();
         
-        List<MuralListagemDTO> itensAtualizados = new ArrayList<>();
+        List<MuralDTO.Listagem> itensAtualizados = new ArrayList<>();
         
         for (String id : ids) {
             try {
                 ItemProduto item = itemProdutoService.buscarPorId(id);
                 item.setInspecionado(true);
-                item.setMotivoInspecao(motivo);
+                item.setMotivoInspecao(motivoFinal);
                 item.setUsuarioInspecao(nomeUsuario);
                 item.setDataHoraInspecao(dataHoraInspecao);
                 
                 ItemProduto itemSalvo = itemProdutoService.salvarItemInspecionado(item);
                 itensAtualizados.add(mapToDTO(itemSalvo));
             } catch (Exception e) {
-                // Loga o erro mas continua processando os outros IDs
                 System.err.println("Erro ao marcar item " + id + " como inspecionado: " + e.getMessage());
                 e.printStackTrace();
             }
@@ -682,91 +579,37 @@ public class MuralListagemService {
         return itensAtualizados;
     }
     
-    /**
-     * Marca vários itens como inspecionados
-     * @param ids Lista de IDs dos itens a serem marcados
-     * @param motivo Motivo da inspeção
-     * @param usuarioInspecao Nome do usuário que realizou a inspeção
-     * @return Lista de itens atualizados
-     * @throws SmartValidityException Se algum item não for encontrado
-     */
-    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids, String motivo, String usuarioInspecao) throws SmartValidityException {
-        return marcarVariosItensInspecionados(ids, motivo, usuarioInspecao);
+    public List<MuralDTO.Listagem> marcarVariosInspecionados(List<String> ids, String motivo, String motivoCustomizado, String usuarioInspecao) throws SmartValidityException {
+        return marcarVariosItensInspecionados(ids, motivo, motivoCustomizado, usuarioInspecao);
     }
-    
-    /**
-     * Marca vários itens como inspecionados (método de compatibilidade)
-     * @param ids Lista de IDs dos itens a serem marcados
-     * @param motivo Motivo da inspeção
-     * @return Lista de itens atualizados
-     * @throws SmartValidityException Se algum item não for encontrado
-     */
-    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids, String motivo) throws SmartValidityException {
-        return marcarVariosItensInspecionados(ids, motivo, null);
-    }
-    
-    /**
-     * Marca vários itens como inspecionados (método de compatibilidade)
-     * @param ids Lista de IDs dos itens a serem marcados
-     * @return Lista de itens atualizados
-     * @throws SmartValidityException Se algum item não for encontrado
-     */
-    public List<MuralListagemDTO> marcarVariosInspecionados(List<String> ids) throws SmartValidityException {
-        return marcarVariosItensInspecionados(ids, null, null);
-    }
-    
-    /**
-     * Busca um item específico por ID
-     * @param id ID do item a ser buscado
-     * @return O item encontrado
-     * @throws SmartValidityException Se o item não for encontrado
-     */
-    public MuralListagemDTO getItemById(String id) throws SmartValidityException {
+
+    public MuralDTO.Listagem getItemById(String id) throws SmartValidityException {
         ItemProduto item = itemProdutoService.buscarPorId(id);
         return mapToDTO(item);
     }
-
-    /**
-     * Conta o número total de páginas com base no filtro e no limite de itens por página
-     * @param filtro Objeto com os parâmetros de filtro
-     * @return Número total de páginas
-     */
-    public int contarPaginas(MuralFiltroDTO filtro) {
+    public int contarPaginas(MuralDTO.Filtro filtro) {
         if (filtro != null && filtro.temPaginacao()) {
             long totalRegistros = contarTotalRegistros(filtro);
             return (int) Math.ceil((double) totalRegistros / filtro.getLimite());
         }
-        // Se não tiver paginação, tudo cabe em uma página
         return 1;
     }
     
-    /**
-     * Conta o número total de registros que atendem aos critérios de filtro
-     * @param filtro Objeto com os parâmetros de filtro
-     * @return Número total de registros
-     */
-    public long contarTotalRegistros(MuralFiltroDTO filtro) {
+    public long contarTotalRegistros(MuralDTO.Filtro filtro) {
         List<ItemProduto> itens = itemProdutoService.buscarTodos();
-        List<MuralListagemDTO> dtos = itens.stream()
+        List<MuralDTO.Listagem> dtos = itens.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
         
-        // Aplicar filtros
-        List<MuralListagemDTO> itensFiltrados = aplicarFiltros(dtos, filtro);
+        List<MuralDTO.Listagem> itensFiltrados = aplicarFiltros(dtos, filtro);
         
         return itensFiltrados.size();
     }
 
-    // Cache para usuários de inspeção
     private List<String> usuariosInspecaoCache;
     private LocalDateTime ultimaAtualizacaoCache;
     private static final long CACHE_DURACAO_MINUTOS = 5;
 
-    /**
-     * Formata um nome para Camel Case
-     * @param nome Nome a ser formatado
-     * @return Nome formatado em Camel Case
-     */
     private String formatarNomeCamelCase(String nome) {
         if (nome == null || nome.trim().isEmpty()) {
             return nome;
@@ -786,10 +629,6 @@ public class MuralListagemService {
         return resultado.toString().trim();
     }
 
-    /**
-     * Obtém a lista de usuários que já realizaram inspeções
-     * @return Lista de usuários que já realizaram inspeções
-     */
     public List<String> getUsuariosInspecaoDisponiveis() {
         if (usuariosInspecaoCache != null && 
             ultimaAtualizacaoCache != null && 
@@ -811,12 +650,7 @@ public class MuralListagemService {
         return usuarios;
     }
 
-    /**
-     * Busca itens por seus IDs
-     * @param ids Lista de IDs dos itens a serem buscados
-     * @return Lista de DTOs dos itens encontrados
-     */
-    public List<MuralListagemDTO> buscarPorIds(List<String> ids) {
+    public List<MuralDTO.Listagem> buscarPorIds(List<String> ids) {
         if (ids == null || ids.isEmpty()) {
             return new ArrayList<>();
         }
@@ -833,5 +667,107 @@ public class MuralListagemService {
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Gera o título do relatório com base no tipo e status
+     */
+    private String gerarTituloRelatorio(String status, String tipo, int quantidade) {
+        StringBuilder titulo = new StringBuilder();
+        
+        // Define o título base com base no status
+        switch (status) {
+            case "proximo":
+                titulo.append("Relatório de Produtos Próximos do Vencimento");
+                break;
+            case "hoje":
+                titulo.append("Relatório de Produtos que Vencem Hoje");
+                break;
+            case "vencido":
+                titulo.append("Relatório de Produtos Vencidos");
+                break;
+            default:
+                titulo.append("Relatório de Produtos");
+        }
+        
+        // Adiciona informação sobre a quantidade de itens
+        switch (tipo) {
+            case "SELECIONADOS":
+                titulo.append(String.format(" (%d item(ns) selecionado(s))", quantidade));
+                break;
+            case "PAGINA":
+                titulo.append(String.format(" (%d item(ns) da página atual)", quantidade));
+                break;
+            case "TODOS":
+                titulo.append(String.format(" (%d item(ns) no total)", quantidade));
+                break;
+        }
+        
+        return titulo.toString();
+    }
+
+    /**
+     * Gera relatório Excel com base nos parâmetros fornecidos
+     */
+    public byte[] gerarRelatorioExcel(MuralDTO.RelatorioRequest request) throws SmartValidityException {
+        logger.info("Iniciando geracao de relatorio. Tipo: {}, Status: {}", request.getTipo(), request.getStatus());
+        
+        List<MuralDTO.Listagem> itens;
+        
+        try {
+            switch (request.getTipo()) {
+                case "SELECIONADOS":
+                    if (request.getIds() == null || request.getIds().isEmpty()) {
+                        logger.warn("Tentativa de gerar relatorio sem itens selecionados");
+                        throw new SmartValidityException("Nenhum item selecionado para o relatório");
+                    }
+                    logger.debug("Gerando relatorio para {} itens selecionados", request.getIds().size());
+                    itens = buscarPorIds(request.getIds());
+                    break;
+                    
+                case "PAGINA":
+                    logger.debug("Gerando relatorio para itens da pagina atual. Filtros: {}", request.getFiltro());
+                    itens = buscarComFiltro(request.getFiltro());
+                    break;
+                    
+                case "TODOS":
+                    logger.debug("Gerando relatorio para todos os itens. Filtros aplicados: {}", request.getFiltro());
+                    // Remove paginação para buscar todos os itens
+                    MuralDTO.Filtro filtroSemPaginacao = request.getFiltro();
+                    filtroSemPaginacao.setPagina(null);
+                    filtroSemPaginacao.setLimite(null);
+                    itens = buscarComFiltro(filtroSemPaginacao);
+                    break;
+                    
+                default:
+                    logger.error("Tipo de relatorio invalido: {}", request.getTipo());
+                    throw new SmartValidityException("Tipo de relatório inválido");
+            }
+
+            if (itens.isEmpty()) {
+                logger.warn("Nenhum item encontrado para gerar o relatorio");
+                throw new SmartValidityException("Nenhum item encontrado para gerar o relatório");
+            }
+
+            String titulo = gerarTituloRelatorio(request.getStatus(), request.getTipo(), itens.size());
+            logger.info("Gerando Excel para {} itens com titulo: {}", itens.size(), titulo);
+            
+            byte[] resultado = excelService.gerarExcelMural(itens, titulo);
+            logger.info("Relatorio gerado com sucesso. Tamanho: {} bytes", resultado.length);
+            
+            return resultado;
+            
+        } catch (SmartValidityException e) {
+            logger.warn("Erro de validacao ao gerar relatorio: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("Erro inesperado ao gerar relatorio: {}", e.getMessage(), e);
+            throw new SmartValidityException("Erro ao gerar relatório: " + e.getMessage());
+        }
+    }
+
+    public void cancelarSelecao(List<String> ids) {
+        // Implemente aqui a lógica de negócio para cancelar seleção, se necessário.
+        // Exemplo: itemProdutoService.cancelarSelecao(ids);
     }
 } 
