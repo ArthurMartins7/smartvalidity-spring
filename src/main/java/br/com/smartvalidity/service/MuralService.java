@@ -706,13 +706,23 @@ public class MuralService {
     }
 
     /**
+     * Valida se todos os itens pertencem ao status/aba informado
+     */
+    private void validarItensPertencemAoStatus(List<MuralDTO.Listagem> itens, String status) throws SmartValidityException {
+        if (status == null || status.isEmpty()) return;
+        for (MuralDTO.Listagem item : itens) {
+            if (!status.equals(item.getStatus())) {
+                throw new SmartValidityException("Um ou mais produtos selecionados não pertencem à aba/status informada. Por favor, selecione apenas produtos da aba correta.");
+            }
+        }
+    }
+
+    /**
      * Gera relatório Excel com base nos parâmetros fornecidos
      */
     public byte[] gerarRelatorioExcel(MuralDTO.RelatorioRequest request) throws SmartValidityException {
         logger.info("Iniciando geracao de relatorio. Tipo: {}, Status: {}", request.getTipo(), request.getStatus());
-        
         List<MuralDTO.Listagem> itens;
-        
         try {
             switch (request.getTipo()) {
                 case "SELECIONADOS":
@@ -722,40 +732,37 @@ public class MuralService {
                     }
                     logger.debug("Gerando relatorio para {} itens selecionados", request.getIds().size());
                     itens = buscarPorIds(request.getIds());
+                    // Validação: todos os itens devem pertencer ao status/aba
+                    validarItensPertencemAoStatus(itens, request.getStatus());
                     break;
-                    
                 case "PAGINA":
                     logger.debug("Gerando relatorio para itens da pagina atual. Filtros: {}", request.getFiltro());
                     itens = buscarComFiltro(request.getFiltro());
+                    // Validação: todos os itens devem pertencer ao status/aba
+                    validarItensPertencemAoStatus(itens, request.getStatus());
                     break;
-                    
                 case "TODOS":
                     logger.debug("Gerando relatorio para todos os itens. Filtros aplicados: {}", request.getFiltro());
-                    // Remove paginação para buscar todos os itens
                     MuralDTO.Filtro filtroSemPaginacao = request.getFiltro();
                     filtroSemPaginacao.setPagina(null);
                     filtroSemPaginacao.setLimite(null);
                     itens = buscarComFiltro(filtroSemPaginacao);
+                    // Validação: todos os itens devem pertencer ao status/aba
+                    validarItensPertencemAoStatus(itens, request.getStatus());
                     break;
-                    
                 default:
                     logger.error("Tipo de relatorio invalido: {}", request.getTipo());
                     throw new SmartValidityException("Tipo de relatório inválido");
             }
-
             if (itens.isEmpty()) {
                 logger.warn("Nenhum item encontrado para gerar o relatorio");
                 throw new SmartValidityException("Nenhum item encontrado para gerar o relatório");
             }
-
             String titulo = gerarTituloRelatorio(request.getStatus(), request.getTipo(), itens.size());
             logger.info("Gerando Excel para {} itens com titulo: {}", itens.size(), titulo);
-            
             byte[] resultado = excelService.gerarExcelMural(itens, titulo);
             logger.info("Relatorio gerado com sucesso. Tamanho: {} bytes", resultado.length);
-            
             return resultado;
-            
         } catch (SmartValidityException e) {
             logger.warn("Erro de validacao ao gerar relatorio: {}", e.getMessage());
             throw e;
