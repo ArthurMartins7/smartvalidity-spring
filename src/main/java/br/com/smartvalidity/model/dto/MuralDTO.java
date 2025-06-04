@@ -63,20 +63,34 @@ public class MuralDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Filtro {
+        // Campos que suportam múltiplos valores
+        private List<String> corredores;
+        private List<String> categorias;
+        private List<String> fornecedores;
+        private List<String> marcas;
+        private List<String> lotes;
+        private List<String> motivosInspecao;
+        private List<String> usuariosInspecao;
+        
+        // Campos legados para compatibilidade com frontend atual
         private String corredor;
         private String categoria;
         private String fornecedor;
         private String marca;
         private String lote;
+        private String motivoInspecao;
+        private String usuarioInspecao;
+        
+        // Campos de data
         private LocalDateTime dataVencimentoInicio;
         private LocalDateTime dataVencimentoFim;
         private LocalDateTime dataFabricacaoInicio;
         private LocalDateTime dataFabricacaoFim;
         private LocalDateTime dataRecebimentoInicio;
         private LocalDateTime dataRecebimentoFim;
+        
+        // Outros campos
         private Boolean inspecionado;
-        private String motivoInspecao;
-        private String usuarioInspecao;
         private String searchTerm;
         private String sortBy;
         private String sortDirection;
@@ -88,6 +102,77 @@ public class MuralDTO {
         
         public boolean temPaginacao() {
             return this.limite != null && this.limite > 0 && this.pagina != null && this.pagina > 0;
+        }
+        
+        // Métodos auxiliares para obter valores (prioriza arrays sobre valores únicos)
+        public List<String> getCorredoresEfetivos() {
+            if (corredores != null && !corredores.isEmpty()) {
+                return corredores;
+            }
+            if (corredor != null && !corredor.trim().isEmpty()) {
+                return List.of(corredor);
+            }
+            return List.of();
+        }
+        
+        public List<String> getCategoriasEfetivas() {
+            if (categorias != null && !categorias.isEmpty()) {
+                return categorias;
+            }
+            if (categoria != null && !categoria.trim().isEmpty()) {
+                return List.of(categoria);
+            }
+            return List.of();
+        }
+        
+        public List<String> getFornecedoresEfetivos() {
+            if (fornecedores != null && !fornecedores.isEmpty()) {
+                return fornecedores;
+            }
+            if (fornecedor != null && !fornecedor.trim().isEmpty()) {
+                return List.of(fornecedor);
+            }
+            return List.of();
+        }
+        
+        public List<String> getMarcasEfetivas() {
+            if (marcas != null && !marcas.isEmpty()) {
+                return marcas;
+            }
+            if (marca != null && !marca.trim().isEmpty()) {
+                return List.of(marca);
+            }
+            return List.of();
+        }
+        
+        public List<String> getLotesEfetivos() {
+            if (lotes != null && !lotes.isEmpty()) {
+                return lotes;
+            }
+            if (lote != null && !lote.trim().isEmpty()) {
+                return List.of(lote);
+            }
+            return List.of();
+        }
+        
+        public List<String> getMotivosInspecaoEfetivos() {
+            if (motivosInspecao != null && !motivosInspecao.isEmpty()) {
+                return motivosInspecao;
+            }
+            if (motivoInspecao != null && !motivoInspecao.trim().isEmpty()) {
+                return List.of(motivoInspecao);
+            }
+            return List.of();
+        }
+        
+        public List<String> getUsuariosInspecaoEfetivos() {
+            if (usuariosInspecao != null && !usuariosInspecao.isEmpty()) {
+                return usuariosInspecao;
+            }
+            if (usuarioInspecao != null && !usuarioInspecao.trim().isEmpty()) {
+                return List.of(usuarioInspecao);
+            }
+            return List.of();
         }
     }
 

@@ -172,26 +172,44 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
         
-        if (StringUtils.hasText(filtro.getMotivoInspecao())) {
+        // Filtro por motivo de inspeção (suporta múltiplos valores)
+        List<String> motivosInspecao = filtro.getMotivosInspecaoEfetivos();
+        if (!motivosInspecao.isEmpty()) {
             resultado = resultado.stream()
                     .filter(item -> {
-                        if ("Outro".equals(filtro.getMotivoInspecao())) {
-                            return item.getMotivoInspecao() != null && 
-                                   !item.getMotivoInspecao().equals("Avaria/Quebra") && 
-                                   !item.getMotivoInspecao().equals("Promoção");
-                        } else {
-                            return filtro.getMotivoInspecao().equals(item.getMotivoInspecao());
+                        String motivoItem = item.getMotivoInspecao();
+                        if (motivoItem == null) return false;
+                        
+                        for (String motivo : motivosInspecao) {
+                            if ("Outro".equals(motivo)) {
+                                // Para motivo "Outro", inclui todos que não são "Avaria/Quebra" nem "Promoção"
+                                if (!motivoItem.equals("Avaria/Quebra") && !motivoItem.equals("Promoção")) {
+                                    return true;
+                                }
+                            } else {
+                                // Para motivos específicos, verifica igualdade
+                                if (motivo.equals(motivoItem)) {
+                                    return true;
+                                }
+                            }
                         }
+                        return false;
                     })
                     .collect(Collectors.toList());
         }
 
-        if (StringUtils.hasText(filtro.getUsuarioInspecao())) {
-            String filtroUsuario = filtro.getUsuarioInspecao().trim().toLowerCase();
+        // Filtro por usuário de inspeção (suporta múltiplos valores)
+        List<String> usuariosInspecao = filtro.getUsuariosInspecaoEfetivos();
+        if (!usuariosInspecao.isEmpty()) {
             resultado = resultado.stream()
                     .filter(item -> {
                         String usuario = item.getUsuarioInspecao();
-                        return usuario != null && usuario.trim().toLowerCase().equals(filtroUsuario);
+                        if (usuario == null) return false;
+                        
+                        String usuarioNormalizado = usuario.trim().toLowerCase();
+                        return usuariosInspecao.stream()
+                                .anyMatch(filtroUsuario -> 
+                                    filtroUsuario.trim().toLowerCase().equals(usuarioNormalizado));
                     })
                     .collect(Collectors.toList());
         }
@@ -202,34 +220,44 @@ public class MuralService {
     private List<MuralDTO.Listagem> aplicarFiltrosTexto(List<MuralDTO.Listagem> itens, MuralDTO.Filtro filtro) {
         List<MuralDTO.Listagem> resultado = new ArrayList<>(itens);
         
-        if (StringUtils.hasText(filtro.getMarca())) {
+        // Filtro por marca (suporta múltiplos valores)
+        List<String> marcas = filtro.getMarcasEfetivas();
+        if (!marcas.isEmpty()) {
             resultado = resultado.stream()
                     .filter(item -> item.getProduto() != null && 
-                            filtro.getMarca().equals(item.getProduto().getMarca()))
+                            marcas.contains(item.getProduto().getMarca()))
                     .collect(Collectors.toList());
         }
         
-        if (StringUtils.hasText(filtro.getCorredor())) {
+        // Filtro por corredor (suporta múltiplos valores)
+        List<String> corredores = filtro.getCorredoresEfetivos();
+        if (!corredores.isEmpty()) {
             resultado = resultado.stream()
-                    .filter(item -> filtro.getCorredor().equals(item.getCorredor()))
+                    .filter(item -> corredores.contains(item.getCorredor()))
                     .collect(Collectors.toList());
         }
         
-        if (StringUtils.hasText(filtro.getCategoria())) {
+        // Filtro por categoria (suporta múltiplos valores)
+        List<String> categorias = filtro.getCategoriasEfetivas();
+        if (!categorias.isEmpty()) {
             resultado = resultado.stream()
-                    .filter(item -> filtro.getCategoria().equals(item.getCategoria()))
+                    .filter(item -> categorias.contains(item.getCategoria()))
                     .collect(Collectors.toList());
         }
         
-        if (StringUtils.hasText(filtro.getFornecedor())) {
+        // Filtro por fornecedor (suporta múltiplos valores)
+        List<String> fornecedores = filtro.getFornecedoresEfetivos();
+        if (!fornecedores.isEmpty()) {
             resultado = resultado.stream()
-                    .filter(item -> filtro.getFornecedor().equals(item.getFornecedor()))
+                    .filter(item -> fornecedores.contains(item.getFornecedor()))
                     .collect(Collectors.toList());
         }
         
-        if (StringUtils.hasText(filtro.getLote())) {
+        // Filtro por lote (suporta múltiplos valores)
+        List<String> lotes = filtro.getLotesEfetivos();
+        if (!lotes.isEmpty()) {
             resultado = resultado.stream()
-                    .filter(item -> filtro.getLote().equals(item.getLote()))
+                    .filter(item -> lotes.contains(item.getLote()))
                     .collect(Collectors.toList());
         }
         
@@ -612,6 +640,13 @@ public class MuralService {
         return itensFiltrados.size();
     }
 
+    /**
+     * Formata um nome para o padrão CamelCase.
+     * Responsabilidade: Transformação de dados para apresentação consistente.
+     * 
+     * @param nome Nome a ser formatado
+     * @return Nome formatado em CamelCase
+     */
     private String formatarNomeCamelCase(String nome) {
         if (nome == null || nome.trim().isEmpty()) {
             return nome;
@@ -631,15 +666,21 @@ public class MuralService {
         return resultado.toString().trim();
     }
 
+    /**
+     * Obtém a lista de usuários disponíveis para inspeção.
+     * Responsabilidade: Agregação de dados de diferentes serviços para o mural.
+     * 
+     * @return Lista de nomes de usuários formatados
+     */
     public List<String> getUsuariosInspecaoDisponiveis() {
         try {
-            List<String> usuarios = usuarioService.listarTodos().stream()
+            return usuarioService.listarTodos().stream()
                 .map(usuario -> formatarNomeCamelCase(usuario.getNome()))
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
-        return usuarios;
         } catch (Exception e) {
+            logger.warn("Erro ao obter usuários para inspeção: {}", e.getMessage());
             return new ArrayList<>();
         }
     }
