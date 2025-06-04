@@ -28,6 +28,9 @@ public class MuralService {
     @Autowired
     private ExcelService excelService;
 
+    @Autowired
+    private UsuarioService usuarioService;
+
     private static final List<String> MOTIVOS_INSPECAO_VALIDOS = Arrays.asList(
         "Avaria/Quebra",
         "Promoção",
@@ -184,8 +187,12 @@ public class MuralService {
         }
 
         if (StringUtils.hasText(filtro.getUsuarioInspecao())) {
+            String filtroUsuario = filtro.getUsuarioInspecao().trim().toLowerCase();
             resultado = resultado.stream()
-                    .filter(item -> filtro.getUsuarioInspecao().equals(item.getUsuarioInspecao()))
+                    .filter(item -> {
+                        String usuario = item.getUsuarioInspecao();
+                        return usuario != null && usuario.trim().toLowerCase().equals(filtroUsuario);
+                    })
                     .collect(Collectors.toList());
         }
         
@@ -605,10 +612,6 @@ public class MuralService {
         return itensFiltrados.size();
     }
 
-    private List<String> usuariosInspecaoCache;
-    private LocalDateTime ultimaAtualizacaoCache;
-    private static final long CACHE_DURACAO_MINUTOS = 5;
-
     private String formatarNomeCamelCase(String nome) {
         if (nome == null || nome.trim().isEmpty()) {
             return nome;
@@ -629,24 +632,16 @@ public class MuralService {
     }
 
     public List<String> getUsuariosInspecaoDisponiveis() {
-        if (usuariosInspecaoCache != null && 
-            ultimaAtualizacaoCache != null && 
-            ultimaAtualizacaoCache.plusMinutes(CACHE_DURACAO_MINUTOS).isAfter(LocalDateTime.now())) {
-            return usuariosInspecaoCache;
-        }
-
-        List<String> usuarios = itemProdutoService.buscarTodos().stream()
-                .filter(item -> StringUtils.hasText(item.getUsuarioInspecao()))
-                .map(ItemProduto::getUsuarioInspecao)
+        try {
+            List<String> usuarios = usuarioService.listarTodos().stream()
+                .map(usuario -> formatarNomeCamelCase(usuario.getNome()))
                 .distinct()
-                .map(this::formatarNomeCamelCase)
                 .sorted()
                 .collect(Collectors.toList());
-
-        usuariosInspecaoCache = usuarios;
-        ultimaAtualizacaoCache = LocalDateTime.now();
-
         return usuarios;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     public List<MuralDTO.Listagem> buscarPorIds(List<String> ids) {
