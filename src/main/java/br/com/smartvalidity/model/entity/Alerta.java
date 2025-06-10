@@ -1,15 +1,27 @@
 package br.com.smartvalidity.model.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import br.com.smartvalidity.model.enums.TipoAlerta;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
 @Entity
-@Table
+@Table(name = "alerta")
 @Data
 public class Alerta {
 
@@ -23,8 +35,36 @@ public class Alerta {
     @NotBlank(message = "O campo 'Descrição' não pode ser vazio ou apenas espaços em branco.")
     private String descricao;
 
+    @Column(name = "data_hora_disparo", nullable = false)
     private LocalDateTime dataHoraDisparo;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoAlerta tipo;
+
+    // Para alertas de vencimento personalizado (PERSONALIZADO com antecedência)
+    @Column(name = "dias_antecedencia")
+    private Integer diasAntecedencia;
+
+    // Controle simples
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
+    // Recorrência (apenas para PERSONALIZADO)
+    @Column(nullable = false)
+    private Boolean recorrente = false;
+
+    @Column(name = "configuracao_recorrencia")
+    private String configuracaoRecorrencia; // Ex: "DIARIO", "SEMANAL", etc.
+
+    // Auditoria
+    @Column(name = "data_criacao", nullable = false)
+    private LocalDateTime dataCriacao;
+
+    @Column(name = "data_envio")
+    private LocalDateTime dataEnvio;
+
+    // Relacionamentos
     @ManyToMany
     @JoinTable(
             name = "alerta_usuario",
@@ -41,4 +81,15 @@ public class Alerta {
     )
     private Set<Produto> produtosAlerta;
 
+    // Criador (null para alertas automáticos)
+    @ManyToOne
+    @JoinColumn(name = "id_usuario_criador")
+    private Usuario usuarioCriador;
+
+    @PrePersist
+    protected void onCreate() {
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
+    }
 }
