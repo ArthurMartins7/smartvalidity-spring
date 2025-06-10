@@ -41,6 +41,12 @@ public class ItemProduto {
     
     @Column(name = "motivo_inspecao")
     private String motivoInspecao;
+    
+    @Column(name = "usuario_inspecao")
+    private String usuarioInspecao;
+    
+    @Column(name = "data_hora_inspecao")
+    private LocalDateTime dataHoraInspecao;
 
     @Enumerated(EnumType.STRING)
     private SituacaoValidade situacaoValidade;
