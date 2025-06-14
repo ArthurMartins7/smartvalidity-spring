@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,8 +86,6 @@ public class AlertaService {
     public AlertaDTO.Listagem salvar(AlertaDTO.Cadastro cadastroDTO, String usuarioCriadorId) throws SmartValidityException {
         authorizationService.verificarPerfilAcesso();
         
-        validarCadastro(cadastroDTO);
-
         Alerta alerta = new Alerta();
         alerta.setTitulo(cadastroDTO.getTitulo());
         alerta.setDescricao(cadastroDTO.getDescricao());
@@ -168,9 +165,22 @@ public class AlertaService {
         }
     }
 
+    @Transactional
+    public AlertaDTO.Listagem toggleAtivo(Integer id) throws SmartValidityException {
+        authorizationService.verificarPerfilAcesso();
+        
+        Alerta alerta = alertaRepository.findById(id)
+                .orElseThrow(() -> new SmartValidityException("Alerta não encontrado"));
+
+        // Inverter o status ativo
+        alerta.setAtivo(!alerta.getAtivo());
+        
+        Alerta alertaAtualizado = alertaRepository.save(alerta);
+        return converterParaListagem(alertaAtualizado);
+    }
+
     // Geração Automática
 
-    @Scheduled(cron = "0 0 8 * * *") // Todo dia às 8h
     @Transactional
     public void gerarAlertasAutomaticos() {
         logger.info("Iniciando geração de alertas automáticos...");
@@ -311,31 +321,5 @@ public class AlertaService {
         }
 
         return dto;
-    }
-
-    // Validações
-
-    private void validarCadastro(AlertaDTO.Cadastro cadastroDTO) throws SmartValidityException {
-        if (cadastroDTO.getTitulo() == null || cadastroDTO.getTitulo().trim().isEmpty()) {
-            throw new SmartValidityException("Título é obrigatório");
-        }
-
-        if (cadastroDTO.getDescricao() == null || cadastroDTO.getDescricao().trim().isEmpty()) {
-            throw new SmartValidityException("Descrição é obrigatória");
-        }
-
-        if (cadastroDTO.getDataHoraDisparo() == null) {
-            throw new SmartValidityException("Data/hora de disparo é obrigatória");
-        }
-
-        if (cadastroDTO.getTipo() == null) {
-            throw new SmartValidityException("Tipo de alerta é obrigatório");
-        }
-
-        // Validar recorrência
-        if (cadastroDTO.getRecorrente() != null && cadastroDTO.getRecorrente() && 
-            (cadastroDTO.getConfiguracaoRecorrencia() == null || cadastroDTO.getConfiguracaoRecorrencia().trim().isEmpty())) {
-            throw new SmartValidityException("Configuração de recorrência é obrigatória para alertas recorrentes");
-        }
     }
 } 

@@ -23,6 +23,7 @@ import br.com.smartvalidity.model.dto.AlertaDTO;
 import br.com.smartvalidity.model.seletor.AlertaSeletor;
 import br.com.smartvalidity.service.AlertaService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -53,15 +54,15 @@ public class AlertaController {
     }
 
     @PostMapping
-    public ResponseEntity<AlertaDTO.Listagem> criar(@RequestBody AlertaDTO.Cadastro cadastroDTO, 
+    public ResponseEntity<AlertaDTO.Listagem> criar(@Valid @RequestBody AlertaDTO.Cadastro cadastroDTO, 
                                                     @RequestParam(required = false) String usuarioCriadorId) throws SmartValidityException {
         AlertaDTO.Listagem alertaCriado = alertaService.salvar(cadastroDTO, usuarioCriadorId);
         return ResponseEntity.status(201).body(alertaCriado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AlertaDTO.Listagem> atualizar(@PathVariable Integer id, 
-                                                        @RequestBody AlertaDTO.Edicao edicaoDTO) throws SmartValidityException {
+    public ResponseEntity<AlertaDTO.Listagem> atualizar(@PathVariable Integer id,
+                                                        @Valid @RequestBody AlertaDTO.Edicao edicaoDTO) throws SmartValidityException {
         AlertaDTO.Listagem alertaAtualizado = alertaService.atualizar(id, edicaoDTO);
         return ResponseEntity.ok(alertaAtualizado);
     }
@@ -75,19 +76,7 @@ public class AlertaController {
     @Operation(summary = "Ativar ou desativar um alerta")
     @PatchMapping("/{id}/toggle-ativo")
     public ResponseEntity<AlertaDTO.Listagem> toggleAtivo(@PathVariable Integer id) throws SmartValidityException {
-        AlertaDTO.Listagem alertaAtual = alertaService.buscarPorId(id);
-        
-        AlertaDTO.Edicao edicaoDTO = new AlertaDTO.Edicao();
-        edicaoDTO.setId(id);
-        edicaoDTO.setTitulo(alertaAtual.getTitulo());
-        edicaoDTO.setDescricao(alertaAtual.getDescricao());
-        edicaoDTO.setDataHoraDisparo(alertaAtual.getDataHoraDisparo());
-        edicaoDTO.setDiasAntecedencia(alertaAtual.getDiasAntecedencia());
-        edicaoDTO.setAtivo(!alertaAtual.getAtivo());
-        edicaoDTO.setRecorrente(alertaAtual.getRecorrente());
-        edicaoDTO.setConfiguracaoRecorrencia(alertaAtual.getConfiguracaoRecorrencia());
-        
-        AlertaDTO.Listagem alertaAtualizado = alertaService.atualizar(id, edicaoDTO);
+        AlertaDTO.Listagem alertaAtualizado = alertaService.toggleAtivo(id);
         return ResponseEntity.ok(alertaAtualizado);
     }
 
@@ -99,4 +88,4 @@ public class AlertaController {
         response.put("message", "Alertas automáticos gerados com sucesso");
         return ResponseEntity.ok(response);
     }
-} 
+}

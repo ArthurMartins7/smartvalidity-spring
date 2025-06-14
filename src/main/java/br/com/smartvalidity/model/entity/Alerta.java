@@ -42,29 +42,24 @@ public class Alerta {
     @Column(nullable = false)
     private TipoAlerta tipo;
 
-    // Para alertas de vencimento personalizado (PERSONALIZADO com antecedência)
     @Column(name = "dias_antecedencia")
     private Integer diasAntecedencia;
 
-    // Controle simples
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    // Recorrência (apenas para PERSONALIZADO)
     @Column(nullable = false)
     private Boolean recorrente = false;
 
     @Column(name = "configuracao_recorrencia")
     private String configuracaoRecorrencia; // Ex: "DIARIO", "SEMANAL", etc.
 
-    // Auditoria
     @Column(name = "data_criacao", nullable = false)
     private LocalDateTime dataCriacao;
 
     @Column(name = "data_envio")
     private LocalDateTime dataEnvio;
 
-    // Relacionamentos
     @ManyToMany
     @JoinTable(
             name = "alerta_usuario",
@@ -81,7 +76,6 @@ public class Alerta {
     )
     private Set<Produto> produtosAlerta;
 
-    // Criador (null para alertas automáticos)
     @ManyToOne
     @JoinColumn(name = "id_usuario_criador")
     private Usuario usuarioCriador;
