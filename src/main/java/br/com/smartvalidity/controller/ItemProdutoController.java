@@ -36,7 +36,7 @@ public class ItemProdutoController {
     }
 
     @PostMapping
-    public ResponseEntity<ItemProduto> salvar(@Valid @RequestBody ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
+    public ResponseEntity<?> salvar(@Valid @RequestBody ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
         ItemProduto itemProduto = new ItemProduto();
         itemProduto.setLote(itemProdutoDTO.getLote());
         itemProduto.setPrecoVenda(itemProdutoDTO.getPrecoVenda());
@@ -49,8 +49,17 @@ public class ItemProdutoController {
         itemProduto.setDataHoraInspecao(itemProdutoDTO.getDataHoraInspecao());
         itemProduto.setProduto(itemProdutoDTO.getProduto());
         
-        ItemProduto novoItemProduto = itemProdutoService.salvar(itemProduto);
-        return ResponseEntity.status(201).body(novoItemProduto);
+        Integer quantidade = itemProdutoDTO.getQuantidade() != null ? itemProdutoDTO.getQuantidade() : 1;
+        
+        if (quantidade == 1) {
+            // Salvar um único item
+            ItemProduto novoItemProduto = itemProdutoService.salvar(itemProduto);
+            return ResponseEntity.status(201).body(novoItemProduto);
+        } else {
+            // Salvar múltiplos itens
+            List<ItemProduto> novosItensProduto = itemProdutoService.salvarMultiplos(itemProduto, quantidade);
+            return ResponseEntity.status(201).body(novosItensProduto);
+        }
     }
 
     @PutMapping("/{id}")

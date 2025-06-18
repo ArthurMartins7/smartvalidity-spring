@@ -17,4 +17,5 @@ public class ItemProdutoDTO {
     private String usuarioInspecao;
     private LocalDateTime dataHoraInspecao;
     private Produto produto;
+    private Integer quantidade = 1;
 }
