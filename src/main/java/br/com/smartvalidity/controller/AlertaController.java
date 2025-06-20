@@ -88,4 +88,10 @@ public class AlertaController {
         response.put("message", "Alertas automáticos gerados com sucesso");
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/contar-registros")
+    public ResponseEntity<Long> contarTotalRegistros(@RequestBody AlertaSeletor seletor) throws SmartValidityException {
+        long total = alertaService.contarTotalRegistros(seletor);
+        return ResponseEntity.ok(total);
+    }
 }

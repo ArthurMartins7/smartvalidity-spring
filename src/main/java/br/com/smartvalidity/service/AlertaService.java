@@ -179,6 +179,12 @@ public class AlertaService {
         return converterParaListagem(alertaAtualizado);
     }
 
+    @Transactional(readOnly = true)
+    public long contarTotalRegistros(AlertaSeletor seletor) throws SmartValidityException {
+        authorizationService.verificarPerfilAcesso();
+        return alertaRepository.count(seletor);
+    }
+
     // Geração Automática
 
     @Transactional
