@@ -14,8 +14,7 @@ class SmartvalidityApplicationTests {
     @Test
     @Timeout(value = 60, unit = TimeUnit.SECONDS)
     void contextLoads() {
-        // Teste básico para verificar se o contexto da aplicação carrega corretamente
-        // Este teste é fundamental para garantir que todas as configurações estão corretas
+
     }
 
 }
