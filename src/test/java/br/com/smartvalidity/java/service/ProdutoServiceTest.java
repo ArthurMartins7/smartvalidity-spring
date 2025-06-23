@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,6 +62,7 @@ class ProdutoServiceTest {
         endereco.setCep("12345-678");
         endereco.setLogradouro("Rua Teste");
         endereco.setNumero("123");
+        endereco.setComplemento("Sala 1");
         endereco.setBairro("Centro");
         endereco.setCidade("São Paulo");
         endereco.setEstado("SP");
@@ -71,6 +71,7 @@ class ProdutoServiceTest {
         fornecedor = new Fornecedor();
         fornecedor.setId(1);
         fornecedor.setNome("Fornecedor A");
+        fornecedor.setTelefone("(11) 99999-9999");
         fornecedor.setCnpj("12.345.678/0001-90");
         fornecedor.setEndereco(endereco);
 
@@ -349,5 +350,97 @@ class ProdutoServiceTest {
         RuntimeException exception = assertThrows(RuntimeException.class,
             () -> produtoService.salvar(produtoInvalido));
         assertTrue(exception.getMessage().contains("Quantidade não pode ser nula"));
+    }
+
+    @Test
+    @DisplayName("Deve listar todos os produtos como DTO")
+    void deveListarTodosProdutosComoDTO() {
+        // Given
+        // Garantir que o fornecedor tem dados válidos
+        fornecedor.setNome("Fornecedor Teste");
+        fornecedor.setTelefone("(11) 99999-9999");
+        
+        List<Produto> produtos = Arrays.asList(produtoValido);
+        when(produtoRepository.findAll()).thenReturn(produtos);
+
+        // When
+        List<ProdutoDTO> result = produtoService.listarTodosDTO();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(produtoValido.getDescricao(), result.get(0).getDescricao());
+        assertEquals(produtoValido.getMarca(), result.get(0).getMarca());
+        assertEquals(produtoValido.getCodigoBarras(), result.get(0).getCodigoBarras());
+        
+        // Verificar se a categoria foi mapeada
+        assertNotNull(result.get(0).getCategoria());
+        
+        verify(produtoRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Deve contar páginas quando não há paginação")
+    void deveContarPaginasQuandoNaoHaPaginacao() {
+        // Given
+        ProdutoSeletor seletor = new ProdutoSeletor();
+        when(produtoRepository.count(seletor)).thenReturn(5L);
+
+        // When
+        int result = produtoService.contarPaginas(seletor);
+
+        // Then
+        assertEquals(1, result);
+        verify(produtoRepository).count(seletor);
+    }
+
+    @Test
+    @DisplayName("Deve retornar 0 páginas quando não há registros")
+    void deveRetornarZeroPaginasQuandoNaoHaRegistros() {
+        // Given
+        ProdutoSeletor seletor = new ProdutoSeletor();
+        when(produtoRepository.count(seletor)).thenReturn(0L);
+
+        // When
+        int result = produtoService.contarPaginas(seletor);
+
+        // Then
+        assertEquals(0, result);
+        verify(produtoRepository).count(seletor);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao atualizar produto inexistente")
+    void deveLancarExcecaoAoAtualizarProdutoInexistente() {
+        // Given
+        String idInexistente = UUID.randomUUID().toString();
+        Produto produtoAtualizado = new Produto();
+        produtoAtualizado.setDescricao("Produto Atualizado");
+        
+        when(produtoRepository.findById(idInexistente)).thenReturn(Optional.empty());
+
+        // When & Then
+        SmartValidityException exception = assertThrows(SmartValidityException.class,
+            () -> produtoService.atualizar(idInexistente, produtoAtualizado));
+        
+        assertEquals("Produto não encontrado com o ID: " + idInexistente, exception.getMessage());
+        verify(produtoRepository).findById(idInexistente);
+        verify(produtoRepository, never()).save(any(Produto.class));
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao excluir produto inexistente")
+    void deveLancarExcecaoAoExcluirProdutoInexistente() {
+        // Given
+        String idInexistente = UUID.randomUUID().toString();
+        when(produtoRepository.findById(idInexistente)).thenReturn(Optional.empty());
+
+        // When & Then
+        SmartValidityException exception = assertThrows(SmartValidityException.class,
+            () -> produtoService.excluir(idInexistente));
+        
+        assertEquals("Produto não encontrado com o ID: " + idInexistente, exception.getMessage());
+        verify(produtoRepository).findById(idInexistente);
+        verify(produtoRepository, never()).delete(any(Produto.class));
     }
 } 
