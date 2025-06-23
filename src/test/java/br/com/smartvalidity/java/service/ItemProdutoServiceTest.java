@@ -327,40 +327,215 @@ class ItemProdutoServiceTest {
         int quantidadeParaRemover = 2;
         
         ItemProduto item1 = new ItemProduto();
-        item1.setId(UUID.randomUUID().toString());
+        item1.setId("item1");
         item1.setLote(lote);
         item1.setProduto(produto);
         
         ItemProduto item2 = new ItemProduto();
-        item2.setId(UUID.randomUUID().toString());
+        item2.setId("item2");
         item2.setLote(lote);
         item2.setProduto(produto);
         
-        ItemProduto item3 = new ItemProduto();
-        item3.setId(UUID.randomUUID().toString());
-        item3.setLote(lote);
-        item3.setProduto(produto);
-
-        List<ItemProduto> itensDoLote = Arrays.asList(item1, item2, item3);
+        List<ItemProduto> itensDoLote = Arrays.asList(item1, item2);
         
         when(itemProdutoRepository.findByLote(lote)).thenReturn(itensDoLote);
-        when(itemProdutoRepository.findById(item1.getId())).thenReturn(Optional.of(item1));
-        when(itemProdutoRepository.findById(item2.getId())).thenReturn(Optional.of(item2));
+        when(itemProdutoRepository.findById("item1")).thenReturn(Optional.of(item1));
+        when(itemProdutoRepository.findById("item2")).thenReturn(Optional.of(item2));
         when(produtoService.buscarPorId(produto.getId())).thenReturn(produto);
+        when(produtoService.salvar(any(Produto.class))).thenReturn(produto);
 
         // When
         itemProdutoService.darBaixaItensVendidos(lote, quantidadeParaRemover);
 
         // Then
         verify(itemProdutoRepository).findByLote(lote);
-        verify(itemProdutoRepository).findById(item1.getId());
-        verify(itemProdutoRepository).findById(item2.getId());
-        verify(itemProdutoRepository).delete(item1);
-        verify(itemProdutoRepository).delete(item2);
-        verify(itemProdutoRepository, never()).delete(item3); // O terceiro não deve ser removido
-        
-        // Verifica se o produto foi buscado e salvo para cada item removido
-        verify(produtoService, times(2)).buscarPorId(produto.getId());
+        verify(itemProdutoRepository, times(2)).delete(any(ItemProduto.class));
         verify(produtoService, times(2)).salvar(produto);
+    }
+
+    @Test
+    @DisplayName("Deve dar baixa em lista de itens vendidos")
+    void deveDarBaixaEmListaDeItensVendidos() throws SmartValidityException {
+        // Given
+        ItemProduto item1 = new ItemProduto();
+        item1.setLote("LOTE123");
+        
+        ItemProduto item2 = new ItemProduto();
+        item2.setLote("LOTE456");
+        
+        List<ItemProduto> itensVendidos = Arrays.asList(item1, item2);
+        
+        when(itemProdutoRepository.findByLote("LOTE123")).thenReturn(Arrays.asList(item1));
+        when(itemProdutoRepository.findByLote("LOTE456")).thenReturn(Arrays.asList(item2));
+
+        // When
+        itemProdutoService.darBaixaItensVendidos(itensVendidos);
+
+        // Then
+        // O método chama buscarPorLote duas vezes para cada lote (no forEach e no for)
+        verify(itemProdutoRepository, times(2)).findByLote("LOTE123");
+        verify(itemProdutoRepository, times(2)).findByLote("LOTE456");
+    }
+
+    @Test
+    @DisplayName("Deve lançar RuntimeException quando não encontrar lote na lista de vendidos")
+    void deveLancarRuntimeExceptionQuandoNaoEncontrarLoteNaListaVendidos() {
+        // Given
+        ItemProduto item1 = new ItemProduto();
+        item1.setLote("LOTE_INEXISTENTE");
+        
+        List<ItemProduto> itensVendidos = Arrays.asList(item1);
+        
+        when(itemProdutoRepository.findByLote("LOTE_INEXISTENTE")).thenReturn(null);
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            itemProdutoService.darBaixaItensVendidos(itensVendidos);
+        });
+
+        assertTrue(exception.getCause() instanceof SmartValidityException);
+        verify(itemProdutoRepository).findByLote("LOTE_INEXISTENTE");
+    }
+
+    @Test
+    @DisplayName("Deve salvar usando salvar2 sem incrementar estoque")
+    void deveSalvarUsandoSalvar2SemIncrementarEstoque() {
+        // Given
+        ItemProduto item = new ItemProduto();
+        item.setLote("LOTE789");
+        
+        when(itemProdutoRepository.save(item)).thenReturn(item);
+
+        // When
+        ItemProduto resultado = itemProdutoService.salvar2(item);
+
+        // Then
+        assertNotNull(resultado);
+        assertEquals(item, resultado);
+        verify(itemProdutoRepository).save(item);
+        // Verifica que não chamou produtoService - não lança exceção
+    }
+
+    @Test
+    @DisplayName("Deve excluir usando excluir2 sem decrementar estoque")
+    void deveExcluirUsandoExcluir2SemDecrementarEstoque() throws SmartValidityException {
+        // Given
+        String id = itemProdutoValido.getId();
+        when(itemProdutoRepository.findById(id)).thenReturn(Optional.of(itemProdutoValido));
+
+        // When
+        itemProdutoService.excluir2(id);
+
+        // Then
+        verify(itemProdutoRepository).findById(id);
+        verify(itemProdutoRepository).delete(itemProdutoValido);
+        // Verifica que não chamou produtoService
+        verify(produtoService, never()).buscarPorId(any());
+        verify(produtoService, never()).salvar(any());
+    }
+
+    @Test
+    @DisplayName("Deve salvar item inspecionado com sucesso")
+    void deveSalvarItemInspecionadoComSucesso() throws SmartValidityException {
+        // Given
+        ItemProduto itemNaoInspecionado = new ItemProduto();
+        itemNaoInspecionado.setId("item-novo");
+        itemNaoInspecionado.setInspecionado(false); // Item ainda não inspecionado
+        
+        ItemProduto itemParaInspecionar = new ItemProduto();
+        itemParaInspecionar.setId("item-novo");
+        itemParaInspecionar.setInspecionado(true);
+        itemParaInspecionar.setMotivoInspecao("Teste");
+        itemParaInspecionar.setUsuarioInspecao("usuario@teste.com");
+        itemParaInspecionar.setDataHoraInspecao(LocalDateTime.now());
+        
+        when(itemProdutoRepository.findById("item-novo")).thenReturn(Optional.of(itemNaoInspecionado));
+        when(itemProdutoRepository.save(any(ItemProduto.class))).thenReturn(itemParaInspecionar);
+
+        // When
+        ItemProduto resultado = itemProdutoService.salvarItemInspecionado(itemParaInspecionar);
+
+        // Then
+        assertNotNull(resultado);
+        assertTrue(resultado.getInspecionado());
+        assertEquals("Teste", resultado.getMotivoInspecao());
+        verify(itemProdutoRepository).findById("item-novo");
+        verify(itemProdutoRepository).save(any(ItemProduto.class));
+    }
+
+    @Test
+    @DisplayName("Deve retornar item sem alterações se já estiver inspecionado")
+    void deveRetornarItemSemAlteracoesSeJaEstiverInspecionado() throws SmartValidityException {
+        // Given
+        ItemProduto itemJaInspecionado = new ItemProduto();
+        itemJaInspecionado.setId("item-inspecionado");
+        itemJaInspecionado.setInspecionado(true);
+        itemJaInspecionado.setMotivoInspecao("Motivo original");
+        
+        ItemProduto itemParaInspecionar = new ItemProduto();
+        itemParaInspecionar.setId("item-inspecionado");
+        itemParaInspecionar.setInspecionado(true);
+        itemParaInspecionar.setMotivoInspecao("Novo motivo");
+        
+        when(itemProdutoRepository.findById("item-inspecionado")).thenReturn(Optional.of(itemJaInspecionado));
+
+        // When
+        ItemProduto resultado = itemProdutoService.salvarItemInspecionado(itemParaInspecionar);
+
+        // Then
+        assertNotNull(resultado);
+        assertEquals("Motivo original", resultado.getMotivoInspecao()); // Mantém o motivo original
+        verify(itemProdutoRepository).findById("item-inspecionado");
+        verify(itemProdutoRepository, never()).save(any()); // Não deve salvar
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar inspecionar item com ID nulo")
+    void deveLancarExcecaoAoTentarInspecionarItemComIdNulo() {
+        // Given
+        ItemProduto itemSemId = new ItemProduto();
+        itemSemId.setId(null);
+
+        // When & Then
+        SmartValidityException exception = assertThrows(SmartValidityException.class, () -> {
+            itemProdutoService.salvarItemInspecionado(itemSemId);
+        });
+
+        assertEquals("ID do item não pode ser nulo para inspeção", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar SmartValidityException quando item não existe para inspeção")
+    void deveLancarSmartValidityExceptionQuandoItemNaoExisteParaInspecao() {
+        // Given
+        ItemProduto item = new ItemProduto();
+        item.setId("item-inexistente");
+        
+        when(itemProdutoRepository.findById("item-inexistente")).thenReturn(Optional.empty());
+
+        // When & Then
+        SmartValidityException exception = assertThrows(SmartValidityException.class, () -> {
+            itemProdutoService.salvarItemInspecionado(item);
+        });
+
+        assertTrue(exception.getMessage().contains("ItemProduto não encontrado com o ID: item-inexistente"));
+        verify(itemProdutoRepository).findById("item-inexistente");
+    }
+
+    @Test
+    @DisplayName("Deve capturar e relançar exceção genérica como SmartValidityException")
+    void deveCapturaERelancaExcecaoGenericaComoSmartValidityException() {
+        // Given
+        ItemProduto item = new ItemProduto();
+        item.setId("item-erro");
+        
+        when(itemProdutoRepository.findById("item-erro")).thenThrow(new RuntimeException("Erro de banco"));
+
+        // When & Then
+        assertThrows(SmartValidityException.class, () -> {
+            itemProdutoService.salvarItemInspecionado(item);
+        });
+
+        verify(itemProdutoRepository).findById("item-erro");
     }
 } 

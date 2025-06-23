@@ -371,4 +371,135 @@ class CorredorServiceTest {
             
         verify(corredorRepository).findAll(seletor);
     }
+
+
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar salvar corredor com erro")
+    void deveLancarExcecaoAoTentarSalvarCorredorComErro() {
+        // Given
+        Corredor novoCorretor = new Corredor();
+        novoCorretor.setNome("Corredor com Erro");
+        
+        when(corredorRepository.save(novoCorretor)).thenThrow(new RuntimeException("Erro de banco"));
+
+        // When & Then
+        SmartValidityException exception = assertThrows(SmartValidityException.class, () -> {
+            corredorService.salvar(novoCorretor);
+        });
+
+        assertTrue(exception.getMessage().contains("Erro ao salvar corredor: Erro de banco"));
+        verify(corredorRepository).save(novoCorretor);
+    }
+
+    @Test
+    @DisplayName("Deve contar páginas com seletor sem paginação")
+    void deveContarPaginasComSeletorSemPaginacao() {
+        // Given
+        CorredorSeletor seletor = new CorredorSeletor();
+        seletor.setNome("Teste");
+        // Não configura paginação
+        
+        when(corredorRepository.count()).thenReturn(5L);
+
+        // When
+        int paginas = corredorService.contarPaginas(seletor);
+
+        // Then
+        assertEquals(1, paginas);
+        verify(corredorRepository).count();
+    }
+
+    @Test
+    @DisplayName("Deve retornar 0 páginas quando não há registros")
+    void deveRetornar0PaginasQuandoNaoHaRegistros() {
+        // Given
+        CorredorSeletor seletor = new CorredorSeletor();
+        
+        when(corredorRepository.count()).thenReturn(0L);
+
+        // When
+        int paginas = corredorService.contarPaginas(seletor);
+
+        // Then
+        assertEquals(0, paginas);
+        verify(corredorRepository).count();
+    }
+
+    @Test
+    @DisplayName("Deve contar total de registros com filtro de responsável")
+    void deveContarTotalDeRegistrosComFiltroDeResponsavel() {
+        // Given
+        CorredorSeletor seletor = new CorredorSeletor();
+        seletor.setNome("Teste");
+        seletor.setResponsavelId("resp123");
+        
+        List<Corredor> corredoresFiltrados = Arrays.asList(corredorValido);
+        when(corredorRepository.findByFiltros("Teste", "resp123")).thenReturn(corredoresFiltrados);
+
+        // When
+        long total = corredorService.contarTotalRegistros(seletor);
+
+        // Then
+        assertEquals(1L, total);
+        verify(corredorRepository).findByFiltros("Teste", "resp123");
+        verify(corredorRepository, never()).count();
+    }
+
+    @Test
+    @DisplayName("Deve contar total de registros sem filtro de responsável")
+    void deveContarTotalDeRegistrosSemFiltroDeResponsavel() {
+        // Given
+        CorredorSeletor seletor = new CorredorSeletor();
+        seletor.setNome("Teste");
+        // Não configura responsavelId
+        
+        when(corredorRepository.count()).thenReturn(10L);
+
+        // When
+        long total = corredorService.contarTotalRegistros(seletor);
+
+        // Then
+        assertEquals(10L, total);
+        verify(corredorRepository).count();
+        verify(corredorRepository, never()).findByFiltros(any(), any());
+    }
+
+    @Test
+    @DisplayName("Deve pesquisar com seletor sem paginação")
+    void devePesquisarComSeletorSemPaginacao2() {
+        // Given
+        CorredorSeletor seletor = new CorredorSeletor();
+        seletor.setNome("Teste");
+        // Não configura paginação
+        
+        List<Corredor> corredores = Arrays.asList(corredorValido);
+        when(corredorRepository.findAll(seletor)).thenReturn(corredores);
+
+        // When
+        List<Corredor> resultado = corredorService.pesquisarComSeletor(seletor);
+
+        // Then
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals(corredorValido, resultado.get(0));
+        verify(corredorRepository).findAll(seletor);
+        verify(corredorRepository, never()).findAll(any(CorredorSeletor.class), any(PageRequest.class));
+    }
+
+    @Test
+    @DisplayName("Deve pesquisar com seletor nulo")
+    void devePesquisarComSeletorNulo() {
+        // Given
+        List<Corredor> corredores = Arrays.asList(corredorValido);
+        when(corredorRepository.findAll((CorredorSeletor) null)).thenReturn(corredores);
+
+        // When
+        List<Corredor> resultado = corredorService.pesquisarComSeletor(null);
+
+        // Then
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        verify(corredorRepository).findAll((CorredorSeletor) null);
+    }
 } 
