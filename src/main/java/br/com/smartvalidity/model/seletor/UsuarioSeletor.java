@@ -43,7 +43,8 @@ public class UsuarioSeletor extends BaseSeletor implements Specification<Usuario
             predicates.add(cb.like(root.get("email"), "%" + this.getEmail() + "%"));
         }
 
-        //aplicarFiltroPeriodo(root, cb, predicates, this.getDataInicialCriacao(), this.getDataFinalCriacao(), "createdAt");
+        //aplicarFiltroPeriodo(root, cb, predicates, this.getDataInicialCriacao(), this.getDataFinalCriacao(),
+        // "createdAt");
 
         return cb.and(predicates.toArray(new Predicate[0]));
     }
