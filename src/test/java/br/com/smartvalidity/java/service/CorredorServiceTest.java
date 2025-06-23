@@ -78,14 +78,9 @@ class CorredorServiceTest {
     @Test
     @DisplayName("Deve buscar todos os corredores")
     void deveBuscarTodosCorredores() {
-        // Given
         List<Corredor> corredores = Arrays.asList(corredorValido);
         when(corredorRepository.findAll()).thenReturn(corredores);
-
-        // When
         List<Corredor> result = corredorService.listarTodos();
-
-        // Then
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(corredorValido, result.get(0));
@@ -187,24 +182,17 @@ class CorredorServiceTest {
     @Test
     @DisplayName("Deve atualizar corredor existente")
     void deveAtualizarCorredorExistente() throws SmartValidityException {
-        // Given
         String idCorredor = corredorValido.getId();
         Corredor corredorAtualizado = new Corredor();
         corredorAtualizado.setNome("Corredor Atualizado");
         corredorAtualizado.setResponsaveis(Arrays.asList(responsavel2));
-
         when(corredorRepository.findById(idCorredor)).thenReturn(Optional.of(corredorValido));
         when(corredorRepository.save(any(Corredor.class))).thenReturn(corredorAtualizado);
-
-        // When
         Corredor result = corredorService.atualizar(idCorredor, corredorAtualizado);
-
-        // Then
         assertNotNull(result);
         assertEquals("Corredor Atualizado", result.getNome());
         assertEquals(1, result.getResponsaveis().size());
         assertTrue(result.getResponsaveis().contains(responsavel2));
-
         verify(corredorRepository).findById(idCorredor);
         verify(corredorRepository).save(any(Corredor.class));
     }
@@ -212,14 +200,9 @@ class CorredorServiceTest {
     @Test
     @DisplayName("Deve excluir corredor existente")
     void deveExcluirCorredorExistente() throws SmartValidityException {
-        // Given
         String idCorredor = corredorValido.getId();
         when(corredorRepository.findById(idCorredor)).thenReturn(Optional.of(corredorValido));
-
-        // When
         corredorService.excluir(idCorredor);
-
-        // Then
         verify(corredorRepository).findById(idCorredor);
         verify(corredorRepository).delete(corredorValido);
     }
@@ -227,10 +210,8 @@ class CorredorServiceTest {
     @Test
     @DisplayName("Deve salvar imagem do corredor")
     void deveSalvarImagemDoCorredor() throws SmartValidityException {
-        // Given
         String idCorredor = corredorValido.getId();
         String imagemBase64 = "imagemBase64Processada";
-        
         when(corredorRepository.findById(idCorredor)).thenReturn(Optional.of(corredorValido));
         when(imagemService.processarImagem(multipartFile)).thenReturn(imagemBase64);
         when(corredorRepository.save(any(Corredor.class))).thenReturn(corredorValido);

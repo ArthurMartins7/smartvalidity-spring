@@ -12,6 +12,6 @@ import org.springframework.test.context.ActiveProfiles;
     "br.com.smartvalidity.java.service"  // Inclui todos os *ServiceTest
 })
 @ActiveProfiles("test")
-public class AllTestsSuite {
+public class TestsSuite {
 
 } 

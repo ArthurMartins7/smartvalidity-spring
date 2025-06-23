@@ -139,26 +139,19 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("Deve verificar hash da senha antes da persistência")
     void deveVerificarHashDaSenhaAntesDaPersistencia() throws SmartValidityException {
-        // Given
         Usuario novoUsuario = new Usuario();
         novoUsuario.setNome("Ana Costa");
         novoUsuario.setEmail("ana@teste.com");
         novoUsuario.setCpf("999.888.777-66");
         novoUsuario.setSenha("minhasenha");
-
         String senhaEncodada = "senhaHasheada456";
         when(usuarioRepository.existsByEmail("ana@teste.com")).thenReturn(false);
         when(usuarioRepository.findBySenha("minhasenha")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("minhasenha")).thenReturn(senhaEncodada);
-        
         Usuario usuarioSalvo = new Usuario();
         usuarioSalvo.setSenha(senhaEncodada);
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioSalvo);
-
-        // When
         Usuario result = usuarioService.salvar(novoUsuario);
-
-        // Then
         assertEquals(senhaEncodada, result.getSenha());
         verify(passwordEncoder).encode("minhasenha");
         verify(usuarioRepository).findBySenha("minhasenha");
@@ -167,22 +160,16 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("Não deve codificar senha se já estiver hashada")
     void naoDeveCodificarSenhaSeJaEstiverHashada() throws SmartValidityException {
-        // Given
         String senhaJaHashada = "senhaJaHashada123";
         Usuario novoUsuario = new Usuario();
         novoUsuario.setNome("Lucas Pereira");
         novoUsuario.setEmail("lucas@teste.com");
         novoUsuario.setCpf("444.555.666-77");
         novoUsuario.setSenha(senhaJaHashada);
-
         when(usuarioRepository.existsByEmail("lucas@teste.com")).thenReturn(false);
         when(usuarioRepository.findBySenha(senhaJaHashada)).thenReturn(Optional.of(usuarioValido));
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(novoUsuario);
-
-        // When
         Usuario result = usuarioService.salvar(novoUsuario);
-
-        // Then
         verify(passwordEncoder, never()).encode(anyString());
         verify(usuarioRepository).findBySenha(senhaJaHashada);
     }

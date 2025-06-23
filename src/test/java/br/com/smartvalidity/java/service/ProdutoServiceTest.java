@@ -313,16 +313,10 @@ class ProdutoServiceTest {
     @Test
     @DisplayName("Deve contar total de registros corretamente")
     void deveContarTotalRegistrosCorretamente() {
-        // Given
         ProdutoSeletor seletor = new ProdutoSeletor();
         seletor.setDescricao("Produto");
-        
         when(produtoRepository.count(seletor)).thenReturn(5L);
-
-        // When
         long totalRegistros = produtoService.contarTotalRegistros(seletor);
-
-        // Then
         assertEquals(5L, totalRegistros);
         verify(produtoRepository).count(seletor);
     }
@@ -330,42 +324,30 @@ class ProdutoServiceTest {
     @Test
     @DisplayName("Não deve salvar produto com código de barras inválido")
     void naoDeveSalvarProdutoComCodigoBarrasInvalido() {
-        // Given
         Produto produtoInvalido = new Produto();
         produtoInvalido.setCodigoBarras("123"); // Código de barras muito curto
         produtoInvalido.setDescricao("Produto Inválido");
         produtoInvalido.setMarca("Marca");
         produtoInvalido.setUnidadeMedida("UN");
         produtoInvalido.setQuantidade(1);
-
-        // Simular erro de validação do JPA/Hibernate
         when(produtoRepository.save(produtoInvalido)).thenThrow(new RuntimeException("Código de barras inválido"));
-
-        // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class,
             () -> produtoService.salvar(produtoInvalido));
-
         assertTrue(exception.getMessage().contains("Código de barras inválido"));
     }
 
     @Test
     @DisplayName("Não deve salvar produto com quantidade nula")
     void naoDeveSalvarProdutoComQuantidadeNula() {
-        // Given
         Produto produtoInvalido = new Produto();
         produtoInvalido.setCodigoBarras("7891234567890");
         produtoInvalido.setDescricao("Produto Inválido");
         produtoInvalido.setMarca("Marca");
         produtoInvalido.setUnidadeMedida("UN");
         produtoInvalido.setQuantidade(null); // Quantidade nula
-
-        // Simular erro de validação do JPA/Hibernate
         when(produtoRepository.save(produtoInvalido)).thenThrow(new RuntimeException("Quantidade não pode ser nula"));
-
-        // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class,
             () -> produtoService.salvar(produtoInvalido));
-
         assertTrue(exception.getMessage().contains("Quantidade não pode ser nula"));
     }
 } 

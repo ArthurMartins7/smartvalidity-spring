@@ -273,32 +273,24 @@ class ItemProdutoServiceTest {
     @Test
     @DisplayName("Deve marcar item como inspecionado")
     void deveMarcarItemComoInspecionado() throws SmartValidityException {
-        // Given
         String idItem = itemProdutoValido.getId();
         String motivo = "Avaria/Quebra";
         String usuario = "João Silva";
         LocalDateTime agora = LocalDateTime.now();
-        
         ItemProduto itemInspecionado = new ItemProduto();
         itemInspecionado.setId(idItem);
         itemInspecionado.setInspecionado(true);
         itemInspecionado.setMotivoInspecao(motivo);
         itemInspecionado.setUsuarioInspecao(usuario);
         itemInspecionado.setDataHoraInspecao(agora);
-
         when(itemProdutoRepository.findById(idItem)).thenReturn(Optional.of(itemProdutoValido));
         when(itemProdutoRepository.save(any(ItemProduto.class))).thenReturn(itemInspecionado);
-
-        // When
         ItemProduto result = itemProdutoService.salvarItemInspecionado(itemInspecionado);
-
-        // Then
         assertNotNull(result);
         assertTrue(result.getInspecionado());
         assertEquals(motivo, result.getMotivoInspecao());
         assertEquals(usuario, result.getUsuarioInspecao());
         assertNotNull(result.getDataHoraInspecao());
-
         verify(itemProdutoRepository).findById(idItem);
         verify(itemProdutoRepository).save(any(ItemProduto.class));
     }
@@ -306,11 +298,9 @@ class ItemProdutoServiceTest {
     @Test
     @DisplayName("Não deve alterar item já inspecionado")
     void naoDeveAlterarItemJaInspecionado() throws SmartValidityException {
-        // Given
         String idItem = itemProdutoValido.getId();
         itemProdutoValido.setInspecionado(true);
         itemProdutoValido.setMotivoInspecao("Motivo Original");
-        
         ItemProduto tentativaAlteracao = new ItemProduto();
         tentativaAlteracao.setId(idItem);
         tentativaAlteracao.setInspecionado(true);

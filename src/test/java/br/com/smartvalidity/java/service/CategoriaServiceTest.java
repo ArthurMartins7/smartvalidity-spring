@@ -40,7 +40,6 @@ class CategoriaServiceTest {
         corredor = new Corredor();
         corredor.setId(java.util.UUID.randomUUID().toString());
         corredor.setNome("Corredor A");
-
         categoriaValida = new Categoria();
         categoriaValida.setId(java.util.UUID.randomUUID().toString());
         categoriaValida.setNome("Categoria A");
@@ -50,14 +49,9 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Deve buscar todas as categorias")
     void deveBuscarTodasCategorias() {
-        // Given
         List<Categoria> categorias = Arrays.asList(categoriaValida);
         when(categoriaRepository.findAll()).thenReturn(categorias);
-
-        // When
         List<Categoria> result = categoriaService.buscarTodas();
-
-        // Then
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(categoriaValida, result.get(0));
@@ -67,14 +61,9 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Deve buscar categoria por ID com sucesso")
     void deveBuscarCategoriaPorIdComSucesso() throws SmartValidityException {
-        // Given
         String id = categoriaValida.getId();
         when(categoriaRepository.findById(id)).thenReturn(Optional.of(categoriaValida));
-
-        // When
         Categoria result = categoriaService.buscarPorId(id);
-
-        // Then
         assertNotNull(result);
         assertEquals(categoriaValida.getId(), result.getId());
         assertEquals(categoriaValida.getNome(), result.getNome());
@@ -85,14 +74,10 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao buscar categoria inexistente")
     void deveLancarExcecaoAoBuscarCategoriaInexistente() {
-        // Given
         String idInexistente = java.util.UUID.randomUUID().toString();
         when(categoriaRepository.findById(idInexistente)).thenReturn(Optional.empty());
-
-        // When & Then
         SmartValidityException exception = assertThrows(SmartValidityException.class,
             () -> categoriaService.buscarPorId(idInexistente));
-
         assertEquals("Categoria não encontrada com o ID: " + idInexistente, exception.getMessage());
         verify(categoriaRepository).findById(idInexistente);
     }
@@ -100,17 +85,11 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Deve salvar categoria válida")
     void deveSalvarCategoriaValida() {
-        // Given
         Categoria novaCategoria = new Categoria();
         novaCategoria.setNome("Categoria B");
         novaCategoria.setCorredor(corredor);
-
         when(categoriaRepository.save(novaCategoria)).thenReturn(novaCategoria);
-
-        // When
         Categoria result = categoriaService.salvar(novaCategoria);
-
-        // Then
         assertNotNull(result);
         assertEquals(novaCategoria.getNome(), result.getNome());
         assertEquals(corredor, result.getCorredor());
@@ -120,16 +99,13 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Não deve salvar categoria com nome vazio")
     void naoDeveSalvarCategoriaComNomeVazio() {
-        // Given
         Categoria categoriaInvalida = new Categoria();
-        categoriaInvalida.setNome(""); // Nome vazio
+        categoriaInvalida.setNome("");
         categoriaInvalida.setCorredor(corredor);
 
-        // Simular erro de validação
         when(categoriaRepository.save(categoriaInvalida))
             .thenThrow(new RuntimeException("Nome não pode ser vazio"));
 
-        // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class,
             () -> categoriaService.salvar(categoriaInvalida));
 
@@ -139,17 +115,11 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Deve salvar categoria válida com associação a corredor")
     void deveSalvarCategoriaValidaComAssociacaoACorredor() {
-        // Given
         Categoria categoriaComCorredor = new Categoria();
         categoriaComCorredor.setNome("Categoria com Corredor");
         categoriaComCorredor.setCorredor(corredor);
-
         when(categoriaRepository.save(categoriaComCorredor)).thenReturn(categoriaComCorredor);
-
-        // When
         Categoria result = categoriaService.salvar(categoriaComCorredor);
-
-        // Then
         assertNotNull(result);
         assertEquals("Categoria com Corredor", result.getNome());
         assertNotNull(result.getCorredor());
@@ -161,23 +131,16 @@ class CategoriaServiceTest {
     @Test
     @DisplayName("Deve atualizar nome da categoria")
     void deveAtualizarNomeDaCategoria() throws SmartValidityException {
-        // Given
         String idCategoria = categoriaValida.getId();
         Categoria categoriaAtualizada = new Categoria();
         categoriaAtualizada.setNome("Categoria Atualizada");
         categoriaAtualizada.setCorredor(corredor);
-
         when(categoriaRepository.findById(idCategoria)).thenReturn(Optional.of(categoriaValida));
         when(categoriaRepository.save(any(Categoria.class))).thenReturn(categoriaAtualizada);
-
-        // When
         Categoria result = categoriaService.atualizar(idCategoria, categoriaAtualizada);
-
-        // Then
         assertNotNull(result);
         assertEquals("Categoria Atualizada", result.getNome());
         assertEquals(corredor, result.getCorredor());
-
         verify(categoriaRepository).findById(idCategoria);
         verify(categoriaRepository).save(any(Categoria.class));
     }
