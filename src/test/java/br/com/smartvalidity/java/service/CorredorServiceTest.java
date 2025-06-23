@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,14 +53,14 @@ class CorredorServiceTest {
     @BeforeEach
     void setUp() {
         responsavel1 = new Usuario();
-        responsavel1.setId("usuario-1");
+        responsavel1.setId(UUID.randomUUID().toString());
         responsavel1.setNome("João Silva");
         responsavel1.setEmail("joao@teste.com");
         responsavel1.setCpf("123.456.789-09");
         responsavel1.setPerfilAcesso(PerfilAcesso.OPERADOR);
 
         responsavel2 = new Usuario();
-        responsavel2.setId("usuario-2");
+        responsavel2.setId(UUID.randomUUID().toString());
         responsavel2.setNome("Maria Santos");
         responsavel2.setEmail("maria@teste.com");
         responsavel2.setCpf("987.654.321-00");
@@ -68,7 +69,7 @@ class CorredorServiceTest {
         List<Usuario> responsaveis = Arrays.asList(responsavel1, responsavel2);
 
         corredorValido = new Corredor();
-        corredorValido.setId("corredor-1");
+        corredorValido.setId(UUID.randomUUID().toString());
         corredorValido.setNome("Corredor A");
         corredorValido.setResponsaveis(responsaveis);
         corredorValido.setImagemEmBase64("imagemBase64Exemplo");
@@ -95,7 +96,7 @@ class CorredorServiceTest {
     @DisplayName("Deve buscar corredor por ID com sucesso")
     void deveBuscarCorredorPorIdComSucesso() throws SmartValidityException {
         // Given
-        String id = "corredor-1";
+        String id = corredorValido.getId();
         when(corredorRepository.findById(id)).thenReturn(Optional.of(corredorValido));
 
         // When
@@ -112,7 +113,7 @@ class CorredorServiceTest {
     @DisplayName("Deve lançar exceção ao buscar corredor inexistente")
     void deveLancarExcecaoAoBuscarCorredorInexistente() {
         // Given
-        String idInexistente = "corredor-inexistente";
+        String idInexistente = UUID.randomUUID().toString();
         when(corredorRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
         // When & Then
@@ -187,7 +188,7 @@ class CorredorServiceTest {
     @DisplayName("Deve atualizar corredor existente")
     void deveAtualizarCorredorExistente() throws SmartValidityException {
         // Given
-        String idCorredor = "corredor-1";
+        String idCorredor = corredorValido.getId();
         Corredor corredorAtualizado = new Corredor();
         corredorAtualizado.setNome("Corredor Atualizado");
         corredorAtualizado.setResponsaveis(Arrays.asList(responsavel2));
@@ -212,7 +213,7 @@ class CorredorServiceTest {
     @DisplayName("Deve excluir corredor existente")
     void deveExcluirCorredorExistente() throws SmartValidityException {
         // Given
-        String idCorredor = "corredor-1";
+        String idCorredor = corredorValido.getId();
         when(corredorRepository.findById(idCorredor)).thenReturn(Optional.of(corredorValido));
 
         // When
@@ -227,7 +228,7 @@ class CorredorServiceTest {
     @DisplayName("Deve salvar imagem do corredor")
     void deveSalvarImagemDoCorredor() throws SmartValidityException {
         // Given
-        String idCorredor = "corredor-1";
+        String idCorredor = corredorValido.getId();
         String imagemBase64 = "imagemBase64Processada";
         
         when(corredorRepository.findById(idCorredor)).thenReturn(Optional.of(corredorValido));
@@ -247,7 +248,7 @@ class CorredorServiceTest {
     @DisplayName("Deve lançar exceção ao salvar imagem de corredor inexistente")
     void deveLancarExcecaoAoSalvarImagemCorredorInexistente() throws SmartValidityException {
         // Given
-        String idInexistente = "corredor-inexistente";
+        String idInexistente = UUID.randomUUID().toString();
         when(corredorRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
         // When & Then
@@ -312,11 +313,11 @@ class CorredorServiceTest {
         seletor.setPagina(1);
         seletor.setLimite(5);
         seletor.setNome("Corredor");
-        seletor.setResponsavelId("usuario-1");
+        seletor.setResponsavelId(responsavel1.getId());
         
         Page<Corredor> page = new PageImpl<>(Arrays.asList(corredorValido), PageRequest.of(0, 5), 1);
         
-        when(corredorRepository.findByFiltros(eq("Corredor"), eq("usuario-1"), any(PageRequest.class)))
+        when(corredorRepository.findByFiltros(eq("Corredor"), eq(responsavel1.getId()), any(PageRequest.class)))
             .thenReturn(page);
 
         // When
@@ -324,7 +325,7 @@ class CorredorServiceTest {
 
         // Then
         assertEquals(1, totalPaginas);
-        verify(corredorRepository).findByFiltros(eq("Corredor"), eq("usuario-1"), any(PageRequest.class));
+        verify(corredorRepository).findByFiltros(eq("Corredor"), eq(responsavel1.getId()), any(PageRequest.class));
     }
 
     @Test
@@ -333,17 +334,17 @@ class CorredorServiceTest {
         // Given
         CorredorSeletor seletor = new CorredorSeletor();
         seletor.setNome("Corredor");
-        seletor.setResponsavelId("usuario-1");
+        seletor.setResponsavelId(responsavel1.getId());
         
         List<Corredor> corredores = Arrays.asList(corredorValido);
-        when(corredorRepository.findByFiltros("Corredor", "usuario-1")).thenReturn(corredores);
+        when(corredorRepository.findByFiltros("Corredor", responsavel1.getId())).thenReturn(corredores);
 
         // When
         long totalRegistros = corredorService.contarTotalRegistros(seletor);
 
         // Then
         assertEquals(1L, totalRegistros);
-        verify(corredorRepository).findByFiltros("Corredor", "usuario-1");
+        verify(corredorRepository).findByFiltros("Corredor", responsavel1.getId());
     }
 
     @Test
@@ -370,7 +371,7 @@ class CorredorServiceTest {
         // Given
         CorredorSeletor seletor = new CorredorSeletor();
         seletor.setNome("Corredor A");
-        seletor.setResponsavelId("usuario-1");
+        seletor.setResponsavelId(responsavel1.getId());
         
         List<Corredor> corredores = Arrays.asList(corredorValido);
         when(corredorRepository.findAll(seletor)).thenReturn(corredores);
@@ -385,7 +386,7 @@ class CorredorServiceTest {
 
         // Verifica se o corredor encontrado tem o responsável esperado
         assertTrue(result.get(0).getResponsaveis().stream()
-            .anyMatch(resp -> resp.getId().equals("usuario-1")));
+            .anyMatch(resp -> resp.getId().equals(responsavel1.getId())));
             
         verify(corredorRepository).findAll(seletor);
     }

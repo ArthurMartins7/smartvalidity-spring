@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +56,7 @@ class UsuarioServiceTest {
     @BeforeEach
     void setUp() {
         usuarioValido = new Usuario();
-        usuarioValido.setId("1");
+        usuarioValido.setId(UUID.randomUUID().toString());
         usuarioValido.setNome("João Silva");
         usuarioValido.setEmail("joao@teste.com");
         usuarioValido.setCpf("123.456.789-09");
@@ -63,7 +64,7 @@ class UsuarioServiceTest {
         usuarioValido.setPerfilAcesso(PerfilAcesso.OPERADOR);
 
         usuarioComEmailExistente = new Usuario();
-        usuarioComEmailExistente.setId("2");
+        usuarioComEmailExistente.setId(UUID.randomUUID().toString());
         usuarioComEmailExistente.setNome("Maria Santos");
         usuarioComEmailExistente.setEmail("joao@teste.com"); // Mesmo email
         usuarioComEmailExistente.setCpf("987.654.321-00");
@@ -88,7 +89,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.findBySenha("123456")).thenReturn(Optional.empty());
         
         Usuario usuarioSalvo = new Usuario();
-        usuarioSalvo.setId("3");
+        usuarioSalvo.setId(UUID.randomUUID().toString());
         usuarioSalvo.setNome("Pedro Costa");
         usuarioSalvo.setEmail("pedro@teste.com");
         usuarioSalvo.setCpf("111.222.333-44");
@@ -190,7 +191,7 @@ class UsuarioServiceTest {
     @DisplayName("Deve alterar usuário existente")
     void deveAlterarUsuarioExistente() throws SmartValidityException {
         // Given
-        String idUsuario = "1";
+        String idUsuario = usuarioValido.getId();
         Usuario usuarioAtualizado = new Usuario();
         usuarioAtualizado.setNome("João Silva Atualizado");
         usuarioAtualizado.setEmail("joao.novo@teste.com");
@@ -216,7 +217,7 @@ class UsuarioServiceTest {
     @DisplayName("Não deve alterar usuário com ID inexistente")
     void naoDeveAlterarUsuarioComIdInexistente() {
         // Given
-        String idInexistente = "999";
+        String idInexistente = UUID.randomUUID().toString();
         Usuario usuarioAtualizado = new Usuario();
         usuarioAtualizado.setNome("Nome Qualquer");
 
@@ -235,7 +236,7 @@ class UsuarioServiceTest {
     @DisplayName("Deve buscar usuário por ID com sucesso")
     void deveBuscarUsuarioPorIdComSucesso() throws SmartValidityException {
         // Given
-        String id = "1";
+        String id = usuarioValido.getId();
         doNothing().when(authorizationService).verificarPerfilAcesso();
         when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuarioValido));
 
@@ -361,7 +362,7 @@ class UsuarioServiceTest {
     @DisplayName("Deve excluir usuário com autorização")
     void deveExcluirUsuarioComAutorizacao() throws SmartValidityException {
         // Given
-        String idUsuario = "1";
+        String idUsuario = usuarioValido.getId();
         doNothing().when(authorizationService).verifiarCredenciaisUsuario(idUsuario);
 
         // When

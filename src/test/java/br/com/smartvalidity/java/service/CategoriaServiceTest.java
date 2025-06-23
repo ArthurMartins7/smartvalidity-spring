@@ -38,11 +38,11 @@ class CategoriaServiceTest {
     @BeforeEach
     void setUp() {
         corredor = new Corredor();
-        corredor.setId("corredor-1");
+        corredor.setId(java.util.UUID.randomUUID().toString());
         corredor.setNome("Corredor A");
 
         categoriaValida = new Categoria();
-        categoriaValida.setId("categoria-1");
+        categoriaValida.setId(java.util.UUID.randomUUID().toString());
         categoriaValida.setNome("Categoria A");
         categoriaValida.setCorredor(corredor);
     }
@@ -68,7 +68,7 @@ class CategoriaServiceTest {
     @DisplayName("Deve buscar categoria por ID com sucesso")
     void deveBuscarCategoriaPorIdComSucesso() throws SmartValidityException {
         // Given
-        String id = "categoria-1";
+        String id = categoriaValida.getId();
         when(categoriaRepository.findById(id)).thenReturn(Optional.of(categoriaValida));
 
         // When
@@ -86,7 +86,7 @@ class CategoriaServiceTest {
     @DisplayName("Deve lançar exceção ao buscar categoria inexistente")
     void deveLancarExcecaoAoBuscarCategoriaInexistente() {
         // Given
-        String idInexistente = "categoria-inexistente";
+        String idInexistente = java.util.UUID.randomUUID().toString();
         when(categoriaRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
         // When & Then
@@ -162,7 +162,7 @@ class CategoriaServiceTest {
     @DisplayName("Deve atualizar nome da categoria")
     void deveAtualizarNomeDaCategoria() throws SmartValidityException {
         // Given
-        String idCategoria = "categoria-1";
+        String idCategoria = categoriaValida.getId();
         Categoria categoriaAtualizada = new Categoria();
         categoriaAtualizada.setNome("Categoria Atualizada");
         categoriaAtualizada.setCorredor(corredor);
@@ -186,10 +186,10 @@ class CategoriaServiceTest {
     @DisplayName("Deve atualizar nome e corredor da categoria")
     void deveAtualizarNomeECorredorDaCategoria() throws SmartValidityException {
         // Given
-        String idCategoria = "categoria-1";
+        String idCategoria = categoriaValida.getId();
         
         Corredor novoCorredor = new Corredor();
-        novoCorredor.setId("corredor-2");
+        novoCorredor.setId(java.util.UUID.randomUUID().toString());
         novoCorredor.setNome("Corredor B");
         
         Categoria categoriaAtualizada = new Categoria();
@@ -206,7 +206,7 @@ class CategoriaServiceTest {
         assertNotNull(result);
         assertEquals("Categoria Mudou de Corredor", result.getNome());
         assertEquals(novoCorredor, result.getCorredor());
-        assertEquals("corredor-2", result.getCorredor().getId());
+        assertEquals(novoCorredor.getId(), result.getCorredor().getId());
 
         verify(categoriaRepository).findById(idCategoria);
         verify(categoriaRepository).save(any(Categoria.class));
@@ -216,7 +216,7 @@ class CategoriaServiceTest {
     @DisplayName("Não deve atualizar categoria com ID inexistente")
     void naoDeveAtualizarCategoriaComIdInexistente() {
         // Given
-        String idInexistente = "categoria-inexistente";
+        String idInexistente = java.util.UUID.randomUUID().toString();
         Categoria categoriaAtualizada = new Categoria();
         categoriaAtualizada.setNome("Nome Qualquer");
 
@@ -235,7 +235,7 @@ class CategoriaServiceTest {
     @DisplayName("Deve excluir categoria existente")
     void deveExcluirCategoriaExistente() throws SmartValidityException {
         // Given
-        String idCategoria = "categoria-1";
+        String idCategoria = categoriaValida.getId();
         when(categoriaRepository.findById(idCategoria)).thenReturn(Optional.of(categoriaValida));
 
         // When
@@ -250,7 +250,7 @@ class CategoriaServiceTest {
     @DisplayName("Não deve excluir categoria inexistente")
     void naoDeveExcluirCategoriaInexistente() {
         // Given
-        String idInexistente = "categoria-inexistente";
+        String idInexistente = java.util.UUID.randomUUID().toString();
         when(categoriaRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
         // When & Then

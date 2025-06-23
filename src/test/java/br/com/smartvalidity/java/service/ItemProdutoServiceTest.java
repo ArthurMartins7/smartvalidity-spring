@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,11 +47,11 @@ class ItemProdutoServiceTest {
     @BeforeEach
     void setUp() {
         categoria = new Categoria();
-        categoria.setId("categoria-1");
+        categoria.setId(UUID.randomUUID().toString());
         categoria.setNome("Categoria Teste");
 
         produto = new Produto();
-        produto.setId("produto-1");
+        produto.setId(UUID.randomUUID().toString());
         produto.setCodigoBarras("7891234567890");
         produto.setDescricao("Produto Teste");
         produto.setMarca("Marca A");
@@ -59,7 +60,7 @@ class ItemProdutoServiceTest {
         produto.setCategoria(categoria);
 
         itemProdutoValido = new ItemProduto();
-        itemProdutoValido.setId("item-1");
+        itemProdutoValido.setId(UUID.randomUUID().toString());
         itemProdutoValido.setLote("LOTE123");
         itemProdutoValido.setPrecoVenda(15.99);
         itemProdutoValido.setDataFabricacao(LocalDateTime.now().minusDays(30));
@@ -91,7 +92,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Deve buscar item por ID com sucesso")
     void deveBuscarItemPorIdComSucesso() throws SmartValidityException {
         // Given
-        String id = "item-1";
+        String id = itemProdutoValido.getId();
         when(itemProdutoRepository.findById(id)).thenReturn(Optional.of(itemProdutoValido));
 
         // When
@@ -108,7 +109,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Deve lançar exceção ao buscar item inexistente")
     void deveLancarExcecaoAoBuscarItemInexistente() {
         // Given
-        String idInexistente = "item-inexistente";
+        String idInexistente = UUID.randomUUID().toString();
         when(itemProdutoRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
         // When & Then
@@ -207,7 +208,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Deve buscar itens por produto")
     void deveBuscarItensPorProduto() {
         // Given
-        String produtoId = "produto-1";
+        String produtoId = produto.getId();
         List<ItemProduto> itens = Arrays.asList(itemProdutoValido);
         when(itemProdutoRepository.findByProdutoId(produtoId)).thenReturn(itens);
 
@@ -225,7 +226,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Deve atualizar item de produto")
     void deveAtualizarItemProduto() throws SmartValidityException {
         // Given
-        String idItem = "item-1";
+        String idItem = itemProdutoValido.getId();
         ItemProduto itemAtualizado = new ItemProduto();
         itemAtualizado.setLote("LOTE_ATUALIZADO");
         itemAtualizado.setPrecoVenda(25.00);
@@ -253,7 +254,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Deve excluir item e decrementar estoque do produto")
     void deveExcluirItemEDecrementarEstoque() throws SmartValidityException {
         // Given
-        String idItem = "item-1";
+        String idItem = itemProdutoValido.getId();
         when(itemProdutoRepository.findById(idItem)).thenReturn(Optional.of(itemProdutoValido));
         when(produtoService.buscarPorId(produto.getId())).thenReturn(produto);
 
@@ -273,7 +274,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Deve marcar item como inspecionado")
     void deveMarcarItemComoInspecionado() throws SmartValidityException {
         // Given
-        String idItem = "item-1";
+        String idItem = itemProdutoValido.getId();
         String motivo = "Avaria/Quebra";
         String usuario = "João Silva";
         LocalDateTime agora = LocalDateTime.now();
@@ -306,7 +307,7 @@ class ItemProdutoServiceTest {
     @DisplayName("Não deve alterar item já inspecionado")
     void naoDeveAlterarItemJaInspecionado() throws SmartValidityException {
         // Given
-        String idItem = "item-1";
+        String idItem = itemProdutoValido.getId();
         itemProdutoValido.setInspecionado(true);
         itemProdutoValido.setMotivoInspecao("Motivo Original");
         
@@ -336,25 +337,25 @@ class ItemProdutoServiceTest {
         int quantidadeParaRemover = 2;
         
         ItemProduto item1 = new ItemProduto();
-        item1.setId("item-1");
+        item1.setId(UUID.randomUUID().toString());
         item1.setLote(lote);
         item1.setProduto(produto);
         
         ItemProduto item2 = new ItemProduto();
-        item2.setId("item-2");
+        item2.setId(UUID.randomUUID().toString());
         item2.setLote(lote);
         item2.setProduto(produto);
         
         ItemProduto item3 = new ItemProduto();
-        item3.setId("item-3");
+        item3.setId(UUID.randomUUID().toString());
         item3.setLote(lote);
         item3.setProduto(produto);
 
         List<ItemProduto> itensDoLote = Arrays.asList(item1, item2, item3);
         
         when(itemProdutoRepository.findByLote(lote)).thenReturn(itensDoLote);
-        when(itemProdutoRepository.findById("item-1")).thenReturn(Optional.of(item1));
-        when(itemProdutoRepository.findById("item-2")).thenReturn(Optional.of(item2));
+        when(itemProdutoRepository.findById(item1.getId())).thenReturn(Optional.of(item1));
+        when(itemProdutoRepository.findById(item2.getId())).thenReturn(Optional.of(item2));
         when(produtoService.buscarPorId(produto.getId())).thenReturn(produto);
 
         // When
@@ -362,8 +363,8 @@ class ItemProdutoServiceTest {
 
         // Then
         verify(itemProdutoRepository).findByLote(lote);
-        verify(itemProdutoRepository).findById("item-1");
-        verify(itemProdutoRepository).findById("item-2");
+        verify(itemProdutoRepository).findById(item1.getId());
+        verify(itemProdutoRepository).findById(item2.getId());
         verify(itemProdutoRepository).delete(item1);
         verify(itemProdutoRepository).delete(item2);
         verify(itemProdutoRepository, never()).delete(item3); // O terceiro não deve ser removido
