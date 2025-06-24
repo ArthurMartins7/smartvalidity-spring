@@ -1,5 +1,15 @@
 package br.com.smartvalidity.model.entity;
 
+<<<<<<< HEAD
+=======
+import br.com.smartvalidity.model.enums.FrequenciaDisparo;
+import br.com.smartvalidity.model.enums.SituacaoValidade;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+>>>>>>> ac60f2e9298f0c29c567180cb212ef149affd74d
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -38,6 +48,7 @@ public class Alerta {
     @Column(name = "data_hora_disparo", nullable = false)
     private LocalDateTime dataHoraDisparo;
 
+<<<<<<< HEAD
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoAlerta tipo;
@@ -59,6 +70,12 @@ public class Alerta {
 
     @Column(name = "data_envio")
     private LocalDateTime dataEnvio;
+=======
+    private boolean isDisparoRecorrente;
+
+    @Enumerated(EnumType.STRING)
+    private FrequenciaDisparo frequenciaDisparo;
+>>>>>>> ac60f2e9298f0c29c567180cb212ef149affd74d
 
     @ManyToMany
     @JoinTable(

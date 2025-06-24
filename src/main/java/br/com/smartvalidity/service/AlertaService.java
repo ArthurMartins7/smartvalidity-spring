@@ -1,5 +1,6 @@
 package br.com.smartvalidity.service;
 
+<<<<<<< HEAD
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,10 +25,23 @@ import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.model.seletor.AlertaSeletor;
+=======
+import br.com.smartvalidity.model.dto.AlertaRequestDTO;
+import br.com.smartvalidity.model.dto.AlertaResponseDTO;
+import br.com.smartvalidity.model.entity.Alerta;
+import br.com.smartvalidity.model.repository.AlertaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+>>>>>>> ac60f2e9298f0c29c567180cb212ef149affd74d
 
 @Service
 public class AlertaService {
 
+<<<<<<< HEAD
     private static final Logger logger = LoggerFactory.getLogger(AlertaService.class);
 
     @Autowired
@@ -327,5 +341,41 @@ public class AlertaService {
         }
 
         return dto;
+=======
+    @Autowired
+    private AlertaRepository alertaRepository;
+
+    public AlertaResponseDTO create(AlertaRequestDTO dto) {
+        Alerta alerta = dto.toEntity();
+        alerta = alertaRepository.save(alerta);
+        return AlertaResponseDTO.fromEntity(alerta);
+    }
+
+    public List<AlertaResponseDTO> findAll() {
+        return alertaRepository.findAll().stream()
+                .map(AlertaResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public Optional<AlertaResponseDTO> findById(Integer id) {
+        return alertaRepository.findById(id).map(AlertaResponseDTO::fromEntity);
+    }
+
+    public Optional<AlertaResponseDTO> update(Integer id, AlertaRequestDTO dto) {
+        return alertaRepository.findById(id).map(alerta -> {
+            alerta.setTitulo(dto.getTitulo());
+            alerta.setDescricao(dto.getDescricao());
+            alerta.setDataHoraDisparo(dto.getDataHoraDisparo());
+            alerta.setDisparoRecorrente(dto.isDisparoRecorrente());
+            alerta.setFrequenciaDisparo(dto.getFrequenciaDisparo());
+            // Relacionamentos podem ser atualizados aqui se necessário
+            alerta = alertaRepository.save(alerta);
+            return AlertaResponseDTO.fromEntity(alerta);
+        });
+    }
+
+    public void delete(Integer id) {
+        alertaRepository.deleteById(id);
+>>>>>>> ac60f2e9298f0c29c567180cb212ef149affd74d
     }
 } 

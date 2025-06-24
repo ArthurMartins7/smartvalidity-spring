@@ -1,5 +1,6 @@
 package br.com.smartvalidity.scheduler;
 
+<<<<<<< HEAD
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,3 +18,10 @@ public class AlertaScheduler {
         alertaService.gerarAlertasAutomaticos();
     }
 } 
+=======
+import org.springframework.stereotype.Component;
+
+@Component
+public class AlertaScheduler {
+}
+>>>>>>> ac60f2e9298f0c29c567180cb212ef149affd74d

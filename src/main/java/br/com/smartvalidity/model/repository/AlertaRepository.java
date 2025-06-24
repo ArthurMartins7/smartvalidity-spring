@@ -1,5 +1,6 @@
 package br.com.smartvalidity.model.repository;
 
+<<<<<<< HEAD
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,4 +31,10 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer>, JpaSpe
     @Query("SELECT a FROM Alerta a WHERE a.tipo IN (:tipos) AND a.ativo = true AND " +
            "(a.dataEnvio IS NULL OR DATE(a.dataEnvio) < CURRENT_DATE)")
     List<Alerta> findAlertasVencimentoParaEnviar(@Param("tipos") List<TipoAlerta> tipos);
+=======
+import br.com.smartvalidity.model.entity.Alerta;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
+>>>>>>> ac60f2e9298f0c29c567180cb212ef149affd74d
 } 
