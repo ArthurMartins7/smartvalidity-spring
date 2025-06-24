@@ -1,13 +1,8 @@
 package br.com.smartvalidity.service;
 
-import br.com.smartvalidity.auth.AuthenticationService;
-import br.com.smartvalidity.auth.AuthorizationService;
-import br.com.smartvalidity.exception.SmartValidityException;
-import br.com.smartvalidity.model.entity.Usuario;
-import br.com.smartvalidity.model.enums.PerfilAcesso;
-import br.com.smartvalidity.model.repository.UsuarioRepository;
-import br.com.smartvalidity.model.seletor.UsuarioSeletor;
-import org.hibernate.tool.schema.spi.SchemaManagementException;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,8 +11,13 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import br.com.smartvalidity.auth.AuthenticationService;
+import br.com.smartvalidity.auth.AuthorizationService;
+import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.PerfilAcesso;
+import br.com.smartvalidity.model.repository.UsuarioRepository;
+import br.com.smartvalidity.model.seletor.UsuarioSeletor;
 
 @Service
 public class UsuarioService implements UserDetailsService {
@@ -36,8 +36,14 @@ public class UsuarioService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return usuarioRepository.findByEmail(username).orElseThrow(
+        Usuario usuario = usuarioRepository.findByEmail(username).orElseThrow(
                 () -> new UsernameNotFoundException("Usuário não encontrado" + username));
+
+        if (Boolean.FALSE.equals(usuario.getEmailVerificado())) {
+            throw new UsernameNotFoundException("E-mail não verificado");
+        }
+
+        return usuario;
     }
 
     public List<Usuario> buscarComSeletor(UsuarioSeletor seletor) throws SmartValidityException {

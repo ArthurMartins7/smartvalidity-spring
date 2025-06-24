@@ -52,6 +52,8 @@ public class Usuario implements UserDetails {
     @Column(length = 4000)
     private String senha;
 
+    private Boolean emailVerificado = false;
+
     @ManyToMany(mappedBy = "usuariosAlerta")
     private Set<Alerta> alertas;
 
