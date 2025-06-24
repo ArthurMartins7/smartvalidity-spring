@@ -9,6 +9,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.ItemProduto;
@@ -37,6 +38,7 @@ public class AlertaScheduler {
      * e criar alertas automáticos conforme necessário
      */
     @Scheduled(fixedRate = 120000) // 2 minutos = 120.000 ms
+    @Transactional
     public void verificarVencimentosECriarAlertas() {
         log.info("=== Iniciando verificação de vencimentos ===");
         
@@ -86,6 +88,7 @@ public class AlertaScheduler {
     /**
      * Criar um alerta automático para um item-produto específico
      */
+    @Transactional
     private void criarAlertaAutomatico(ItemProduto itemProduto, TipoAlerta tipoAlerta) {
         try {
             Alerta alerta = new Alerta();
@@ -127,7 +130,10 @@ public class AlertaScheduler {
 
             // Adicionar todos os usuários do sistema para receber o alerta
             List<Usuario> todosUsuarios = usuarioRepository.findAll();
-            Set<Usuario> usuariosAlerta = new HashSet<>(todosUsuarios);
+            Set<Usuario> usuariosAlerta = new HashSet<>();
+            for (Usuario usuario : todosUsuarios) {
+                usuariosAlerta.add(usuario);
+            }
             alerta.setUsuariosAlerta(usuariosAlerta);
 
             // Salvar o alerta
@@ -146,6 +152,7 @@ public class AlertaScheduler {
      * Limpar alertas antigos resolvidos (executado diariamente às 2h da manhã)
      */
     @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
     public void limparAlertasAntigos() {
         log.info("=== Iniciando limpeza de alertas antigos ===");
         

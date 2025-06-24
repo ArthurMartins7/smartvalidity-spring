@@ -71,8 +71,8 @@ public class Alerta {
     @ManyToMany
     @JoinTable(
             name = "alerta_usuario",
-            joinColumns = @JoinColumn(name = "id_alerta"),
-            inverseJoinColumns = @JoinColumn(name = "id_usuario")
+            joinColumns = @JoinColumn(name = "id_alerta", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "id_usuario", referencedColumnName = "id")
     )
     private Set<Usuario> usuariosAlerta;
 
@@ -80,8 +80,8 @@ public class Alerta {
     @ManyToMany
     @JoinTable(
             name = "alerta_produto",
-            joinColumns = @JoinColumn(name = "id_alerta"),
-            inverseJoinColumns = @JoinColumn(name = "id_produto")
+            joinColumns = @JoinColumn(name = "id_alerta", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "id_produto", referencedColumnName = "id")
     )
     private Set<Produto> produtosAlerta;
 

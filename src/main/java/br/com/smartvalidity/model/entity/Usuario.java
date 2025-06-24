@@ -22,11 +22,17 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table
-@Data
+@Getter
+@Setter
+@ToString(exclude = "alertas") // Excluir alertas do toString para evitar problemas de lazy loading
+@EqualsAndHashCode(exclude = "alertas") // Excluir alertas do equals/hashCode para evitar problemas de lazy loading
 public class Usuario implements UserDetails {
 
     @Id
