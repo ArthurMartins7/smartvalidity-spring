@@ -1,10 +1,8 @@
 package br.com.smartvalidity.model.enums;
 
-
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-
 public enum PerfilAcesso {
+    ASSINANTE,
     ADMIN,
     OPERADOR
+
 }

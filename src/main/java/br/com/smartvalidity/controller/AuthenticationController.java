@@ -2,6 +2,7 @@ package br.com.smartvalidity.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.smartvalidity.auth.AuthenticationService;
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
+import br.com.smartvalidity.model.entity.Empresa;
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.service.EmpresaService;
 import br.com.smartvalidity.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(path = "/auth")
@@ -25,6 +31,9 @@ public class AuthenticationController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmpresaService empresaService;
 
     @Autowired
     private UsuarioService usuarioService;
@@ -41,6 +50,13 @@ public class AuthenticationController {
     @PostMapping("authenticate")
     public String authenticate(Authentication authentication) throws SmartValidityException {
         return authenticationService.authenticate(authentication);
+    }
+
+    @Operation(summary = "Registrar nova empresa com usuário assinante")
+    @PostMapping("/registrar-empresa")
+    public ResponseEntity<Empresa> registrarEmpresa(@Valid @RequestBody EmpresaUsuarioDTO dto) throws SmartValidityException {
+        Empresa empresa = empresaService.cadastrarEmpresaEAssinante(dto);
+        return ResponseEntity.status(201).body(empresa);
     }
 
     @PostMapping("/novo-usuario")
