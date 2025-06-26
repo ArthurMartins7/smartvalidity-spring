@@ -1,19 +1,25 @@
 package br.com.smartvalidity.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.ProdutoDTO;
-import br.com.smartvalidity.model.entity.Fornecedor;
 import br.com.smartvalidity.model.entity.Produto;
-import br.com.smartvalidity.model.seletor.FornecedorSeletor;
 import br.com.smartvalidity.model.seletor.ProdutoSeletor;
 import br.com.smartvalidity.service.ProdutoService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/produto")
@@ -25,6 +31,14 @@ public class ProdutoController {
     @GetMapping
     public ResponseEntity<List<ProdutoDTO>> listarTodos() {
         return ResponseEntity.ok(produtoService.listarTodosDTO());
+    }
+    
+    @GetMapping("/com-itens-nao-inspecionados")
+    @Operation(summary = "Listar produtos com itens não inspecionados",
+               description = "Retorna apenas produtos que possuem itens-produto não inspecionados, para uso em alertas personalizados")
+    public ResponseEntity<List<Produto>> listarProdutosComItensNaoInspecionados() {
+        List<Produto> produtos = produtoService.buscarProdutosComItensNaoInspecionados();
+        return ResponseEntity.ok(produtos);
     }
 
     @Operation(summary = "Pesquisar produtos com filtros",

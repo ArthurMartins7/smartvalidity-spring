@@ -18,6 +18,7 @@ public class ItemProdutoService {
     private ItemProdutoRepository itemProdutoRepository;
 
     @Autowired
+    @org.springframework.context.annotation.Lazy
     private ProdutoService produtoService;
 
     public List<ItemProduto> buscarTodos() {
@@ -31,6 +32,14 @@ public class ItemProdutoService {
 
     public List<ItemProduto> buscarPorProduto(String produtoId) {
         return itemProdutoRepository.findByProdutoId(produtoId);
+    }
+    
+    /**
+     * Busca itens-produto não inspecionados de um produto específico
+     * Para uso em alertas personalizados
+     */
+    public List<ItemProduto> buscarItensProdutoNaoInspecionadosPorProduto(String produtoId) {
+        return itemProdutoRepository.findByProdutoIdAndInspecionadoFalse(produtoId);
     }
 
     public List<ItemProduto> buscarPorLote(final String lote) throws SmartValidityException {
