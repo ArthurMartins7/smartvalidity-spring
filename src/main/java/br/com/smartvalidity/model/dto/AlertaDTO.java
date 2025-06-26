@@ -23,9 +23,11 @@ public class AlertaDTO {
         private String configuracaoRecorrencia;
         private LocalDateTime dataCriacao;
         private LocalDateTime dataEnvio;
-        private String usuarioCriador; //
-        private List<String> usuariosAlerta;
-        private List<String> produtosAlerta;
+        private String usuarioCriador; // Nome do usuário criador
+        private List<String> usuariosAlerta; // Nomes dos usuários
+        private List<String> produtosAlerta; // Nomes dos produtos
+        private List<String> usuariosAlertaIds; // IDs dos usuários
+        private List<String> produtosAlertaIds; // IDs dos produtos
     }
 
     @Data

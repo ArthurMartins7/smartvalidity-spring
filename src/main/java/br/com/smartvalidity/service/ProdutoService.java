@@ -1,20 +1,19 @@
 package br.com.smartvalidity.service;
 
-import br.com.smartvalidity.exception.SmartValidityException;
-import br.com.smartvalidity.model.dto.ProdutoDTO;
-import br.com.smartvalidity.model.entity.Fornecedor;
-import br.com.smartvalidity.model.entity.Produto;
-import br.com.smartvalidity.model.repository.ProdutoRepository;
-import br.com.smartvalidity.model.seletor.FornecedorSeletor;
-import br.com.smartvalidity.model.seletor.ProdutoSeletor;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.ProdutoDTO;
+import br.com.smartvalidity.model.entity.Produto;
+import br.com.smartvalidity.model.repository.ProdutoRepository;
+import br.com.smartvalidity.model.seletor.ProdutoSeletor;
 
 @Service
 public class ProdutoService {
@@ -22,8 +21,20 @@ public class ProdutoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private ItemProdutoService itemProdutoService;
+
     public List<Produto> buscarTodos() {
         return produtoRepository.findAll();
+    }
+    
+    /**
+     * Busca apenas produtos que possuem itens-produto não inspecionados
+     * Para uso em alertas personalizados
+     */
+    public List<Produto> buscarProdutosComItensNaoInspecionados() {
+        return produtoRepository.findProdutosComItensNaoInspecionados();
     }
 
     public Produto buscarPorId(String id) throws SmartValidityException {
