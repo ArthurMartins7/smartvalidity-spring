@@ -19,7 +19,7 @@ public class AuthorizationService {
     public void verificarPerfilAcesso() throws SmartValidityException {
         Usuario usuarioAutenticado = authenticationService.getUsuarioAutenticado();
 
-        if (usuarioAutenticado.getPerfilAcesso() != PerfilAcesso.ADMIN) {
+        if (usuarioAutenticado.getPerfilAcesso() == PerfilAcesso.OPERADOR) {
             throw new SmartValidityException("Usuário sem permissão de acesso!");
         }
     }

@@ -2,6 +2,7 @@ package br.com.smartvalidity.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,14 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.smartvalidity.auth.AuthenticationService;
 import br.com.smartvalidity.exception.SmartValidityException;
-import br.com.smartvalidity.model.dto.EmailOtpDTO;
-import br.com.smartvalidity.model.dto.ForgotPasswordDTO;
-import br.com.smartvalidity.model.dto.ResetPasswordDTO;
+import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
+import br.com.smartvalidity.model.entity.Empresa;
 import br.com.smartvalidity.model.entity.Usuario;
-import br.com.smartvalidity.model.enums.OtpPurpose;
-import br.com.smartvalidity.model.repository.UsuarioRepository;
-import br.com.smartvalidity.service.OtpService;
+import br.com.smartvalidity.service.EmpresaService;
 import br.com.smartvalidity.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(path = "/auth")
@@ -33,13 +33,10 @@ public class AuthenticationController {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private EmpresaService empresaService;
+
+    @Autowired
     private UsuarioService usuarioService;
-
-    @Autowired
-    private OtpService otpService;
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
     /**
      * Método de login padronizado -> Basic Auth
@@ -55,44 +52,17 @@ public class AuthenticationController {
         return authenticationService.authenticate(authentication);
     }
 
+    @Operation(summary = "Registrar nova empresa com usuário assinante")
+    @PostMapping("/registrar-empresa")
+    public ResponseEntity<Empresa> registrarEmpresa(@Valid @RequestBody EmpresaUsuarioDTO dto) throws SmartValidityException {
+        Empresa empresa = empresaService.cadastrarEmpresaEAssinante(dto);
+        return ResponseEntity.status(201).body(empresa);
+    }
+
     @PostMapping("/novo-usuario")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public String registrarUsuario(@RequestBody Usuario novoUsuario) throws SmartValidityException {
-        Usuario salvo = this.usuarioService.salvar(novoUsuario);
-        // Gera OTP de verificação (24h = 1440 min)
-        otpService.generateAndSendOtp(salvo.getEmail(), OtpPurpose.EMAIL_VERIFICATION, 1440);
-        return "Usuário criado com sucesso. Verifique seu e-mail para concluir a ativação.";
-    }
-
-    @PostMapping("/verificar-email-otp")
-    public String verificarEmail(@RequestBody EmailOtpDTO dto) throws SmartValidityException {
-        otpService.validateOtp(dto.getEmail(), dto.getOtp(), OtpPurpose.EMAIL_VERIFICATION);
-        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new SmartValidityException("Usuário não encontrado"));
-        usuario.setEmailVerificado(true);
-        usuarioRepository.save(usuario);
-        return "E-mail verificado com sucesso!";
-    }
-
-    @PostMapping("/forgot-password")
-    public String forgotPassword(@RequestBody ForgotPasswordDTO dto) throws SmartValidityException {
-        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new SmartValidityException("Usuário não encontrado"));
-        if(Boolean.FALSE.equals(usuario.getEmailVerificado())) {
-            throw new SmartValidityException("E-mail não verificado");
-        }
-        otpService.generateAndSendOtp(dto.getEmail(), OtpPurpose.PASSWORD_RESET, 15);
-        return "OTP enviado para redefinição de senha.";
-    }
-
-    @PostMapping("/reset-password")
-    public String resetPassword(@RequestBody ResetPasswordDTO dto) throws SmartValidityException {
-        otpService.validateOtp(dto.getEmail(), dto.getOtp(), OtpPurpose.PASSWORD_RESET);
-        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new SmartValidityException("Usuário não encontrado"));
-        usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
-        usuarioRepository.save(usuario);
-        return "Senha redefinida com sucesso.";
+    public Usuario registrarUsuario(@RequestBody @Valid Usuario novoUsuario) throws SmartValidityException {
+        return this.usuarioService.salvar(novoUsuario);
     }
     
     /**
