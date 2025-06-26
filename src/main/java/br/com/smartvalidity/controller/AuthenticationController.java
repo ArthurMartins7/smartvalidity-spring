@@ -61,7 +61,7 @@ public class AuthenticationController {
 
     @PostMapping("/novo-usuario")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public Usuario registrarUsuario(@RequestBody Usuario novoUsuario) throws SmartValidityException {
+    public Usuario registrarUsuario(@RequestBody @Valid Usuario novoUsuario) throws SmartValidityException {
         return this.usuarioService.salvar(novoUsuario);
     }
     

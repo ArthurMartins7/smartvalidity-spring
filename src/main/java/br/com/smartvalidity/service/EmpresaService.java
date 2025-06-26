@@ -51,12 +51,15 @@ public class EmpresaService {
         assinante.setPerfilAcesso(PerfilAcesso.ASSINANTE);
         assinante.setEmpresa(empresa);
 
-        // Associação bidirecional
-        empresa.setUsuarioAssinante(assinante);
+        // Associação empresa ⇄ usuários
         empresa.setUsuarios(new ArrayList<>());
         empresa.getUsuarios().add(assinante);
 
         // Persistir (cascade ALL salva o usuário)
         return empresaRepository.save(empresa);
+    }
+
+    public Empresa buscarPorId(String id) throws SmartValidityException {
+        return this.empresaRepository.findById(id).orElseThrow(() -> new SmartValidityException("Empresa não encontrada"));
     }
 } 

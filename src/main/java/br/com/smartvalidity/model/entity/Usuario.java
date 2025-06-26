@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.security.core.GrantedAuthority;
@@ -58,7 +59,7 @@ public class Usuario implements UserDetails {
     @ManyToOne
     @JoinColumn(name = "empresa_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JsonIgnore
+    //@JsonIgnore
     private Empresa empresa;
 
     @ManyToMany(mappedBy = "usuariosAlerta")
