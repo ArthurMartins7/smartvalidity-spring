@@ -44,7 +44,8 @@ public class FornecedorSeletor extends BaseSeletor implements Specification<Forn
 
         if (this.getDescricaoProduto() != null && !this.getDescricaoProduto().trim().isEmpty()) {
             Join<Fornecedor, Produto> joinProduto = root.join("produtos");
-            predicates.add(cb.like(cb.lower(joinProduto.get("descricao")), "%" + this.getDescricaoProduto().toLowerCase() + "%"));
+            predicates.add(cb.like(cb.lower(joinProduto.get("descricao")), "%"
+                    + this.getDescricaoProduto().toLowerCase() + "%"));
         }
 
 
