@@ -1,13 +1,8 @@
 package br.com.smartvalidity.service;
 
-import br.com.smartvalidity.auth.AuthenticationService;
-import br.com.smartvalidity.auth.AuthorizationService;
-import br.com.smartvalidity.exception.SmartValidityException;
-import br.com.smartvalidity.model.entity.Usuario;
-import br.com.smartvalidity.model.enums.PerfilAcesso;
-import br.com.smartvalidity.model.repository.UsuarioRepository;
-import br.com.smartvalidity.model.seletor.UsuarioSeletor;
-import org.hibernate.tool.schema.spi.SchemaManagementException;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,8 +11,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import br.com.smartvalidity.auth.AuthorizationService;
+import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.entity.Empresa;
+import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.PerfilAcesso;
+import br.com.smartvalidity.model.repository.EmpresaRepository;
+import br.com.smartvalidity.model.repository.UsuarioRepository;
+import br.com.smartvalidity.model.seletor.UsuarioSeletor;
 
 @Service
 public class UsuarioService implements UserDetailsService {
@@ -26,7 +27,7 @@ public class UsuarioService implements UserDetailsService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private AuthenticationService authenticationService;
+    private EmpresaRepository empresaRepository;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -88,7 +89,7 @@ public class UsuarioService implements UserDetailsService {
         this.verificarEmailJaUtilizado(usuarioDTO.getEmail(), usuarioEditado.getId());
 
         usuarioEditado.setPerfilAcesso(Optional.ofNullable(usuarioDTO.getPerfilAcesso()).orElse(usuarioEditado.getPerfilAcesso()));
-        usuarioEditado.setCpf(Optional.ofNullable(usuarioDTO.getCpf()).orElse(usuarioEditado.getCpf()));
+        //usuarioEditado.setCpf(Optional.ofNullable(usuarioDTO.getCpf()).orElse(usuarioEditado.getCpf()));
         usuarioEditado.setNome(Optional.ofNullable(usuarioDTO.getNome()).orElse(usuarioEditado.getNome()));
         usuarioEditado.setEmail(Optional.ofNullable(usuarioDTO.getEmail()).orElse(usuarioEditado.getEmail()));
         usuarioEditado.setSenha(Optional.ofNullable(usuarioDTO.getSenha()).orElse(usuarioEditado.getSenha()));
@@ -98,9 +99,24 @@ public class UsuarioService implements UserDetailsService {
 
     public void excluir(String id) throws SmartValidityException {
 
+        Usuario usuario =  this.buscarPorId(id);
+
         this.authorizationService.verifiarCredenciaisUsuario(id);
 
-        this.usuarioRepository.deleteById(id);
+        // Se é assinante, delete a empresa (cascade removerá usuários)
+        if (usuario.getPerfilAcesso() == PerfilAcesso.ASSINANTE) {
+            if (usuario.getEmpresa() != null) {
+                Empresa empresa = usuario.getEmpresa();
+                empresa.getUsuarios().clear();
+                empresaRepository.delete(empresa); // cascade remove assinante e colaboradores
+            }
+        } else {
+            // colaborador: apenas remover da empresa e excluir usuário
+            if (usuario.getEmpresa() != null) {
+                usuario.getEmpresa().getUsuarios().remove(usuario);
+            }
+            usuarioRepository.delete(usuario);
+        }
     }
 
     public void verificarEmailJaUtilizado(String email, String idUsuarioAtual) throws SmartValidityException {
