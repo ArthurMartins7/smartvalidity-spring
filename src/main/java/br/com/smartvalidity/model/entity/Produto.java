@@ -1,24 +1,14 @@
 package br.com.smartvalidity.model.entity;
 
-import java.util.List;
-import java.util.Set;
-
-import org.hibernate.validator.constraints.EAN;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.hibernate.validator.constraints.EAN;
+
+import java.util.List;
 
 @Entity
 @Table
@@ -62,5 +52,5 @@ public class Produto {
     private List<Fornecedor> fornecedores;
 
     @ManyToMany(mappedBy = "produtosAlerta")
-    private Set<Alerta> alertas;
+    private List<Alerta> alertas;
 }

@@ -46,12 +46,18 @@ public class ItemProdutoService {
     }
 
     public ItemProduto salvar(final ItemProduto itemProduto) throws SmartValidityException {
+        if (itemProduto == null) {
+            throw new SmartValidityException("ItemProduto não pode ser nulo");
+        }
+        
+        if (itemProduto.getProduto() == null || itemProduto.getProduto().getId() == null) {
+            throw new SmartValidityException("Produto não pode ser nulo e deve ter um ID válido");
+        }
+
         Produto produto = this.produtoService.buscarPorId(itemProduto.getProduto().getId());
-
         itemProduto.setProduto(produto);
-
         produto.setQuantidade(produto.getQuantidade() + 1);
-
+        this.produtoService.salvar(produto);
         return itemProdutoRepository.save(itemProduto);
     }
 
@@ -133,11 +139,13 @@ public class ItemProdutoService {
             // Verificação adicional para garantir que o item existe
             if (itemProduto.getId() != null) {
                 ItemProduto itemExistente = itemProdutoRepository.findById(itemProduto.getId())
-                    .orElseThrow(() -> new SmartValidityException("ItemProduto não encontrado com o ID: " + itemProduto.getId()));
+                    .orElseThrow(() -> new SmartValidityException("ItemProduto não encontrado com o ID: "
+                            + itemProduto.getId()));
                 
                 // Se o item já estiver inspecionado, retorna o item sem alterações
                 if (itemExistente.getInspecionado() != null && itemExistente.getInspecionado()) {
-                    System.out.println("Tentativa de alterar item já inspecionado ignorada. ID: " + itemExistente.getId() + 
+                    System.out.println("Tentativa de alterar item já inspecionado ignorada. ID: "
+                            + itemExistente.getId() +
                         ", Motivo atual: " + itemExistente.getMotivoInspecao());
                     return itemExistente;
                 }
@@ -162,5 +170,52 @@ public class ItemProdutoService {
             e.printStackTrace();
             throw new SmartValidityException("Erro ao salvar item inspecionado: " + e.getMessage());
         }
+    }
+
+    /**
+     * Salva múltiplos itens de produto baseado na quantidade especificada
+     * 
+     * @param itemProduto O item de produto base para criar múltiplos registros
+     * @param quantidade A quantidade de itens a serem criados
+     * @return Lista dos itens de produto criados
+     * @throws SmartValidityException Se ocorrer algum erro durante o salvamento
+     */
+    public List<ItemProduto> salvarMultiplos(final ItemProduto itemProduto, final Integer quantidade) throws SmartValidityException {
+        if (itemProduto == null) {
+            throw new SmartValidityException("ItemProduto não pode ser nulo");
+        }
+        
+        if (quantidade == null || quantidade <= 0) {
+            throw new SmartValidityException("Quantidade deve ser maior que zero");
+        }
+        
+        if (itemProduto.getProduto() == null || itemProduto.getProduto().getId() == null) {
+            throw new SmartValidityException("Produto não pode ser nulo e deve ter um ID válido");
+        }
+
+        Produto produto = this.produtoService.buscarPorId(itemProduto.getProduto().getId());
+        produto.setQuantidade(produto.getQuantidade() + quantidade);
+        this.produtoService.salvar(produto);
+        
+        List<ItemProduto> itensCriados = new java.util.ArrayList<>();
+        
+        for (int i = 0; i < quantidade; i++) {
+            ItemProduto novoItem = new ItemProduto();
+            novoItem.setLote(itemProduto.getLote());
+            novoItem.setPrecoVenda(itemProduto.getPrecoVenda());
+            novoItem.setDataFabricacao(itemProduto.getDataFabricacao());
+            novoItem.setDataVencimento(itemProduto.getDataVencimento());
+            novoItem.setDataRecebimento(itemProduto.getDataRecebimento());
+            novoItem.setInspecionado(itemProduto.getInspecionado());
+            novoItem.setMotivoInspecao(itemProduto.getMotivoInspecao());
+            novoItem.setUsuarioInspecao(itemProduto.getUsuarioInspecao());
+            novoItem.setDataHoraInspecao(itemProduto.getDataHoraInspecao());
+            novoItem.setProduto(produto);
+            
+            ItemProduto itemSalvo = itemProdutoRepository.save(novoItem);
+            itensCriados.add(itemSalvo);
+        }
+        
+        return itensCriados;
     }
 }

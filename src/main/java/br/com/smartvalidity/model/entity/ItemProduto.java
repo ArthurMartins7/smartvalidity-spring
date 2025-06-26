@@ -6,6 +6,7 @@ import br.com.smartvalidity.model.enums.SituacaoValidade;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table
@@ -53,5 +54,6 @@ public class ItemProduto {
 
     @ManyToOne
     @JoinColumn(name = "id_produto", nullable = false)
+    @JsonIgnore
     private Produto produto;
 }
