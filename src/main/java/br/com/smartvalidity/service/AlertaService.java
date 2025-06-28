@@ -18,8 +18,8 @@ import br.com.smartvalidity.model.entity.ItemProduto;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.enums.TipoAlerta;
-import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.model.mapper.AlertaMapper;
+import br.com.smartvalidity.model.repository.AlertaRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -278,17 +278,19 @@ public class AlertaService {
         // ----- SORT -----
         String sortBy = filtro.getSortBy() != null ? filtro.getSortBy() : "dataCriacao";
         boolean desc = "desc".equalsIgnoreCase(filtro.getSortDirection());
-        filtrados = filtrados.stream()
-                .sorted((a1, a2) -> {
-                    int resultado = 0;
-                    switch (sortBy) {
-                        case "dataDisparo", "dataHoraDisparo" -> resultado = a1.getDataHoraDisparo().compareTo(a2.getDataHoraDisparo());
-                        case "titulo" -> resultado = a1.getTitulo().compareToIgnoreCase(a2.getTitulo());
-                        default -> resultado = a1.getDataHoraCriacao().compareTo(a2.getDataHoraCriacao());
-                    }
-                    return desc ? -resultado : resultado;
-                })
-                .toList();
+        java.util.Comparator<Alerta> comparator;
+        switch (sortBy) {
+            case "dataDisparo", "dataHoraDisparo" -> comparator = java.util.Comparator.comparing(
+                    Alerta::getDataHoraDisparo, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            case "titulo" -> comparator = java.util.Comparator.comparing(
+                    Alerta::getTitulo, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            default -> comparator = java.util.Comparator.comparing(
+                    Alerta::getDataHoraCriacao, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+        }
+        if (desc) {
+            comparator = comparator.reversed();
+        }
+        filtrados = filtrados.stream().sorted(comparator).toList();
 
         // ----- PAGINAÇÃO -----
         if (filtro.temPaginacao()) {

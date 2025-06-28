@@ -1,7 +1,6 @@
 package br.com.smartvalidity.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,39 +67,38 @@ public class ProdutoService {
             dto.setUnidadeMedida(produto.getUnidadeMedida());
             dto.setQuantidade(produto.getQuantidade());
 
-            // Categoria com id e nome
+            // Categoria com id e nome (permitir valores nulos)
             if (produto.getCategoria() != null) {
-                dto.setCategoria(Map.of(
-                        "id", produto.getCategoria().getId(),
-                        "nome", produto.getCategoria().getNome()
-                ));
+                java.util.Map<String, Object> categoria = new java.util.HashMap<>();
+                categoria.put("id", produto.getCategoria().getId());
+                categoria.put("nome", produto.getCategoria().getNome());
+                dto.setCategoria(categoria);
             }
 
-            // Fornecedores com endereço incluso
+            // Fornecedores com endereço incluso (permitir valores nulos)
             if (produto.getFornecedores() != null) {
-                List<Map<String, Object>> fornecedores = produto.getFornecedores().stream().map(f -> {
-                    Map<String, Object> endereco = null;
+                List<java.util.Map<String, Object>> fornecedores = produto.getFornecedores().stream().map(f -> {
+                    java.util.Map<String, Object> enderecoMap = null;
                     if (f.getEndereco() != null) {
-                        endereco = Map.of(
-                                "id", f.getEndereco().getId(),
-                                "logradouro", f.getEndereco().getLogradouro(),
-                                "numero", f.getEndereco().getNumero(),
-                                "complemento", f.getEndereco().getComplemento(),
-                                "bairro", f.getEndereco().getBairro(),
-                                "cidade", f.getEndereco().getCidade(),
-                                "estado", f.getEndereco().getEstado(),
-                                "pais", f.getEndereco().getPais(),
-                                "cep", f.getEndereco().getCep()
-                        );
+                        enderecoMap = new java.util.HashMap<>();
+                        enderecoMap.put("id", f.getEndereco().getId());
+                        enderecoMap.put("logradouro", f.getEndereco().getLogradouro());
+                        enderecoMap.put("numero", f.getEndereco().getNumero());
+                        enderecoMap.put("complemento", f.getEndereco().getComplemento());
+                        enderecoMap.put("bairro", f.getEndereco().getBairro());
+                        enderecoMap.put("cidade", f.getEndereco().getCidade());
+                        enderecoMap.put("estado", f.getEndereco().getEstado());
+                        enderecoMap.put("pais", f.getEndereco().getPais());
+                        enderecoMap.put("cep", f.getEndereco().getCep());
                     }
 
-                    return Map.of(
-                            "id", f.getId(),
-                            "nome", f.getNome(),
-                            "telefone", f.getTelefone(),
-                            "cnpj", f.getCnpj(),
-                            "endereco", endereco
-                    );
+                    java.util.Map<String, Object> fornMap = new java.util.HashMap<>();
+                    fornMap.put("id", f.getId());
+                    fornMap.put("nome", f.getNome());
+                    fornMap.put("telefone", f.getTelefone());
+                    fornMap.put("cnpj", f.getCnpj());
+                    fornMap.put("endereco", enderecoMap);
+                    return fornMap;
                 }).toList();
 
                 dto.setFornecedores(fornecedores);
