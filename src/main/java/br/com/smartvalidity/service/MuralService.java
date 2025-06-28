@@ -641,41 +641,15 @@ public class MuralService {
     }
 
     /**
-     * Formata um nome para o padrão CamelCase.
-     * Responsabilidade: Transformação de dados para apresentação consistente.
-     * 
-     * @param nome Nome a ser formatado
-     * @return Nome formatado em CamelCase
-     */
-    private String formatarNomeCamelCase(String nome) {
-        if (nome == null || nome.trim().isEmpty()) {
-            return nome;
-        }
-
-        String[] palavras = nome.trim().toLowerCase().split("\\s+");
-        StringBuilder resultado = new StringBuilder();
-
-        for (String palavra : palavras) {
-            if (!palavra.isEmpty()) {
-                resultado.append(palavra.substring(0, 1).toUpperCase())
-                        .append(palavra.substring(1))
-                        .append(" ");
-            }
-        }
-
-        return resultado.toString().trim();
-    }
-
-    /**
      * Obtém a lista de usuários disponíveis para inspeção.
      * Responsabilidade: Agregação de dados de diferentes serviços para o mural.
      * 
-     * @return Lista de nomes de usuários formatados
+     * @return Lista de nomes de usuários
      */
     public List<String> getUsuariosInspecaoDisponiveis() {
         try {
             return usuarioService.listarTodos().stream()
-                .map(usuario -> formatarNomeCamelCase(usuario.getNome()))
+                .map(usuario -> usuario.getNome())
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());

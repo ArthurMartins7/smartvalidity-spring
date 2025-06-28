@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import br.com.smartvalidity.model.dto.AlertaDTO;
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.mapper.AlertaMapper;
 import br.com.smartvalidity.model.repository.AlertaRepository;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,7 +30,7 @@ public class NotificacaoService {
                 return List.of(); // Retorna lista vazia sem erro
             }
             return alertas.stream()
-                    .map(this::converterParaDTO)
+                    .map(AlertaMapper::toListagemDTO)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Aviso ao buscar notificações do usuário {}: {}", usuario.getId(), e.getMessage());
@@ -47,7 +48,7 @@ public class NotificacaoService {
                 return List.of(); // Retorna lista vazia sem erro
             }
             return alertas.stream()
-                    .map(this::converterParaDTO)
+                    .map(AlertaMapper::toListagemDTO)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Aviso ao buscar notificações não lidas do usuário {}: {}", usuario.getId(), e.getMessage());
@@ -107,35 +108,5 @@ public class NotificacaoService {
             log.error("Erro ao marcar todas as notificações como lidas para usuário {}: {}", 
                 usuario.getId(), e.getMessage(), e);
         }
-    }
-
-    /**
-     * Converter entidade Alerta para DTO de listagem
-     */
-    private AlertaDTO.Listagem converterParaDTO(Alerta alerta) {
-        AlertaDTO.Listagem dto = new AlertaDTO.Listagem();
-        
-        dto.setId(alerta.getId());
-        dto.setTitulo(alerta.getTitulo());
-        dto.setDescricao(alerta.getDescricao());
-        dto.setTipo(alerta.getTipo());
-        dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDiasAntecedencia(alerta.getDiasAntecedencia());
-        dto.setAtivo(alerta.getAtivo());
-        dto.setRecorrente(alerta.getRecorrente());
-        dto.setConfiguracaoRecorrencia(alerta.getConfiguracaoRecorrencia());
-        dto.setDataCriacao(alerta.getDataHoraCriacao());
-        
-        // Se for alerta automático, incluir informações do item-produto
-        if (alerta.getItemProduto() != null) {
-            dto.setProdutosAlerta(List.of(alerta.getItemProduto().getProduto().getDescricao()));
-        }
-        
-        // Se for alerta personalizado, incluir informações do usuário criador
-        if (alerta.getUsuarioCriador() != null) {
-            dto.setUsuarioCriador(alerta.getUsuarioCriador().getNome());
-        }
-
-        return dto;
     }
 } 

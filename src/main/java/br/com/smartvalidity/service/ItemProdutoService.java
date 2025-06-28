@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.smartvalidity.exception.SmartValidityException;
+import br.com.smartvalidity.model.dto.ItemProdutoDTO;
 import br.com.smartvalidity.model.entity.ItemProduto;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.repository.ItemProdutoRepository;
@@ -226,5 +227,48 @@ public class ItemProdutoService {
         }
         
         return itensCriados;
+    }
+
+    /**
+     * Salva um item-produto a partir de um DTO (método para controller)
+     */
+    public ItemProduto salvar(ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
+        ItemProduto itemProduto = converterDTOParaEntidade(itemProdutoDTO);
+        return salvar(itemProduto);
+    }
+
+    /**
+     * Atualiza um item-produto a partir de um DTO (método para controller)
+     */
+    public ItemProduto atualizar(String id, ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
+        ItemProduto itemProdutoAtualizado = converterDTOParaEntidade(itemProdutoDTO);
+        itemProdutoAtualizado.setId(id);
+        return atualizar(id, itemProdutoAtualizado);
+    }
+
+    /**
+     * Salva múltiplos itens-produto a partir de um DTO (método para controller)
+     */
+    public List<ItemProduto> salvarMultiplos(ItemProdutoDTO itemProdutoDTO, Integer quantidade) throws SmartValidityException {
+        ItemProduto itemProduto = converterDTOParaEntidade(itemProdutoDTO);
+        return salvarMultiplos(itemProduto, quantidade);
+    }
+
+    /**
+     * Converte DTO para entidade (responsabilidade do service)
+     */
+    private ItemProduto converterDTOParaEntidade(ItemProdutoDTO dto) {
+        ItemProduto itemProduto = new ItemProduto();
+        itemProduto.setLote(dto.getLote());
+        itemProduto.setPrecoVenda(dto.getPrecoVenda());
+        itemProduto.setDataFabricacao(dto.getDataFabricacao());
+        itemProduto.setDataVencimento(dto.getDataVencimento());
+        itemProduto.setDataRecebimento(dto.getDataRecebimento());
+        itemProduto.setInspecionado(dto.getInspecionado() != null ? dto.getInspecionado() : false);
+        itemProduto.setMotivoInspecao(dto.getMotivoInspecao());
+        itemProduto.setUsuarioInspecao(dto.getUsuarioInspecao());
+        itemProduto.setDataHoraInspecao(dto.getDataHoraInspecao());
+        itemProduto.setProduto(dto.getProduto());
+        return itemProduto;
     }
 }

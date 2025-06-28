@@ -37,6 +37,19 @@ public class ProdutoService {
         return produtoRepository.findProdutosComItensNaoInspecionados();
     }
 
+    /**
+     * Busca produtos com itens não inspecionados filtrando por termo de busca
+     * Para uso em busca dinâmica de alertas
+     */
+    public List<Produto> buscarPorTermoComItensNaoInspecionados(String termo, int limite) {
+        if (termo == null || termo.trim().isEmpty()) {
+            return List.of();
+        }
+        org.springframework.data.domain.PageRequest pageable = 
+            org.springframework.data.domain.PageRequest.of(0, limite);
+        return produtoRepository.findProdutosComItensNaoInspecionadosPorTermo(termo.trim(), pageable);
+    }
+
     public Produto buscarPorId(String id) throws SmartValidityException {
         return produtoRepository.findById(id)
                 .orElseThrow(() -> new SmartValidityException("Produto não encontrado com o ID: " + id));

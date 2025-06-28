@@ -19,6 +19,7 @@ import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
+import br.com.smartvalidity.model.mapper.AlertaMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -38,6 +39,8 @@ public class AlertaService {
     
     @Autowired
     private UsuarioService usuarioService;
+
+    // ===== MÉTODOS LEGACY (compatibilidade com DTOs antigos) =====
 
     public AlertaResponseDTO create(AlertaRequestDTO dto) {
         Alerta alerta = dto.toEntity();
@@ -135,8 +138,8 @@ public class AlertaService {
             log.info("Alerta personalizado criado com sucesso: ID {}, Título: {}", 
                 alerta.getId(), alerta.getTitulo());
             
-            // Converter para DTO de resposta
-            return converterParaListagemDTO(alerta);
+            // Usar AlertaMapper para conversão
+            return AlertaMapper.toListagemDTO(alerta);
             
         } catch (Exception e) {
             log.error("Erro ao criar alerta personalizado: {}", e.getMessage(), e);
@@ -151,7 +154,8 @@ public class AlertaService {
         Alerta alerta = alertaRepository.findById(id)
             .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
         
-        return converterParaListagemDTO(alerta);
+        // Usar AlertaMapper para conversão
+        return AlertaMapper.toListagemDTO(alerta);
     }
     
     /**
@@ -206,7 +210,8 @@ public class AlertaService {
             
             log.info("Alerta {} atualizado com sucesso", id);
             
-            return converterParaListagemDTO(alerta);
+            // Usar AlertaMapper para conversão
+            return AlertaMapper.toListagemDTO(alerta);
             
         } catch (Exception e) {
             log.error("Erro ao atualizar alerta {}: {}", id, e.getMessage(), e);
@@ -215,53 +220,110 @@ public class AlertaService {
     }
     
     /**
-     * Converter entidade Alerta para DTO de listagem
+     * Alterna o status "ativo" de um alerta.
      */
-    private AlertaDTO.Listagem converterParaListagemDTO(Alerta alerta) {
-        AlertaDTO.Listagem dto = new AlertaDTO.Listagem();
-        
-        dto.setId(alerta.getId());
-        dto.setTitulo(alerta.getTitulo());
-        dto.setDescricao(alerta.getDescricao());
-        dto.setTipo(alerta.getTipo());
-        dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDiasAntecedencia(alerta.getDiasAntecedencia());
-        dto.setAtivo(alerta.getAtivo());
-        dto.setRecorrente(alerta.getRecorrente());
-        dto.setConfiguracaoRecorrencia(alerta.getConfiguracaoRecorrencia());
-        dto.setDataCriacao(alerta.getDataHoraCriacao());
-        
-        // Usuário criador
-        if (alerta.getUsuarioCriador() != null) {
-            dto.setUsuarioCriador(alerta.getUsuarioCriador().getNome());
+    public AlertaDTO.Listagem toggleAtivo(Integer id) throws SmartValidityException {
+        try {
+            Alerta alerta = alertaRepository.findById(id)
+                    .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
+
+            alerta.setAtivo(!Boolean.TRUE.equals(alerta.getAtivo()));
+            alerta = alertaRepository.save(alerta);
+
+            // Usar AlertaMapper para conversão
+            return AlertaMapper.toListagemDTO(alerta);
+        } catch (Exception e) {
+            log.error("Erro ao alternar status ativo do alerta {}: {}", id, e.getMessage(), e);
+            throw new SmartValidityException("Erro ao alterar status do alerta: " + e.getMessage());
         }
-        
-        // Produtos relacionados (nomes para exibição)
-        if (alerta.getProdutosAlerta() != null && !alerta.getProdutosAlerta().isEmpty()) {
-            List<String> produtosNomes = alerta.getProdutosAlerta().stream()
-                .map(Produto::getDescricao)
-                .toList();
-            dto.setProdutosAlerta(produtosNomes);
-            
-            List<String> produtosIds = alerta.getProdutosAlerta().stream()
-                .map(Produto::getId)
-                .toList();
-            dto.setProdutosAlertaIds(produtosIds);
+    }
+
+    /**
+     * Buscar alertas aplicando filtros, com suporte a paginação simples em memória.
+     */
+    public List<AlertaDTO.Listagem> filtrarAlertas(AlertaDTO.Filtro filtro) {
+        // Carregar todos e filtrar em memória (simples e sem custo de complexidade)
+        List<Alerta> todos = alertaRepository.findAll();
+
+        // ----- FILTROS -----
+        var stream = todos.stream();
+
+        if (filtro.getTitulo() != null && !filtro.getTitulo().isBlank()) {
+            String termo = filtro.getTitulo().toLowerCase();
+            stream = stream.filter(a -> a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo));
         }
-        
-        // Usuários que recebem o alerta
-        if (alerta.getUsuariosAlerta() != null && !alerta.getUsuariosAlerta().isEmpty()) {
-            List<String> usuariosNomes = alerta.getUsuariosAlerta().stream()
-                .map(Usuario::getNome)
-                .toList();
-            dto.setUsuariosAlerta(usuariosNomes);
-            
-            List<String> usuariosIds = alerta.getUsuariosAlerta().stream()
-                .map(Usuario::getId)
-                .toList();
-            dto.setUsuariosAlertaIds(usuariosIds);
+        if (filtro.getTipo() != null) {
+            stream = stream.filter(a -> filtro.getTipo().equals(a.getTipo()));
         }
-        
-        return dto;
+        if (filtro.getAtivo() != null) {
+            stream = stream.filter(a -> filtro.getAtivo().equals(a.getAtivo()));
+        }
+        if (filtro.getRecorrente() != null) {
+            stream = stream.filter(a -> filtro.getRecorrente().equals(a.getRecorrente()));
+        }
+        if (filtro.getUsuarioCriador() != null && !filtro.getUsuarioCriador().isBlank()) {
+            String termo = filtro.getUsuarioCriador().toLowerCase();
+            stream = stream.filter(a -> a.getUsuarioCriador() != null && a.getUsuarioCriador().getNome() != null && a.getUsuarioCriador().getNome().toLowerCase().contains(termo));
+        }
+        if (filtro.getDataInicialDisparo() != null) {
+            stream = stream.filter(a -> a.getDataHoraDisparo() != null && !a.getDataHoraDisparo().isBefore(filtro.getDataInicialDisparo()));
+        }
+        if (filtro.getDataFinalDisparo() != null) {
+            stream = stream.filter(a -> a.getDataHoraDisparo() != null && !a.getDataHoraDisparo().isAfter(filtro.getDataFinalDisparo()));
+        }
+
+        // Coleta pós-filtro para aplicação de sorting / paginação
+        List<Alerta> filtrados = stream.toList();
+
+        // ----- SORT -----
+        String sortBy = filtro.getSortBy() != null ? filtro.getSortBy() : "dataCriacao";
+        boolean desc = "desc".equalsIgnoreCase(filtro.getSortDirection());
+        filtrados = filtrados.stream()
+                .sorted((a1, a2) -> {
+                    int resultado = 0;
+                    switch (sortBy) {
+                        case "dataDisparo", "dataHoraDisparo" -> resultado = a1.getDataHoraDisparo().compareTo(a2.getDataHoraDisparo());
+                        case "titulo" -> resultado = a1.getTitulo().compareToIgnoreCase(a2.getTitulo());
+                        default -> resultado = a1.getDataHoraCriacao().compareTo(a2.getDataHoraCriacao());
+                    }
+                    return desc ? -resultado : resultado;
+                })
+                .toList();
+
+        // ----- PAGINAÇÃO -----
+        if (filtro.temPaginacao()) {
+            int pagina = filtro.getPagina();
+            int limite = filtro.getLimite();
+            int from = (pagina - 1) * limite;
+            int to = Math.min(from + limite, filtrados.size());
+            if (from >= filtrados.size()) {
+                filtrados = List.of();
+            } else {
+                filtrados = filtrados.subList(from, to);
+            }
+        }
+
+        // Usar AlertaMapper para conversão
+        return filtrados.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
+    /**
+     * Conta alertas filtrados (sem paginação).
+     */
+    public long contarAlertas(AlertaDTO.Filtro filtro) {
+        // Reutiliza a lógica de filtro, mas sem paginação
+        // Para evitar duplicação, chamar filtrarAlertas sem paginação (temporariamente)
+        int paginaOriginal = filtro.getPagina();
+        int limiteOriginal = filtro.getLimite();
+        // desativa paginação
+        filtro.setLimite(0);
+        filtro.setPagina(0);
+        long total = filtrarAlertas(filtro).size();
+        // restaura valores
+        filtro.setLimite(limiteOriginal);
+        filtro.setPagina(paginaOriginal);
+        return total;
     }
 } 

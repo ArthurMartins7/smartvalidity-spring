@@ -1,5 +1,20 @@
 package br.com.smartvalidity.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.AlertaDTO;
 import br.com.smartvalidity.model.dto.AlertaRequestDTO;
@@ -8,11 +23,6 @@ import br.com.smartvalidity.service.AlertaService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/alertas")
@@ -71,6 +81,35 @@ public class AlertaController {
         log.info("Recebendo requisição para atualizar alerta ID: {}", id);
         AlertaDTO.Listagem response = alertaService.atualizarAlerta(id, alertaDTO);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/toggle-ativo")
+    @Operation(summary = "Alternar status ativo do alerta")
+    public ResponseEntity<AlertaDTO.Listagem> toggleAtivo(@PathVariable Integer id) throws SmartValidityException {
+        AlertaDTO.Listagem response = alertaService.toggleAtivo(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/filtro")
+    @Operation(summary = "Listar alertas com filtros")
+    public ResponseEntity<List<AlertaDTO.Listagem>> listarComFiltro(@RequestBody AlertaDTO.Filtro filtro) {
+        List<AlertaDTO.Listagem> lista = alertaService.filtrarAlertas(filtro);
+        if (lista.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(lista);
+    }
+
+    @PostMapping("/contar-registros")
+    @Operation(summary = "Contar alertas com filtros")
+    public ResponseEntity<Long> contarRegistros(@RequestBody AlertaDTO.Filtro filtro) {
+        long total = alertaService.contarAlertas(filtro);
+        return ResponseEntity.ok(total);
+    }
+
+    @PostMapping("/count")
+    @Operation(summary = "Contar alertas com filtros (formato {{total}})")
+    public ResponseEntity<java.util.Map<String, Long>> contarRegistrosMap(@RequestBody AlertaDTO.Filtro filtro) {
+        long total = alertaService.contarAlertas(filtro);
+        return ResponseEntity.ok(java.util.Map.of("total", total));
     }
 
     @DeleteMapping("/{id}")

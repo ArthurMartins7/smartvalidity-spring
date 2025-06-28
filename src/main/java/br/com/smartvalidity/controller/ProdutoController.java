@@ -1,9 +1,11 @@
 package br.com.smartvalidity.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.smartvalidity.exception.SmartValidityException;
@@ -23,6 +26,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/produto")
+@CrossOrigin(origins = "http://localhost:4200")
 public class ProdutoController {
 
     @Autowired
@@ -38,6 +42,16 @@ public class ProdutoController {
                description = "Retorna apenas produtos que possuem itens-produto não inspecionados, para uso em alertas personalizados")
     public ResponseEntity<List<Produto>> listarProdutosComItensNaoInspecionados() {
         List<Produto> produtos = produtoService.buscarProdutosComItensNaoInspecionados();
+        return ResponseEntity.ok(produtos);
+    }
+
+    @GetMapping("/buscar")
+    @Operation(summary = "Buscar produtos com itens não inspecionados por termo",
+               description = "Busca dinâmica de produtos com itens não inspecionados para alertas personalizados")
+    public ResponseEntity<List<Produto>> buscarPorTermo(
+            @RequestParam String termo,
+            @RequestParam(defaultValue = "10") int limite) {
+        List<Produto> produtos = produtoService.buscarPorTermoComItensNaoInspecionados(termo, limite);
         return ResponseEntity.ok(produtos);
     }
 
@@ -67,7 +81,44 @@ public class ProdutoController {
         return ResponseEntity.ok(produtos);
     }
 
+    @GetMapping("/debug/produtos-com-itens")
+    @Operation(summary = "Debug: Informações sobre produtos com itens não inspecionados")
+    public ResponseEntity<Map<String, Object>> debugProdutosComItens() {
+        List<Produto> todosProdutos = produtoService.buscarTodos();
+        List<Produto> produtosComItens = produtoService.buscarProdutosComItensNaoInspecionados();
+        
+        Map<String, Object> debug = Map.of(
+            "totalProdutos", todosProdutos.size(),
+            "produtosComItensNaoInspecionados", produtosComItens.size(),
+            "produtos", produtosComItens.stream().limit(5).map(p -> Map.of(
+                "id", p.getId(),
+                "descricao", p.getDescricao(),
+                "marca", p.getMarca(),
+                "totalItens", p.getItensProduto() != null ? p.getItensProduto().size() : 0
+            )).toList()
+        );
+        
+        return ResponseEntity.ok(debug);
+    }
 
+    @GetMapping("/debug/buscar-termo")
+    @Operation(summary = "Debug: Teste de busca por termo")
+    public ResponseEntity<Map<String, Object>> debugBuscarPorTermo(
+            @RequestParam(defaultValue = "coca") String termo) {
+        List<Produto> resultados = produtoService.buscarPorTermoComItensNaoInspecionados(termo, 10);
+        
+        Map<String, Object> debug = Map.of(
+            "termoBuscado", termo,
+            "resultadosEncontrados", resultados.size(),
+            "produtos", resultados.stream().map(p -> Map.of(
+                "id", p.getId(),
+                "descricao", p.getDescricao(),
+                "marca", p.getMarca()
+            )).toList()
+        );
+        
+        return ResponseEntity.ok(debug);
+    }
 
     @PostMapping
     public ResponseEntity<Produto> salvar(@Valid @RequestBody Produto produto) throws SmartValidityException {
