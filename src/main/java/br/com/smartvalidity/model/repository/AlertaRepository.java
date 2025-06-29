@@ -41,4 +41,9 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
      */
     @Query("SELECT COUNT(a) FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true AND a.lido = false")
     Long countByUsuarioAndAtivoTrueAndLidoFalse(@Param("usuario") Usuario usuario);
+    
+    /**
+     * Buscar alertas ainda não ativados cujo horário de disparo já foi alcançado
+     */
+    List<Alerta> findByAtivoFalseAndDataHoraDisparoLessThanEqual(java.time.LocalDateTime dataHora);
 } 

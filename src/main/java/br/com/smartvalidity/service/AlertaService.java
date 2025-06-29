@@ -132,6 +132,11 @@ public class AlertaService {
             }
             alerta.setProdutosAlerta(produtosAlerta);
             
+            // Se a data/hora de disparo for no passado ou não informada, torna-se ativo imediatamente.
+            boolean deveAtivarAgora = alerta.getDataHoraDisparo() == null ||
+                    !alerta.getDataHoraDisparo().isAfter(java.time.LocalDateTime.now());
+            alerta.setAtivo(deveAtivarAgora);
+            
             // Salvar o alerta
             alerta = alertaRepository.save(alerta);
             
@@ -181,8 +186,15 @@ public class AlertaService {
             alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
             alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
             
+            // Reavaliar ativação: se ainda inativo e o horário já passou, ativa
             if (alertaDTO.getAtivo() != null) {
                 alerta.setAtivo(alertaDTO.getAtivo());
+            } else {
+                boolean deveAtivarAgora = alerta.getDataHoraDisparo() == null ||
+                        !alerta.getDataHoraDisparo().isAfter(java.time.LocalDateTime.now());
+                if (deveAtivarAgora && !Boolean.TRUE.equals(alerta.getAtivo())) {
+                    alerta.setAtivo(true);
+                }
             }
             
             // Atualizar usuários se fornecidos

@@ -3,6 +3,8 @@ package br.com.smartvalidity.model.entity;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import org.hibernate.annotations.SQLInsert;
+
 import br.com.smartvalidity.model.enums.FrequenciaDisparo;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.persistence.Column;
@@ -74,6 +76,8 @@ public class Alerta {
             joinColumns = @JoinColumn(name = "id_alerta", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "id_usuario", referencedColumnName = "id")
     )
+    @SQLInsert(sql = "INSERT INTO alerta_usuario (id_alerta, id_usuario, lido) VALUES (?, ?, false)")
+    @com.fasterxml.jackson.annotation.JsonManagedReference
     private Set<Usuario> usuariosAlerta;
 
     // Relacionamento com produtos (para alertas personalizados)
