@@ -28,9 +28,6 @@ public class NotificacaoController {
     @Autowired
     private AuthenticationService authenticationService;
 
-    /**
-     * Buscar todas as notificações do usuário atual
-     */
     @GetMapping
     public ResponseEntity<List<AlertaDTO.Listagem>> buscarNotificacoes() {
         try {
@@ -46,9 +43,25 @@ public class NotificacaoController {
         }
     }
 
-    /**
-     * Buscar apenas notificações não lidas do usuário atual
-     */
+    @GetMapping("/{id}")
+    public ResponseEntity<AlertaDTO.Listagem> buscarNotificacaoPorId(@PathVariable Long id) {
+        try {
+            Usuario usuario = authenticationService.getUsuarioAutenticado();
+            if (usuario == null) {
+                return ResponseEntity.status(401).build();
+            }
+            
+            AlertaDTO.Listagem notificacao = notificacaoService.buscarNotificacaoPorId(id, usuario);
+            if (notificacao != null) {
+                return ResponseEntity.ok(notificacao);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (SmartValidityException e) {
+            return ResponseEntity.status(401).build();
+        }
+    }
+
     @GetMapping("/nao-lidas")
     public ResponseEntity<List<AlertaDTO.Listagem>> buscarNotificacaoNaoLidas() {
         try {
@@ -64,9 +77,6 @@ public class NotificacaoController {
         }
     }
 
-    /**
-     * Contar notificações não lidas do usuário atual
-     */
     @GetMapping("/count-nao-lidas")
     public ResponseEntity<Long> contarNotificacaoNaoLidas() {
         try {
@@ -82,9 +92,6 @@ public class NotificacaoController {
         }
     }
 
-    /**
-     * Marcar uma notificação como lida
-     */
     @PutMapping("/{id}/marcar-lida")
     public ResponseEntity<Void> marcarNotificacaoComoLida(@PathVariable Long id) {
         try {
@@ -105,9 +112,6 @@ public class NotificacaoController {
         }
     }
 
-    /**
-     * Marcar todas as notificações do usuário como lidas
-     */
     @PutMapping("/marcar-todas-lidas")
     public ResponseEntity<Void> marcarTodasNotificacoesComoLidas() {
         try {

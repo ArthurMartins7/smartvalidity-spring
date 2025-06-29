@@ -8,12 +8,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.smartvalidity.model.dto.AlertaDTO;
+import br.com.smartvalidity.model.dto.NotificacaoDTO;
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.Notificacao;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.mapper.AlertaMapper;
+import br.com.smartvalidity.model.mapper.NotificacaoMapper;
 import br.com.smartvalidity.model.repository.NotificacaoRepository;
 import lombok.extern.slf4j.Slf4j;
+
 
 @Service
 @Slf4j
@@ -22,9 +25,7 @@ public class NotificacaoService {
     @Autowired
     private NotificacaoRepository notificacaoRepository;
 
-    /**
-     * Criar notificações individuais para todos os usuários de um alerta
-     */
+
     @Transactional
     public void criarNotificacoesParaAlerta(Alerta alerta) {
         if (alerta.getUsuariosAlerta() == null || alerta.getUsuariosAlerta().isEmpty()) {
@@ -34,7 +35,7 @@ public class NotificacaoService {
 
         int notificacoesCriadas = 0;
         for (Usuario usuario : alerta.getUsuariosAlerta()) {
-            // Verificar se já existe notificação para evitar duplicatas
+
             if (!notificacaoRepository.existsByAlertaIdAndUsuarioId(alerta.getId(), usuario.getId())) {
                 Notificacao notificacao = new Notificacao();
                 notificacao.setAlerta(alerta);
@@ -49,20 +50,12 @@ public class NotificacaoService {
         log.info("Criadas {} notificações para o alerta {}", notificacoesCriadas, alerta.getId());
     }
 
-    /**
-     * Buscar todas as notificações do usuário
-     */
+
     public List<AlertaDTO.Listagem> buscarNotificacoesDoUsuario(Usuario usuario) {
         try {
             List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioOrderByDataHoraCriacaoDesc(usuario);
             return notificacoes.stream()
-                    .map(notificacao -> {
-                        AlertaDTO.Listagem dto = AlertaMapper.toListagemDTO(notificacao.getAlerta());
-                        // Adicionar informações específicas da notificação
-                        dto.setLida(notificacao.getLida());
-                        dto.setDataCriacao(notificacao.getDataHoraCriacao());
-                        return dto;
-                    })
+                    .map(this::convertNotificacaoToAlertaDTO)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Erro ao buscar notificações do usuário {}: {}", usuario.getId(), e.getMessage());
@@ -70,19 +63,12 @@ public class NotificacaoService {
         }
     }
 
-    /**
-     * Buscar apenas notificações não lidas do usuário
-     */
+
     public List<AlertaDTO.Listagem> buscarNotificacaoNaoLidasDoUsuario(Usuario usuario) {
         try {
             List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioAndLidaFalseOrderByDataHoraCriacaoDesc(usuario);
             return notificacoes.stream()
-                    .map(notificacao -> {
-                        AlertaDTO.Listagem dto = AlertaMapper.toListagemDTO(notificacao.getAlerta());
-                        dto.setLida(false); // Sempre false nesta consulta
-                        dto.setDataCriacao(notificacao.getDataHoraCriacao());
-                        return dto;
-                    })
+                    .map(this::convertNotificacaoToAlertaDTO)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Erro ao buscar notificações não lidas do usuário {}: {}", usuario.getId(), e.getMessage());
@@ -90,9 +76,19 @@ public class NotificacaoService {
         }
     }
 
-    /**
-     * Contar notificações não lidas do usuário
-     */
+
+    public AlertaDTO.Listagem buscarNotificacaoPorId(Long notificacaoId, Usuario usuario) {
+        try {
+            return notificacaoRepository.findByIdAndUsuario(notificacaoId, usuario)
+                    .map(this::convertNotificacaoToAlertaDTO)
+                    .orElse(null);
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificação {} do usuário {}: {}", notificacaoId, usuario.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+
     public Long contarNotificacaoNaoLidasDoUsuario(Usuario usuario) {
         try {
             Long count = notificacaoRepository.countByUsuarioAndLidaFalse(usuario);
@@ -103,9 +99,7 @@ public class NotificacaoService {
         }
     }
 
-    /**
-     * Marcar uma notificação como lida
-     */
+
     @Transactional
     public boolean marcarComoLida(Long notificacaoId, Usuario usuario) {
         try {
@@ -125,9 +119,7 @@ public class NotificacaoService {
         }
     }
 
-    /**
-     * Marcar todas as notificações do usuário como lidas
-     */
+
     @Transactional
     public void marcarTodasComoLidas(Usuario usuario) {
         try {
@@ -136,6 +128,59 @@ public class NotificacaoService {
         } catch (Exception e) {
             log.error("Erro ao marcar todas as notificações como lidas para usuário {}: {}", 
                 usuario.getId(), e.getMessage(), e);
+        }
+    }
+
+
+    public List<NotificacaoDTO.Listagem> buscarNotificacoesComNotificacaoDTO(Usuario usuario) {
+        try {
+            List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioOrderByDataHoraCriacaoDesc(usuario);
+            return notificacoes.stream()
+                    .map(NotificacaoMapper::toListagemDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificações do usuário {}: {}", usuario.getId(), e.getMessage());
+            return List.of();
+        }
+    }
+
+
+    public List<NotificacaoDTO.Listagem> buscarNotificacaoNaoLidasComNotificacaoDTO(Usuario usuario) {
+        try {
+            List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioAndLidaFalseOrderByDataHoraCriacaoDesc(usuario);
+            return notificacoes.stream()
+                    .map(NotificacaoMapper::toListagemDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificações não lidas do usuário {}: {}", usuario.getId(), e.getMessage());
+            return List.of();
+        }
+    }
+
+
+    private AlertaDTO.Listagem convertNotificacaoToAlertaDTO(Notificacao notificacao) {
+        if (notificacao == null || notificacao.getAlerta() == null) {
+            return null;
+        }
+        
+        AlertaDTO.Listagem dto = AlertaMapper.toListagemDTO(notificacao.getAlerta());
+        
+        dto.setId(notificacao.getId().intValue());
+        dto.setLida(notificacao.getLida());
+        dto.setDataCriacao(notificacao.getDataHoraCriacao());
+        
+        return dto;
+    }
+    
+
+    public NotificacaoDTO.Listagem buscarNotificacaoPorIdComNotificacaoDTO(Long notificacaoId, Usuario usuario) {
+        try {
+            return notificacaoRepository.findByIdAndUsuario(notificacaoId, usuario)
+                    .map(NotificacaoMapper::toListagemDTO)
+                    .orElse(null);
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificação {} do usuário {}: {}", notificacaoId, usuario.getId(), e.getMessage());
+            return null;
         }
     }
 } 

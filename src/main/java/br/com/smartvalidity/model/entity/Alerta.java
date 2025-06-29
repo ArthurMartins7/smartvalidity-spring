@@ -5,7 +5,6 @@ import java.util.Set;
 
 import org.hibernate.annotations.SQLInsert;
 
-import br.com.smartvalidity.model.enums.FrequenciaDisparo;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,11 +19,10 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Entity
-@Table
+@Table(name = "alerta")
 @Data
 public class Alerta {
 
@@ -32,64 +30,64 @@ public class Alerta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotBlank(message = "O campo 'Título' não pode ser vazio ou apenas espaços em branco.")
+    @Column(nullable = false)
     private String titulo;
 
-    @NotBlank(message = "O campo 'Descrição' não pode ser vazio ou apenas espaços em branco.")
+    @Column(columnDefinition = "TEXT")
     private String descricao;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoAlerta tipo;
 
-    private LocalDateTime dataHoraCriacao;
-
+    @Column(name = "data_hora_disparo")
     private LocalDateTime dataHoraDisparo;
 
+    @Column(name = "dias_antecedencia")
     private Integer diasAntecedencia;
 
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    private Boolean recorrente = false;
-
-    private String configuracaoRecorrencia;
-
     @Column(nullable = false)
     private Boolean lido = false;
 
-    // Campos para compatibilidade com sistema antigo
-    private boolean isDisparoRecorrente;
+    @Column(nullable = false)
+    private Boolean recorrente = false;
 
-    @Enumerated(EnumType.STRING)
-    private FrequenciaDisparo frequenciaDisparo;
+    @Column(name = "configuracao_recorrencia")
+    private String configuracaoRecorrencia;
 
-    // Relacionamento com usuário criador (para alertas personalizados)
+    @Column(name = "data_hora_criacao", nullable = false)
+    private LocalDateTime dataHoraCriacao;
+
+    @Column(name = "is_disparo_recorrente", nullable = false)
+    private Boolean disparoRecorrente = false;
+    
+    @Column(name = "frequencia_disparo")
+    private String frequenciaDisparo;
+
     @ManyToOne
     @JoinColumn(name = "id_usuario_criador")
     private Usuario usuarioCriador;
 
-    // Usuários que devem receber este alerta
     @ManyToMany
     @JoinTable(
-            name = "alerta_usuario",
-            joinColumns = @JoinColumn(name = "id_alerta", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "id_usuario", referencedColumnName = "id")
+        name = "alerta_usuario",
+        joinColumns = @JoinColumn(name = "id_alerta"),
+        inverseJoinColumns = @JoinColumn(name = "id_usuario")
     )
     @SQLInsert(sql = "INSERT INTO alerta_usuario (id_alerta, id_usuario, lido) VALUES (?, ?, false)")
-    @com.fasterxml.jackson.annotation.JsonManagedReference
     private Set<Usuario> usuariosAlerta;
 
-    // Relacionamento com produtos (para alertas personalizados)
     @ManyToMany
     @JoinTable(
-            name = "alerta_produto",
-            joinColumns = @JoinColumn(name = "id_alerta", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "id_produto", referencedColumnName = "id")
+        name = "alerta_produto",
+        joinColumns = @JoinColumn(name = "id_alerta"),
+        inverseJoinColumns = @JoinColumn(name = "id_produto")
     )
     private Set<Produto> produtosAlerta;
 
-    // Relacionamento com item-produto específico (para alertas automáticos)
     @ManyToOne
     @JoinColumn(name = "id_item_produto")
     private ItemProduto itemProduto;

@@ -13,12 +13,7 @@ import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.service.NotificacaoService;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Scheduler responsável por ativar os alertas personalizados (ou quaisquer
- * outros) no horário configurado de disparo. Quando o horário é alcançado,
- * o alerta deixa de ficar "inativo" e passa a "ativo", tornando-se elegível
- * para aparecer como notificação aos usuários relacionados.
- */
+
 @Component
 @Slf4j
 public class DispatchAlertScheduler {
@@ -29,10 +24,7 @@ public class DispatchAlertScheduler {
     @Autowired
     private NotificacaoService notificacaoService;
 
-    /**
-     * Executa a cada minuto e ativa alertas cujo dataHoraDisparo já passou.
-     */
-    @Scheduled(fixedRate = 60000) // 1 minuto
+    @Scheduled(fixedRate = 60000)
     @Transactional
     public void ativarAlertasProntosParaDisparo() {
         LocalDateTime agora = LocalDateTime.now();
@@ -43,10 +35,8 @@ public class DispatchAlertScheduler {
         int ativados = 0;
         for (Alerta alerta : pendentes) {
             alerta.setAtivo(true);
-            alerta.setLido(false); // garante que aparecerá como não lido
+            alerta.setLido(false);
             alertaRepository.save(alerta);
-            
-            // Criar notificações quando o alerta é ativado
             notificacaoService.criarNotificacoesParaAlerta(alerta);
             
             ativados++;

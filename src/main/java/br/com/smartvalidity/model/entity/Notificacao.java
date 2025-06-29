@@ -13,10 +13,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-/**
- * Entidade que representa uma notificação individual para um usuário específico.
- * Cada alerta pode gerar múltiplas notificações (uma para cada usuário destinatário).
- */
+
 @Entity
 @Table(name = "notificacao")
 @Data
@@ -50,9 +47,7 @@ public class Notificacao {
         }
     }
 
-    /**
-     * Marcar esta notificação como lida
-     */
+
     public void marcarComoLida() {
         this.lida = true;
         this.dataHoraLeitura = LocalDateTime.now();

@@ -1,6 +1,8 @@
 package br.com.smartvalidity.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.AlertaDTO;
-import br.com.smartvalidity.model.dto.AlertaRequestDTO;
-import br.com.smartvalidity.model.dto.AlertaResponseDTO;
 import br.com.smartvalidity.service.AlertaService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -34,37 +34,48 @@ public class AlertaController {
     @Autowired
     private AlertaService alertaService;
 
-    // ===== ENDPOINTS ANTIGOS (manter compatibilidade) =====
-
     @PostMapping("/legacy")
-    public ResponseEntity<AlertaResponseDTO> create(@RequestBody AlertaRequestDTO dto) {
+    public ResponseEntity<AlertaDTO.Response> create(@RequestBody AlertaDTO.Request dto) {
         return ResponseEntity.ok(alertaService.create(dto));
     }
 
     @GetMapping("/legacy")
-    public ResponseEntity<List<AlertaResponseDTO>> findAll() {
+    public ResponseEntity<List<AlertaDTO.Response>> findAll() {
         return ResponseEntity.ok(alertaService.findAll());
     }
 
     @PutMapping("/legacy/{id}")
-    public ResponseEntity<AlertaResponseDTO> update(@PathVariable Integer id, @RequestBody AlertaRequestDTO dto) {
+    public ResponseEntity<AlertaDTO.Response> update(@PathVariable Integer id, @RequestBody AlertaDTO.Request dto) {
         return alertaService.update(id, dto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ===== ENDPOINTS MODERNOS (usados pelo frontend) =====
-
     @PostMapping
     @Operation(summary = "Criar alerta personalizado", 
                description = "Cria um novo alerta personalizado com vinculação automática de itens-produto")
-    public ResponseEntity<AlertaDTO.Listagem> criarAlerta(
-            @Valid @RequestBody AlertaDTO.Cadastro alertaDTO,
-            @RequestParam(required = false) String usuarioCriadorId) throws SmartValidityException {
+    public ResponseEntity<?> criarAlerta(
+            @RequestBody AlertaDTO.Cadastro alertaDTO,
+            @RequestParam(required = false) String usuarioCriadorId) {
         
-        log.info("Recebendo requisição para criar alerta: {}", alertaDTO.getTitulo());
-        AlertaDTO.Listagem response = alertaService.criarAlerta(alertaDTO, usuarioCriadorId);
-        return ResponseEntity.status(201).body(response);
+        try {
+            log.info("Recebendo requisição para criar alerta: {}", alertaDTO.getTitulo());
+            log.info("DTO completo recebido: {}", alertaDTO);
+            AlertaDTO.Listagem response = alertaService.criarAlerta(alertaDTO, usuarioCriadorId);
+            return ResponseEntity.status(201).body(response);
+        } catch (SmartValidityException e) {
+            log.error("Erro de validação ao criar alerta: {}", e.getMessage(), e);
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Erro de validação");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        } catch (Exception e) {
+            log.error("Erro inesperado ao criar alerta: {}", e.getMessage(), e);
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Erro interno do servidor");
+            errorResponse.put("message", "Erro ao processar a solicitação: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
+        }
     }
 
     @GetMapping("/{id}")
@@ -103,14 +114,14 @@ public class AlertaController {
     @PostMapping("/contar-registros")
     @Operation(summary = "Contar alertas com filtros")
     public ResponseEntity<Long> contarRegistros(@RequestBody AlertaDTO.Filtro filtro) {
-        long total = alertaService.contarAlertas(filtro);
+        long total = alertaService.contarAlertasFiltrados(filtro);
         return ResponseEntity.ok(total);
     }
 
     @PostMapping("/count")
     @Operation(summary = "Contar alertas com filtros (formato {{total}})")
     public ResponseEntity<java.util.Map<String, Long>> contarRegistrosMap(@RequestBody AlertaDTO.Filtro filtro) {
-        long total = alertaService.contarAlertas(filtro);
+        long total = alertaService.contarAlertasFiltrados(filtro);
         return ResponseEntity.ok(java.util.Map.of("total", total));
     }
 

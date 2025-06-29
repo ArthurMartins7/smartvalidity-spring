@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import br.com.smartvalidity.model.entity.Notificacao;
 import br.com.smartvalidity.model.entity.Usuario;
 
+
 public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> {
 
     /**
