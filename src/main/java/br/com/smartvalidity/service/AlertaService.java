@@ -40,6 +40,9 @@ public class AlertaService {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private NotificacaoService notificacaoService;
+
     // ===== MÉTODOS LEGACY (compatibilidade com DTOs antigos) =====
 
     public AlertaResponseDTO create(AlertaRequestDTO dto) {
@@ -94,6 +97,7 @@ public class AlertaService {
             alerta.setDiasAntecedencia(alertaDTO.getDiasAntecedencia());
             alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
             alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
+            // Sempre criar como ativo, independentemente da data/hora de disparo
             alerta.setAtivo(true);
             alerta.setLido(false);
             
@@ -110,6 +114,10 @@ public class AlertaService {
                     Usuario usuario = usuarioService.buscarPorId(usuarioId);
                     usuariosAlerta.add(usuario);
                 }
+            }
+            // Garante que o criador receba a notificação também
+            if (alerta.getUsuarioCriador() != null) {
+                usuariosAlerta.add(alerta.getUsuarioCriador());
             }
             alerta.setUsuariosAlerta(usuariosAlerta);
             
@@ -132,13 +140,11 @@ public class AlertaService {
             }
             alerta.setProdutosAlerta(produtosAlerta);
             
-            // Se a data/hora de disparo for no passado ou não informada, torna-se ativo imediatamente.
-            boolean deveAtivarAgora = alerta.getDataHoraDisparo() == null ||
-                    !alerta.getDataHoraDisparo().isAfter(java.time.LocalDateTime.now());
-            alerta.setAtivo(deveAtivarAgora);
-            
             // Salvar o alerta
             alerta = alertaRepository.save(alerta);
+            
+            // Criar notificações individuais para cada usuário
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
             
             log.info("Alerta personalizado criado com sucesso: ID {}, Título: {}", 
                 alerta.getId(), alerta.getTitulo());
@@ -185,16 +191,10 @@ public class AlertaService {
             alerta.setDiasAntecedencia(alertaDTO.getDiasAntecedencia());
             alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
             alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
-            
-            // Reavaliar ativação: se ainda inativo e o horário já passou, ativa
+
+            // Se requisitante enviar flag ativo, respeita; caso contrário mantém valor atual
             if (alertaDTO.getAtivo() != null) {
                 alerta.setAtivo(alertaDTO.getAtivo());
-            } else {
-                boolean deveAtivarAgora = alerta.getDataHoraDisparo() == null ||
-                        !alerta.getDataHoraDisparo().isAfter(java.time.LocalDateTime.now());
-                if (deveAtivarAgora && !Boolean.TRUE.equals(alerta.getAtivo())) {
-                    alerta.setAtivo(true);
-                }
             }
             
             // Atualizar usuários se fornecidos

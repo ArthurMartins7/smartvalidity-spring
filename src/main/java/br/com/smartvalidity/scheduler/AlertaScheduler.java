@@ -18,6 +18,7 @@ import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.model.repository.ItemProdutoRepository;
 import br.com.smartvalidity.model.repository.UsuarioRepository;
+import br.com.smartvalidity.service.NotificacaoService;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -33,11 +34,14 @@ public class AlertaScheduler {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private NotificacaoService notificacaoService;
+
     /**
      * Executa de 2 em 2 minutos para verificar itens próximos do vencimento
      * e criar alertas automáticos conforme necessário
      */
-    @Scheduled(fixedRate = 120000) // 2 minutos = 120.000 ms
+    @Scheduled(fixedRate = 30000) // 30 segundos para teste rápido
     @Transactional
     public void verificarVencimentosECriarAlertas() {
         log.info("=== Iniciando verificação de vencimentos ===");
@@ -138,6 +142,9 @@ public class AlertaScheduler {
 
             // Salvar o alerta
             alertaRepository.save(alerta);
+            
+            // Criar notificações individuais para cada usuário
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
             
             log.info("Alerta automático criado: {} para item {} (Lote: {})", 
                 tipoAlerta, produtoNome, itemProduto.getLote());

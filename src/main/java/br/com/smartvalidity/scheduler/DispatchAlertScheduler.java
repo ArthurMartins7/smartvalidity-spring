@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
+import br.com.smartvalidity.service.NotificacaoService;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,6 +25,9 @@ public class DispatchAlertScheduler {
 
     @Autowired
     private AlertaRepository alertaRepository;
+
+    @Autowired
+    private NotificacaoService notificacaoService;
 
     /**
      * Executa a cada minuto e ativa alertas cujo dataHoraDisparo já passou.
@@ -41,6 +45,10 @@ public class DispatchAlertScheduler {
             alerta.setAtivo(true);
             alerta.setLido(false); // garante que aparecerá como não lido
             alertaRepository.save(alerta);
+            
+            // Criar notificações quando o alerta é ativado
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
+            
             ativados++;
         }
         log.info("{} alerta(s) ativados para notificação (horário de disparo alcançado)", ativados);
