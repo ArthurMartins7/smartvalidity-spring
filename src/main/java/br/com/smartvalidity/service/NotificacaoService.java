@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.smartvalidity.auth.AuthenticationService;
+import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.AlertaDTO;
 import br.com.smartvalidity.model.dto.NotificacaoDTO;
 import br.com.smartvalidity.model.entity.Alerta;
@@ -24,6 +26,9 @@ public class NotificacaoService {
 
     @Autowired
     private NotificacaoRepository notificacaoRepository;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
 
     @Transactional
@@ -165,8 +170,8 @@ public class NotificacaoService {
         
         AlertaDTO.Listagem dto = AlertaMapper.toListagemDTO(notificacao.getAlerta());
         
+        // Usar ID da notificação, não do alerta
         dto.setId(notificacao.getId().intValue());
-        dto.setLida(notificacao.getLida());
         dto.setDataCriacao(notificacao.getDataHoraCriacao());
         
         return dto;
@@ -182,5 +187,84 @@ public class NotificacaoService {
             log.warn("Erro ao buscar notificação {} do usuário {}: {}", notificacaoId, usuario.getId(), e.getMessage());
             return null;
         }
+    }
+
+
+    @Transactional
+    public boolean excluirNotificacao(Long notificacaoId, Usuario usuario) {
+        try {
+            return notificacaoRepository.findByIdAndUsuario(notificacaoId, usuario)
+                    .map(notificacao -> {
+                        notificacaoRepository.delete(notificacao);
+                        log.info("Notificação {} excluída pelo usuário {}", notificacaoId, usuario.getId());
+                        return true;
+                    })
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Erro ao excluir notificação {} do usuário {}: {}", 
+                notificacaoId, usuario.getId(), e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * MÉTODOS CONVENIENTES PARA ADERÊNCIA MVC
+     * Encapsulam autenticação para evitar lógica de negócio no Controller
+     */
+    
+    public List<AlertaDTO.Listagem> buscarNotificacoesDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return buscarNotificacoesDoUsuario(usuario);
+    }
+    
+    public AlertaDTO.Listagem buscarNotificacaoPorIdDoUsuarioAutenticado(Long id) throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return buscarNotificacaoPorId(id, usuario);
+    }
+    
+    public List<AlertaDTO.Listagem> buscarNotificacaoNaoLidasDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return buscarNotificacaoNaoLidasDoUsuario(usuario);
+    }
+    
+    public Long contarNotificacaoNaoLidasDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return contarNotificacaoNaoLidasDoUsuario(usuario);
+    }
+    
+    public boolean marcarComoLidaDoUsuarioAutenticado(Long id) throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return marcarComoLida(id, usuario);
+    }
+    
+    public void marcarTodasComoLidasDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        marcarTodasComoLidas(usuario);
+    }
+    
+    public boolean excluirNotificacaoDoUsuarioAutenticado(Long id) throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return excluirNotificacao(id, usuario);
     }
 } 

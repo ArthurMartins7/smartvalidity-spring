@@ -73,7 +73,7 @@ public class AlertaScheduler {
 
                 if (tipoAlerta != null) {
                     // Verificar se já existe alerta ativo para este item e tipo
-                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndAtivoTrue(item, tipoAlerta);
+                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndAtivoTrueAndExcluidoFalse(item, tipoAlerta);
                     
                     if (!alertaJaExiste) {
                         criarAlertaAutomatico(item, tipoAlerta);
@@ -100,7 +100,6 @@ public class AlertaScheduler {
             // Informações básicas do alerta
             alerta.setTipo(tipoAlerta);
             alerta.setAtivo(true);
-            alerta.setLido(false);
             alerta.setRecorrente(false);
             alerta.setItemProduto(itemProduto);
             alerta.setDataHoraDisparo(LocalDateTime.now());
@@ -166,7 +165,7 @@ public class AlertaScheduler {
         try {
             // Desativar alertas de itens que foram inspecionados
             List<Alerta> alertasDeItensInspecionados = alertaRepository
-                .findByItemProdutoInspecionadoTrueAndAtivoTrue();
+                .findByItemProdutoInspecionadoTrueAndAtivoTrueAndExcluidoFalse();
             
             int alertasDesativados = 0;
             for (Alerta alerta : alertasDeItensInspecionados) {

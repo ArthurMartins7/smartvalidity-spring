@@ -48,12 +48,5 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
     @Transactional
     int marcarTodasComoLidasPorUsuario(@Param("usuario") Usuario usuario);
 
-    /**
-     * Remove todas as notificações vinculadas a um alerta específico
-     * Usado para exclusão em cascata quando um alerta é excluído
-     */
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Notificacao n WHERE n.alerta.id = :alertaId")
-    int deleteByAlertaId(@Param("alertaId") Integer alertaId);
+
 } 

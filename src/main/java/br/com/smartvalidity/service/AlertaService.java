@@ -17,7 +17,6 @@ import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.mapper.AlertaMapper;
 import br.com.smartvalidity.model.repository.AlertaRepository;
-import br.com.smartvalidity.model.repository.NotificacaoRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -41,8 +40,7 @@ public class AlertaService {
     @Autowired
     private NotificacaoService notificacaoService;
 
-    @Autowired
-    private NotificacaoRepository notificacaoRepository;
+
 
     public AlertaDTO.Response create(AlertaDTO.Request dto) {
         Alerta alerta = dto.toEntity();
@@ -51,17 +49,17 @@ public class AlertaService {
     }
 
     public List<AlertaDTO.Response> findAll() {
-        return alertaRepository.findAll().stream()
+        return alertaRepository.findAllNotDeleted().stream()
                 .map(AlertaDTO.Response::fromEntity)
                 .toList();
     }
 
     public Optional<AlertaDTO.Response> findById(Integer id) {
-        return alertaRepository.findById(id).map(AlertaDTO.Response::fromEntity);
+        return alertaRepository.findByIdAndExcluidoFalse(id).map(AlertaDTO.Response::fromEntity);
     }
 
     public Optional<AlertaDTO.Response> update(Integer id, AlertaDTO.Request dto) {
-        return alertaRepository.findById(id)
+        return alertaRepository.findByIdAndExcluidoFalse(id)
                 .map(alerta -> {
                     alerta.setTitulo(dto.getTitulo());
                     alerta.setDescricao(dto.getDescricao());
@@ -75,37 +73,27 @@ public class AlertaService {
     }
 
     /**
-     * Exclui um alerta e suas dependências
-     * RESPONSABILIDADE SERVICE: Lógica de negócio para exclusão em cascata
-     * PRINCÍPIO MVC: Coordena exclusão de entidades relacionadas
+     * Exclui um alerta logicamente (mantém notificações existentes)
+     * RESPONSABILIDADE SERVICE: Lógica de negócio para exclusão lógica
+     * PRINCÍPIO MVC: Preserva integridade das notificações já criadas
      */
     @org.springframework.transaction.annotation.Transactional
     public void delete(Integer id) throws SmartValidityException {
-        log.info("Iniciando exclusão do alerta ID: {}", id);
+        log.info("Iniciando exclusão lógica do alerta ID: {}", id);
         
         try {
-            // Verificar se o alerta existe
-            Alerta alerta = alertaRepository.findById(id)
+            // Verificar se o alerta existe e não está excluído
+            Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
                 .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
 
             log.info("Alerta encontrado: {} (Tipo: {})", alerta.getTitulo(), alerta.getTipo());
 
-            // 1. Remover notificações vinculadas ao alerta (integridade referencial)
-            log.info("Removendo notificações vinculadas ao alerta...");
-            int notificacoesRemovidas = notificacaoRepository.deleteByAlertaId(id);
-            log.info("Removidas {} notificações do alerta {}", notificacoesRemovidas, id);
-            
-            // 2. Limpar associações Many-to-Many de forma segura (JPA cuidará do delete nas tabelas de junção)
-            alerta.getUsuariosAlerta().clear();
-            alerta.getProdutosAlerta().clear();
+            // Exclusão lógica: marcar como excluído
+            alerta.setExcluido(true);
+            alerta.setAtivo(false); // Também desativar
             alertaRepository.save(alerta);
-            alertaRepository.flush(); // garante ordem
-
-            // 3. Remover o alerta
-            log.info("Removendo alerta do banco de dados...");
-            alertaRepository.delete(alerta);
             
-            log.info("Alerta {} excluído com sucesso", id);
+            log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
             
         } catch (SmartValidityException e) {
             log.error("Erro de validação ao excluir alerta {}: {}", id, e.getMessage());
@@ -138,7 +126,6 @@ public class AlertaService {
             alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
             alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
             alerta.setAtivo(true);
-            alerta.setLido(false);
             
             // Definir campos de disparo recorrente com valores padrão
             alerta.setDisparoRecorrente(false);
@@ -203,7 +190,7 @@ public class AlertaService {
     }
     
     public AlertaDTO.Listagem buscarPorId(Integer id) throws SmartValidityException {
-        Alerta alerta = alertaRepository.findById(id)
+        Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
             .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
         
         return AlertaMapper.toListagemDTO(alerta);
@@ -213,7 +200,7 @@ public class AlertaService {
         log.info("=== Atualizando alerta ID {} ===", id);
         
         try {
-            Alerta alerta = alertaRepository.findById(id)
+            Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
                 .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
             
             if (alerta.getTipo() != TipoAlerta.PERSONALIZADO) {
@@ -272,7 +259,7 @@ public class AlertaService {
      */
     public AlertaDTO.Listagem toggleAtivo(Integer id) throws SmartValidityException {
         try {
-            Alerta alerta = alertaRepository.findById(id)
+            Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
                     .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
 
             // Aplicar lógica de negócio: inverter status ativo
@@ -295,7 +282,7 @@ public class AlertaService {
     }
 
     public List<AlertaDTO.Listagem> filtrarAlertas(AlertaDTO.Filtro filtro) {
-        List<Alerta> todos = alertaRepository.findAll();
+        List<Alerta> todos = alertaRepository.findAllNotDeleted();
 
         var stream = todos.stream();
 
@@ -359,7 +346,7 @@ public class AlertaService {
     }
 
     public long contarAlertasFiltrados(AlertaDTO.Filtro filtro) {
-        List<Alerta> todos = alertaRepository.findAll();
+        List<Alerta> todos = alertaRepository.findAllNotDeleted();
 
         var stream = todos.stream();
 

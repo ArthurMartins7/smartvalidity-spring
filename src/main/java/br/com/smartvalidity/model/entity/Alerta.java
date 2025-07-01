@@ -3,8 +3,6 @@ package br.com.smartvalidity.model.entity;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-import org.hibernate.annotations.SQLInsert;
-
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,7 +48,7 @@ public class Alerta {
     private Boolean ativo = true;
 
     @Column(nullable = false)
-    private Boolean lido = false;
+    private Boolean excluido = false;
 
     @Column(nullable = false)
     private Boolean recorrente = false;
@@ -77,7 +75,6 @@ public class Alerta {
         joinColumns = @JoinColumn(name = "id_alerta"),
         inverseJoinColumns = @JoinColumn(name = "id_usuario")
     )
-    @SQLInsert(sql = "INSERT INTO alerta_usuario (id_alerta, id_usuario, lido) VALUES (?, ?, false)")
     private Set<Usuario> usuariosAlerta;
 
     @ManyToMany

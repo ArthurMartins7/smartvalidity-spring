@@ -28,14 +28,13 @@ public class DispatchAlertScheduler {
     @Transactional
     public void ativarAlertasProntosParaDisparo() {
         LocalDateTime agora = LocalDateTime.now();
-        List<Alerta> pendentes = alertaRepository.findByAtivoFalseAndDataHoraDisparoLessThanEqual(agora);
+        List<Alerta> pendentes = alertaRepository.findByAtivoFalseAndDataHoraDisparoLessThanEqualAndExcluidoFalse(agora);
         if (pendentes.isEmpty()) {
             return;
         }
         int ativados = 0;
         for (Alerta alerta : pendentes) {
             alerta.setAtivo(true);
-            alerta.setLido(false);
             alertaRepository.save(alerta);
             notificacaoService.criarNotificacoesParaAlerta(alerta);
             
