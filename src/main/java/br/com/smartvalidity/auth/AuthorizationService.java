@@ -34,4 +34,8 @@ public class AuthorizationService {
             throw new SmartValidityException("Somente o portador da conta pode executar essa ação!");
         }
     }
+
+    public Usuario getUsuarioAutenticado() throws SmartValidityException {
+        return authenticationService.getUsuarioAutenticado();
+    }
 }

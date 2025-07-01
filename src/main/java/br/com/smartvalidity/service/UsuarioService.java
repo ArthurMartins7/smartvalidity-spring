@@ -132,4 +132,19 @@ public class UsuarioService implements UserDetailsService {
             throw new SmartValidityException("Não pode utilizar um e-mail já cadastrado!");
         }
     }
+
+    public Usuario atualizarPerfilUsuario(Usuario usuarioDTO) throws SmartValidityException {
+        // Buscar o usuário autenticado
+        Usuario usuarioAtual = authorizationService.getUsuarioAutenticado();
+        
+        // Verificar se o email já está sendo usado por outro usuário
+        this.verificarEmailJaUtilizado(usuarioDTO.getEmail(), usuarioAtual.getId());
+        
+        // Atualizar apenas os campos permitidos
+        usuarioAtual.setNome(Optional.ofNullable(usuarioDTO.getNome()).orElse(usuarioAtual.getNome()));
+        usuarioAtual.setEmail(Optional.ofNullable(usuarioDTO.getEmail()).orElse(usuarioAtual.getEmail()));
+        usuarioAtual.setCargo(Optional.ofNullable(usuarioDTO.getCargo()).orElse(usuarioAtual.getCargo()));
+        
+        return usuarioRepository.save(usuarioAtual);
+    }
 }
