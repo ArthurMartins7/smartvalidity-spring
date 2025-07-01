@@ -17,6 +17,7 @@ import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.mapper.AlertaMapper;
 import br.com.smartvalidity.model.repository.AlertaRepository;
+import br.com.smartvalidity.model.repository.NotificacaoRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -39,6 +40,9 @@ public class AlertaService {
 
     @Autowired
     private NotificacaoService notificacaoService;
+
+    @Autowired
+    private NotificacaoRepository notificacaoRepository;
 
     public AlertaDTO.Response create(AlertaDTO.Request dto) {
         Alerta alerta = dto.toEntity();
@@ -70,8 +74,46 @@ public class AlertaService {
                 });
     }
 
-    public void delete(Integer id) {
-        alertaRepository.deleteById(id);
+    /**
+     * Exclui um alerta e suas dependências
+     * RESPONSABILIDADE SERVICE: Lógica de negócio para exclusão em cascata
+     * PRINCÍPIO MVC: Coordena exclusão de entidades relacionadas
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void delete(Integer id) throws SmartValidityException {
+        log.info("Iniciando exclusão do alerta ID: {}", id);
+        
+        try {
+            // Verificar se o alerta existe
+            Alerta alerta = alertaRepository.findById(id)
+                .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
+
+            log.info("Alerta encontrado: {} (Tipo: {})", alerta.getTitulo(), alerta.getTipo());
+
+            // 1. Remover notificações vinculadas ao alerta (integridade referencial)
+            log.info("Removendo notificações vinculadas ao alerta...");
+            int notificacoesRemovidas = notificacaoRepository.deleteByAlertaId(id);
+            log.info("Removidas {} notificações do alerta {}", notificacoesRemovidas, id);
+            
+            // 2. Limpar associações Many-to-Many de forma segura (JPA cuidará do delete nas tabelas de junção)
+            alerta.getUsuariosAlerta().clear();
+            alerta.getProdutosAlerta().clear();
+            alertaRepository.save(alerta);
+            alertaRepository.flush(); // garante ordem
+
+            // 3. Remover o alerta
+            log.info("Removendo alerta do banco de dados...");
+            alertaRepository.delete(alerta);
+            
+            log.info("Alerta {} excluído com sucesso", id);
+            
+        } catch (SmartValidityException e) {
+            log.error("Erro de validação ao excluir alerta {}: {}", id, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Erro inesperado ao excluir alerta {}: {}", id, e.getMessage(), e);
+            throw new SmartValidityException("Erro interno ao excluir alerta: " + e.getMessage());
+        }
     }
     
     public AlertaDTO.Listagem criarAlerta(AlertaDTO.Cadastro alertaDTO, String usuarioCriadorId) throws SmartValidityException {
@@ -223,18 +265,32 @@ public class AlertaService {
         }
     }
     
+    /**
+     * Alterna o status ativo de um alerta
+     * RESPONSABILIDADE SERVICE: Lógica de negócio para alteração de status
+     * PRINCÍPIO MVC: Isola CONTROLLER da lógica de negócio e acesso a dados
+     */
     public AlertaDTO.Listagem toggleAtivo(Integer id) throws SmartValidityException {
         try {
             Alerta alerta = alertaRepository.findById(id)
                     .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
 
-            alerta.setAtivo(!Boolean.TRUE.equals(alerta.getAtivo()));
+            // Aplicar lógica de negócio: inverter status ativo
+            Boolean novoStatus = !Boolean.TRUE.equals(alerta.getAtivo());
+            alerta.setAtivo(novoStatus);
+
+            // Persistir alteração
             alerta = alertaRepository.save(alerta);
 
+            log.info("Status do alerta {} alterado para: {}", id, novoStatus);
             return AlertaMapper.toListagemDTO(alerta);
+            
+        } catch (SmartValidityException e) {
+            log.error("Erro ao alterar status do alerta {}: {}", id, e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("Erro ao alternar status ativo do alerta {}: {}", id, e.getMessage(), e);
-            throw new SmartValidityException("Erro ao alterar status do alerta: " + e.getMessage());
+            log.error("Erro inesperado ao alterar status do alerta {}: {}", id, e.getMessage(), e);
+            throw new SmartValidityException("Erro interno ao alterar status do alerta: " + e.getMessage());
         }
     }
 

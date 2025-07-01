@@ -3,8 +3,10 @@ package br.com.smartvalidity.model.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.ItemProduto;
@@ -46,4 +48,17 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
      * Buscar alertas ainda não ativados cujo horário de disparo já foi alcançado
      */
     List<Alerta> findByAtivoFalseAndDataHoraDisparoLessThanEqual(java.time.LocalDateTime dataHora);
+
+    /*
+     * Excluir registros das tabelas de junção para evitar violação de FK ao remover um alerta
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM alerta_usuario WHERE id_alerta = :alertaId", nativeQuery = true)
+    void deleteUsuariosAlerta(@Param("alertaId") Integer alertaId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM alerta_produto WHERE id_alerta = :alertaId", nativeQuery = true)
+    void deleteProdutosAlerta(@Param("alertaId") Integer alertaId);
 } 

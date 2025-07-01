@@ -111,21 +111,21 @@ public class AlertaScheduler {
             
             switch (tipoAlerta) {
                 case VENCIMENTO_AMANHA:
-                    alerta.setTitulo("⚠️ Produto vence amanhã");
+                    alerta.setTitulo("Produto vence amanhã");
                     alerta.setDescricao(String.format("O item '%s' (Lote: %s) vence amanhã (%s). Verifique o estoque!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
                     break;
                     
                 case VENCIMENTO_HOJE:
-                    alerta.setTitulo("🚨 Produto vence hoje");
+                    alerta.setTitulo("Produto vence hoje");
                     alerta.setDescricao(String.format("O item '%s' (Lote: %s) vence HOJE (%s). Ação imediata necessária!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
                     break;
                     
                 case VENCIMENTO_ATRASO:
-                    alerta.setTitulo("🔴 Produto vencido");
+                    alerta.setTitulo("Produto vencido");
                     alerta.setDescricao(String.format("O item '%s' (Lote: %s) venceu ontem (%s). Remova do estoque imediatamente!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
