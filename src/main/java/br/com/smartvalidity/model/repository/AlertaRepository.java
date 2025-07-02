@@ -3,8 +3,10 @@ package br.com.smartvalidity.model.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.ItemProduto;
@@ -16,29 +18,48 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
     /**
      * Verificar se já existe um alerta ativo para um item-produto específico e tipo
      */
-    boolean existsByItemProdutoAndTipoAndAtivoTrue(ItemProduto itemProduto, TipoAlerta tipo);
+    boolean existsByItemProdutoAndTipoAndAtivoTrueAndExcluidoFalse(ItemProduto itemProduto, TipoAlerta tipo);
     
     /**
-     * Buscar alertas de itens que foram inspecionados e ainda estão ativos
+     * Buscar alertas de itens que foram inspecionados e ainda estão ativos (não excluídos)
      */
-    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.ativo = true")
-    List<Alerta> findByItemProdutoInspecionadoTrueAndAtivoTrue();
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.ativo = true AND a.excluido = false")
+    List<Alerta> findByItemProdutoInspecionadoTrueAndAtivoTrueAndExcluidoFalse();
     
     /**
-     * Buscar alertas de um usuário específico
+     * Buscar alertas de um usuário específico (não excluídos)
      */
-    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true ORDER BY a.dataHoraCriacao DESC")
-    List<Alerta> findByUsuarioAndAtivoTrue(@Param("usuario") Usuario usuario);
+    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
+    List<Alerta> findByUsuarioAndAtivoTrueAndExcluidoFalse(@Param("usuario") Usuario usuario);
     
     /**
-     * Buscar alertas não lidos de um usuário específico
+     * Buscar alertas ainda não ativados cujo horário de disparo já foi alcançado (não excluídos)
      */
-    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true AND a.lido = false ORDER BY a.dataHoraCriacao DESC")
-    List<Alerta> findByUsuarioAndAtivoTrueAndLidoFalse(@Param("usuario") Usuario usuario);
-    
+    @Query("SELECT a FROM Alerta a WHERE a.ativo = false AND a.dataHoraDisparo <= :dataHora AND a.excluido = false")
+    List<Alerta> findByAtivoFalseAndDataHoraDisparoLessThanEqualAndExcluidoFalse(@Param("dataHora") java.time.LocalDateTime dataHora);
+
     /**
-     * Contar alertas não lidos de um usuário específico
+     * Buscar alerta por ID apenas se não estiver excluído
      */
-    @Query("SELECT COUNT(a) FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true AND a.lido = false")
-    Long countByUsuarioAndAtivoTrueAndLidoFalse(@Param("usuario") Usuario usuario);
+    @Query("SELECT a FROM Alerta a WHERE a.id = :id AND a.excluido = false")
+    java.util.Optional<Alerta> findByIdAndExcluidoFalse(@Param("id") Integer id);
+
+    /**
+     * Buscar todos os alertas não excluídos
+     */
+    @Query("SELECT a FROM Alerta a WHERE a.excluido = false ORDER BY a.dataHoraCriacao DESC")
+    List<Alerta> findAllNotDeleted();
+
+    /*
+     * Excluir registros das tabelas de junção para evitar violação de FK ao remover um alerta
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM alerta_usuario WHERE id_alerta = :alertaId", nativeQuery = true)
+    void deleteUsuariosAlerta(@Param("alertaId") Integer alertaId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM alerta_produto WHERE id_alerta = :alertaId", nativeQuery = true)
+    void deleteProdutosAlerta(@Param("alertaId") Integer alertaId);
 } 

@@ -5,14 +5,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.com.smartvalidity.model.enums.PerfilAcesso;
 import jakarta.persistence.Column;
@@ -69,6 +66,7 @@ public class Usuario implements UserDetails {
     private Empresa empresa;
 
     @ManyToMany(mappedBy = "usuariosAlerta")
+    @com.fasterxml.jackson.annotation.JsonBackReference
     private Set<Alerta> alertas;
 
     @Override

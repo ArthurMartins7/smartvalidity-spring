@@ -42,22 +42,26 @@ public class AuthenticationService {
 
     public Usuario getUsuarioAutenticado() throws SmartValidityException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Usuario usuarioAutenticado = null;
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SmartValidityException("Usuário não autenticado!");
+        }
 
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
 
-            if (principal instanceof Jwt) {
-                String email = ((Jwt) principal).getSubject();
-                System.out.println("email value:" + email);
-                Optional<Usuario> usuario = Optional.ofNullable(usuarioRepository.findByEmail(email).orElseThrow(
-                        () -> new UsernameNotFoundException("Usuário não encontrado!")));
-
-                usuarioAutenticado = usuario.get();
-
+        if (principal instanceof Jwt) {
+            String email = ((Jwt) principal).getSubject();
+            System.out.println("email value:" + email);
+            
+            try {
+                Usuario usuario = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado!"));
+                return usuario;
+            } catch (UsernameNotFoundException e) {
+                throw new SmartValidityException("Usuário não encontrado!");
             }
         }
 
-        return usuarioAutenticado;
+        throw new SmartValidityException("Token de autenticação inválido!");
     }
 }

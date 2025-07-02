@@ -40,6 +40,14 @@ public class UsuarioController {
         return ResponseEntity.ok(this.usuarioService.alterar(id ,usuarioDTO));
     }
 
+    @Operation(summary = "Atualizar perfil do usuário autenticado")
+    @PutMapping("/me")
+    public ResponseEntity<Usuario> atualizarPerfil(@RequestBody Usuario usuarioDTO) throws SmartValidityException {
+        // Buscar o usuário autenticado e atualizar apenas os campos permitidos
+        Usuario usuarioAtualizado = this.usuarioService.atualizarPerfilUsuario(usuarioDTO);
+        return ResponseEntity.ok(usuarioAtualizado);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable String id) throws SmartValidityException {
         this.usuarioService.excluir(id);

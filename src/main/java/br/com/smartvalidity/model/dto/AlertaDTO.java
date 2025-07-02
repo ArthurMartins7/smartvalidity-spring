@@ -3,6 +3,8 @@ package br.com.smartvalidity.model.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import br.com.smartvalidity.model.entity.Alerta;
+import br.com.smartvalidity.model.enums.FrequenciaDisparo;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -76,6 +78,54 @@ public class AlertaDTO {
         private String sortDirection = "desc";
         public boolean temPaginacao() {
             return limite > 0 && pagina > 0;
+        }
+    }
+
+    @Data
+    public static class Request {
+        private String titulo;
+        private String descricao;
+        private LocalDateTime dataHoraDisparo;
+        private boolean disparoRecorrente;
+        private FrequenciaDisparo frequenciaDisparo;
+
+        public Alerta toEntity() {
+            Alerta alerta = new Alerta();
+            alerta.setTitulo(this.titulo);
+            alerta.setDescricao(this.descricao);
+            alerta.setDataHoraDisparo(this.dataHoraDisparo);
+            alerta.setDisparoRecorrente(this.disparoRecorrente);
+            if (this.frequenciaDisparo != null) {
+                alerta.setFrequenciaDisparo(this.frequenciaDisparo.name());
+            }
+            return alerta;
+        }
+    }
+
+    @Data
+    public static class Response {
+        private Integer id;
+        private String titulo;
+        private String descricao;
+        private LocalDateTime dataHoraDisparo;
+        private boolean disparoRecorrente;
+        private FrequenciaDisparo frequenciaDisparo;
+
+        public static Response fromEntity(Alerta alerta) {
+            Response dto = new Response();
+            dto.setId(alerta.getId());
+            dto.setTitulo(alerta.getTitulo());
+            dto.setDescricao(alerta.getDescricao());
+            dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
+            dto.setDisparoRecorrente(alerta.getDisparoRecorrente() != null ? alerta.getDisparoRecorrente() : false);
+            if (alerta.getFrequenciaDisparo() != null) {
+                try {
+                    dto.setFrequenciaDisparo(FrequenciaDisparo.valueOf(alerta.getFrequenciaDisparo()));
+                } catch (IllegalArgumentException e) {
+                    dto.setFrequenciaDisparo(null);
+                }
+            }
+            return dto;
         }
     }
 } 

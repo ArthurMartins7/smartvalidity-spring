@@ -18,6 +18,7 @@ import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.model.repository.ItemProdutoRepository;
 import br.com.smartvalidity.model.repository.UsuarioRepository;
+import br.com.smartvalidity.service.NotificacaoService;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -33,11 +34,14 @@ public class AlertaScheduler {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private NotificacaoService notificacaoService;
+
     /**
      * Executa de 2 em 2 minutos para verificar itens próximos do vencimento
      * e criar alertas automáticos conforme necessário
      */
-    @Scheduled(fixedRate = 120000) // 2 minutos = 120.000 ms
+    @Scheduled(fixedRate = 30000) // 30 segundos para teste rápido
     @Transactional
     public void verificarVencimentosECriarAlertas() {
         log.info("=== Iniciando verificação de vencimentos ===");
@@ -69,7 +73,7 @@ public class AlertaScheduler {
 
                 if (tipoAlerta != null) {
                     // Verificar se já existe alerta ativo para este item e tipo
-                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndAtivoTrue(item, tipoAlerta);
+                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndAtivoTrueAndExcluidoFalse(item, tipoAlerta);
                     
                     if (!alertaJaExiste) {
                         criarAlertaAutomatico(item, tipoAlerta);
@@ -96,7 +100,6 @@ public class AlertaScheduler {
             // Informações básicas do alerta
             alerta.setTipo(tipoAlerta);
             alerta.setAtivo(true);
-            alerta.setLido(false);
             alerta.setRecorrente(false);
             alerta.setItemProduto(itemProduto);
             alerta.setDataHoraDisparo(LocalDateTime.now());
@@ -107,21 +110,21 @@ public class AlertaScheduler {
             
             switch (tipoAlerta) {
                 case VENCIMENTO_AMANHA:
-                    alerta.setTitulo("⚠️ Produto vence amanhã");
+                    alerta.setTitulo("Produto vence amanhã");
                     alerta.setDescricao(String.format("O item '%s' (Lote: %s) vence amanhã (%s). Verifique o estoque!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
                     break;
                     
                 case VENCIMENTO_HOJE:
-                    alerta.setTitulo("🚨 Produto vence hoje");
+                    alerta.setTitulo("Produto vence hoje");
                     alerta.setDescricao(String.format("O item '%s' (Lote: %s) vence HOJE (%s). Ação imediata necessária!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
                     break;
                     
                 case VENCIMENTO_ATRASO:
-                    alerta.setTitulo("🔴 Produto vencido");
+                    alerta.setTitulo("Produto vencido");
                     alerta.setDescricao(String.format("O item '%s' (Lote: %s) venceu ontem (%s). Remova do estoque imediatamente!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
@@ -138,6 +141,9 @@ public class AlertaScheduler {
 
             // Salvar o alerta
             alertaRepository.save(alerta);
+            
+            // Criar notificações individuais para cada usuário
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
             
             log.info("Alerta automático criado: {} para item {} (Lote: {})", 
                 tipoAlerta, produtoNome, itemProduto.getLote());
@@ -159,7 +165,7 @@ public class AlertaScheduler {
         try {
             // Desativar alertas de itens que foram inspecionados
             List<Alerta> alertasDeItensInspecionados = alertaRepository
-                .findByItemProdutoInspecionadoTrueAndAtivoTrue();
+                .findByItemProdutoInspecionadoTrueAndAtivoTrueAndExcluidoFalse();
             
             int alertasDesativados = 0;
             for (Alerta alerta : alertasDeItensInspecionados) {
