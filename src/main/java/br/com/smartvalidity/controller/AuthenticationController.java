@@ -64,6 +64,12 @@ public class AuthenticationController {
     public Usuario registrarUsuario(@RequestBody @Valid Usuario novoUsuario) throws SmartValidityException {
         return this.usuarioService.salvar(novoUsuario);
     }
+
+
+    @GetMapping("/verificar-assinatura")
+    public boolean verificarSeExisteUsuarioAssinante() throws SmartValidityException {
+        return this.usuarioService.verificarSeExisteUsuarioAssinante();
+    }
     
     /**
      * Retorna as informações do usuário atualmente autenticado

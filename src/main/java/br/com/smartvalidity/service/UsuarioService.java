@@ -119,6 +119,10 @@ public class UsuarioService implements UserDetailsService {
         }
     }
 
+    public boolean verificarSeExisteUsuarioAssinante() throws SmartValidityException {
+        return this.usuarioRepository.existsUsuarioByPerfilAcesso(PerfilAcesso.ASSINANTE);
+    }
+
     public void verificarEmailJaUtilizado(String email, String idUsuarioAtual) throws SmartValidityException {
         boolean emailJaUtilizado;
 

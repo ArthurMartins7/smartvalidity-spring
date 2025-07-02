@@ -1,6 +1,7 @@
 package br.com.smartvalidity.model.repository;
 
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.PerfilAcesso;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String>, JpaSp
     boolean existsByEmail(String email);
 
     boolean existsByEmailAndIdNot(String email, String id);
+
+    boolean existsUsuarioByPerfilAcesso(PerfilAcesso perfilAcesso);
 
 
 }
