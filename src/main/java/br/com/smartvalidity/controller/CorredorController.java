@@ -57,7 +57,10 @@ public class CorredorController {
             throw new SmartValidityException("Usuário não encontrado");
         }
 
-        if(usuarioAutenticado.getPerfilAcesso() != PerfilAcesso.ADMIN) {
+        if (usuarioAutenticado.getPerfilAcesso() == PerfilAcesso.ASSINANTE
+                || usuarioAutenticado.getPerfilAcesso() == PerfilAcesso.ADMIN) {
+            corredorService.salvarImagemCorredor(imagem, id);
+        } else {
             throw new SmartValidityException("Usuário sem permissão de acesso");
         }
 
