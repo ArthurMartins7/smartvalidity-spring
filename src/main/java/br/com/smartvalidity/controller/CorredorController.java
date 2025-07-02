@@ -45,7 +45,7 @@ public class CorredorController {
     )
     @PostMapping("/{id}/upload")
     public void fazerUploadCorredor(@RequestParam("imagem") MultipartFile imagem,
-                                 @PathVariable String id)
+                                    @PathVariable String id)
             throws SmartValidityException, IOException {
 
         if(imagem == null) {
@@ -113,5 +113,11 @@ public class CorredorController {
     public ResponseEntity<Void> excluir(@PathVariable String id) throws SmartValidityException {
         corredorService.excluir(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<Corredor>> listarPorUsuario(@PathVariable String usuarioId) {
+        List<Corredor> corredores = corredorService.listarPorUsuario(usuarioId);
+        return ResponseEntity.ok(corredores);
     }
 }

@@ -93,4 +93,8 @@ public class CorredorService {
         Corredor existente = buscarPorId(id);
         corredorRepository.delete(existente);
     }
+
+    public List<Corredor> listarPorUsuario(String usuarioId) {
+        return corredorRepository.findByUsuarioResponsavel(usuarioId);
+    }
 }
