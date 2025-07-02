@@ -46,7 +46,7 @@ public class OtpService {
             subject = "Redefinição de senha";
         }
         String body = String.format("Seu código OTP é: %s. Ele expira em %d minutos.", otp, minutesToExpire);
-        emailService.sendEmail(email, subject, body);
+        //emailService.sendEmail(email, subject, body);
     }
 
     @Transactional
