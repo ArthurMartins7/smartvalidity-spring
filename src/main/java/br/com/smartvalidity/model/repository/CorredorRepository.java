@@ -32,4 +32,7 @@ public interface CorredorRepository extends JpaRepository<Corredor, String>, Jpa
     Page<Corredor> findByFiltros(@Param("nome") String nome,
                                  @Param("responsavelId") String responsavelId,
                                  Pageable pageable);
+
+    @Query("SELECT DISTINCT c FROM Corredor c JOIN c.responsaveis r WHERE r.id = :usuarioId")
+    List<Corredor> findByUsuarioResponsavel(@Param("usuarioId") String usuarioId);
 }
