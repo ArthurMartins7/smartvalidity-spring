@@ -5,8 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class EmailOtpDTO {
+public class OtpValidateDTO {
     @NotBlank
     @Email
     private String email;
+
+    @NotBlank
+    private String token;
 } 

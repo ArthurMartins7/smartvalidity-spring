@@ -26,6 +26,9 @@ public class EmpresaService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private OtpService otpService;
+
     @Transactional
     public Empresa cadastrarEmpresaEAssinante(EmpresaUsuarioDTO dto) throws SmartValidityException {
 
@@ -35,7 +38,10 @@ public class EmpresaService {
         }
 
         // Verifica se e-mail já existe utilizando regra do UsuarioService
-        //usuarioService.verificarEmailJaUtilizado(dto.getEmail(), null);
+        usuarioService.verificarEmailJaUtilizado(dto.getEmail(), null);
+
+        // Valida o código de verificação de e-mail
+        otpService.validarCodigo(dto.getEmail(), dto.getToken());
 
         // Monta entidade Empresa
         Empresa empresa = new Empresa();
@@ -56,7 +62,12 @@ public class EmpresaService {
         empresa.getUsuarios().add(assinante);
 
         // Persistir (cascade ALL salva o usuário)
-        return empresaRepository.save(empresa);
+        Empresa salva = empresaRepository.save(empresa);
+
+        // Limpa tokens de verificação
+        otpService.removerTokens(dto.getEmail(), br.com.smartvalidity.model.enums.OtpPurpose.VERIFICAR_EMAIL);
+
+        return salva;
     }
 
     public Empresa buscarPorId(String id) throws SmartValidityException {

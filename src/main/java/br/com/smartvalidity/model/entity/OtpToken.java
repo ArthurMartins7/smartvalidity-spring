@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -31,6 +32,7 @@ public class OtpToken {
     private LocalDateTime expiresAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", length = 20, columnDefinition = "varchar(20)")
     private OtpPurpose purpose;
 
     public OtpToken(String email, String token, LocalDateTime expiresAt, OtpPurpose purpose) {

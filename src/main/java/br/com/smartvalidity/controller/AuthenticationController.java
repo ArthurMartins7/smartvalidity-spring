@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.smartvalidity.auth.AuthenticationService;
 import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
+import br.com.smartvalidity.model.dto.EmailOtpDTO;
+import br.com.smartvalidity.model.dto.OtpValidateDTO;
 import br.com.smartvalidity.model.entity.Empresa;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.service.EmpresaService;
 import br.com.smartvalidity.service.UsuarioService;
+import br.com.smartvalidity.service.OtpService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
@@ -37,6 +40,9 @@ public class AuthenticationController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private OtpService otpService;
 
     /**
      * Método de login padronizado -> Basic Auth
@@ -80,5 +86,19 @@ public class AuthenticationController {
     @GetMapping("/current-user")
     public Usuario getUserInfo() throws SmartValidityException {
         return authenticationService.getUsuarioAutenticado();
+    }
+
+    // --------------------- OTP: Verificar E-mail ---------------------
+
+    @PostMapping("/enviar-otp-email")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void enviarOtpEmail(@RequestBody @Valid EmailOtpDTO dto) {
+        otpService.enviarCodigoVerificacao(dto.getEmail());
+    }
+
+    @PostMapping("/validar-otp-email")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void validarOtpEmail(@RequestBody @Valid OtpValidateDTO dto) throws SmartValidityException {
+        otpService.validarCodigo(dto.getEmail(), dto.getToken());
     }
 }

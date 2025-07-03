@@ -35,6 +35,11 @@ public class UsuarioService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
+    private static final int TAMANHO_SENHA_CONVITE = 6;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return usuarioRepository.findByEmail(username).orElseThrow(
@@ -135,5 +140,43 @@ public class UsuarioService implements UserDetailsService {
         if (emailJaUtilizado) {
             throw new SmartValidityException("Não pode utilizar um e-mail já cadastrado!");
         }
+    }
+
+    /**
+     * Convida um novo usuário gerando uma senha provisória de 6 dígitos que é
+     * enviada por e-mail. A senha é criptografada antes de ser salva.
+     *
+     * @param usuario objeto usuário a ser persistido
+     * @return usuário salvo com senha criptografada
+     * @throws SmartValidityException caso e-mail já esteja em uso ou outro erro de regra
+     */
+    public Usuario convidarUsuario(Usuario usuario) throws SmartValidityException {
+        // Verifica se e-mail já está cadastrado
+        this.verificarEmailJaUtilizado(usuario.getEmail(), null);
+
+        // Gera senha aleatória numérica
+        String senhaGerada = gerarSenhaNumerica();
+
+        // Codifica a senha gerada e define no usuário
+        String senhaCodificada = passwordEncoder.encode(senhaGerada);
+        usuario.setSenha(senhaCodificada);
+
+        // Define perfil padrão se não informado
+        if (usuario.getPerfilAcesso() == null) {
+            usuario.setPerfilAcesso(PerfilAcesso.OPERADOR);
+        }
+
+        Usuario salvo = usuarioRepository.save(usuario);
+
+        // Envia e-mail com a senha (texto puro)
+        emailService.enviarSenhaAleatoria(usuario.getEmail(), senhaGerada);
+
+        return salvo;
+    }
+
+    private String gerarSenhaNumerica() {
+        int max = (int) Math.pow(10, TAMANHO_SENHA_CONVITE);
+        int numero = new java.util.Random().nextInt(max);
+        return String.format("%0" + TAMANHO_SENHA_CONVITE + "d", numero);
     }
 }
