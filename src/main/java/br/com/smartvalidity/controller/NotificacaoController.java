@@ -70,13 +70,18 @@ public class NotificacaoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluirNotificacao(@PathVariable Long id) throws SmartValidityException {
-        boolean sucesso = notificacaoService.excluirNotificacaoDoUsuarioAutenticado(id);
-        
-        if (sucesso) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> excluirNotificacao(@PathVariable Long id) {
+        try {
+            boolean sucesso = notificacaoService.excluirNotificacaoDoUsuarioAutenticado(id);
+            if (sucesso) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (SmartValidityException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                "error", "Exclusão negada",
+                "message", e.getMessage()));
         }
     }
 } 

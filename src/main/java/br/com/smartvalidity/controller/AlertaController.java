@@ -126,9 +126,16 @@ public class AlertaController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir alerta")
-    public ResponseEntity<Void> excluirAlerta(@PathVariable Integer id) throws SmartValidityException {
-        alertaService.delete(id);
-        log.info("Alerta {} excluído com sucesso", id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> excluirAlerta(@PathVariable Integer id) {
+        try {
+            alertaService.delete(id);
+            log.info("Alerta {} excluído com sucesso", id);
+            return ResponseEntity.noContent().build();
+        } catch (SmartValidityException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Exclusão negada");
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 } 

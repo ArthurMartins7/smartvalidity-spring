@@ -12,6 +12,7 @@ import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.AlertaDTO;
 import br.com.smartvalidity.model.dto.NotificacaoDTO;
 import br.com.smartvalidity.model.entity.Alerta;
+import br.com.smartvalidity.model.entity.ItemProduto;
 import br.com.smartvalidity.model.entity.Notificacao;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.model.mapper.AlertaMapper;
@@ -192,15 +193,30 @@ public class NotificacaoService {
 
 
     @Transactional
-    public boolean excluirNotificacao(Long notificacaoId, Usuario usuario) {
+    public boolean excluirNotificacao(Long notificacaoId, Usuario usuario) throws SmartValidityException {
         try {
-            return notificacaoRepository.findByIdAndUsuario(notificacaoId, usuario)
-                    .map(notificacao -> {
-                        notificacaoRepository.delete(notificacao);
-                        log.info("Notificação {} excluída pelo usuário {}", notificacaoId, usuario.getId());
-                        return true;
-                    })
-                    .orElse(false);
+            Notificacao notificacao = notificacaoRepository.findByIdAndUsuario(notificacaoId, usuario)
+                                             .orElse(null);
+
+            if (notificacao == null) {
+                return false; // Não encontrada
+            }
+
+            // Validação: verificar se item-produto foi inspecionado
+            ItemProduto itemProduto = null;
+            if (notificacao.getAlerta() != null) {
+                itemProduto = notificacao.getAlerta().getItemProduto();
+            }
+            if (itemProduto != null && Boolean.FALSE.equals(itemProduto.getInspecionado())) {
+                throw new SmartValidityException("Não é possível excluir a notificação: o item-produto associado ainda não foi inspecionado.");
+            }
+
+            notificacaoRepository.delete(notificacao);
+            log.info("Notificação {} excluída pelo usuário {}", notificacaoId, usuario.getId());
+            return true;
+
+        } catch (SmartValidityException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Erro ao excluir notificação {} do usuário {}: {}", 
                 notificacaoId, usuario.getId(), e.getMessage(), e);

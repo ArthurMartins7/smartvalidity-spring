@@ -88,6 +88,9 @@ public class AlertaService {
 
             log.info("Alerta encontrado: {} (Tipo: {})", alerta.getTitulo(), alerta.getTipo());
 
+            // Regra de negócio: só excluir se item-produto estiver inspecionado
+            validarItemProdutoInspecionado(alerta.getItemProduto());
+
             // Exclusão lógica: marcar como excluído
             alerta.setExcluido(true);
             alerta.setAtivo(false); // Também desativar
@@ -375,5 +378,11 @@ public class AlertaService {
         }
 
         return stream.count();
+    }
+
+    private void validarItemProdutoInspecionado(ItemProduto itemProduto) throws SmartValidityException {
+        if (itemProduto != null && Boolean.FALSE.equals(itemProduto.getInspecionado())) {
+            throw new SmartValidityException("Não é possível excluir o alerta: o item-produto associado ainda não foi inspecionado.");
+        }
     }
 } 
