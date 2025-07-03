@@ -173,6 +173,7 @@ public class NotificacaoService {
         // Usar ID da notificação, não do alerta
         dto.setId(notificacao.getId().intValue());
         dto.setDataCriacao(notificacao.getDataHoraCriacao());
+        dto.setLida(notificacao.getLida());
         
         return dto;
     }

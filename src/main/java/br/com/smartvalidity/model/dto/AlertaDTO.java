@@ -30,6 +30,7 @@ public class AlertaDTO {
         private List<String> produtosAlerta; // Nomes dos produtos
         private List<String> usuariosAlertaIds; // IDs dos usuários
         private List<String> produtosAlertaIds; // IDs dos produtos
+        private Boolean lida; // Status de leitura
     }
 
     @Data
