@@ -17,6 +17,7 @@ import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
 import br.com.smartvalidity.model.dto.EmailOtpDTO;
 import br.com.smartvalidity.model.dto.OtpValidateDTO;
+import br.com.smartvalidity.model.dto.ResetPasswordDTO;
 import br.com.smartvalidity.model.entity.Empresa;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.service.EmpresaService;
@@ -100,5 +101,25 @@ public class AuthenticationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void validarOtpEmail(@RequestBody @Valid OtpValidateDTO dto) throws SmartValidityException {
         otpService.validarCodigo(dto.getEmail(), dto.getToken());
+    }
+
+    // --------------------- OTP: Esqueceu Senha ---------------------
+
+    @PostMapping("/enviar-otp-esqueceu-senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void enviarOtpEsqueceuSenha(@RequestBody @Valid EmailOtpDTO dto) {
+        otpService.enviarCodigoEsqueceuSenha(dto.getEmail());
+    }
+
+    @PostMapping("/validar-otp-esqueceu-senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void validarOtpEsqueceuSenha(@RequestBody @Valid OtpValidateDTO dto) throws SmartValidityException {
+        otpService.validarCodigoEsqueceuSenha(dto.getEmail(), dto.getToken());
+    }
+
+    @PostMapping("/resetar-senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetarSenha(@RequestBody @Valid ResetPasswordDTO dto) throws SmartValidityException {
+        otpService.redefinirSenha(dto.getEmail(), dto.getToken(), dto.getNovaSenha());
     }
 }

@@ -179,4 +179,14 @@ public class UsuarioService implements UserDetailsService {
         int numero = new java.util.Random().nextInt(max);
         return String.format("%0" + TAMANHO_SENHA_CONVITE + "d", numero);
     }
+
+    // Método para redefinir senha quando usuário esquece a senha
+    @org.springframework.transaction.annotation.Transactional
+    public void redefinirSenha(String email, String novaSenha) throws SmartValidityException {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new SmartValidityException("Usuário não encontrado"));
+
+        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(usuario);
+    }
 }
