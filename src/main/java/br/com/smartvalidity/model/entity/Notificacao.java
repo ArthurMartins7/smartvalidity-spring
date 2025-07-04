@@ -52,4 +52,4 @@ public class Notificacao {
         this.lida = true;
         this.dataHoraLeitura = LocalDateTime.now();
     }
-} 
+}

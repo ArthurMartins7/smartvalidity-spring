@@ -34,8 +34,8 @@ import lombok.ToString;
 @Table
 @Getter
 @Setter
-@ToString(exclude = "alertas") // Excluir alertas do toString para evitar problemas de lazy loading
-@EqualsAndHashCode(exclude = "alertas") // Excluir alertas do equals/hashCode para evitar problemas de lazy loading
+@ToString(exclude = "alertas")
+@EqualsAndHashCode(exclude = "alertas")
 public class Usuario implements UserDetails {
 
     @Id
