@@ -6,13 +6,13 @@ import lombok.Data;
 
 @Data
 public class ResetPasswordDTO {
-    @NotBlank
+    @NotBlank(message = "O e-mail não pode ser vazio ou apenas espaços em branco.")
     @Email
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "O código não pode ser vazio ou apenas espaços em branco.")
     private String token;
 
-    @NotBlank
+    @NotBlank(message = "A senha não pode ser vazia ou apenas espaços em branco.")
     private String novaSenha;
 } 
