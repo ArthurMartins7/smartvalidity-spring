@@ -19,8 +19,6 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
 
     private String titulo;
     private TipoAlerta tipo;
-    private Boolean ativo;
-    private Boolean recorrente;
     private LocalDateTime dataInicialDisparo;
     private LocalDateTime dataFinalDisparo;
     private String usuarioCriador;
@@ -40,14 +38,6 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
 
         if (tipo != null) {
             predicates.add(cb.equal(root.get("tipo"), tipo));
-        }
-
-        if (ativo != null) {
-            predicates.add(cb.equal(root.get("ativo"), ativo));
-        }
-
-        if (recorrente != null) {
-            predicates.add(cb.equal(root.get("recorrente"), recorrente));
         }
 
         if (dataInicialDisparo != null || dataFinalDisparo != null) {

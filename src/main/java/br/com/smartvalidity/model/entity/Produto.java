@@ -50,6 +50,7 @@ public class Produto {
     private Categoria categoria;
 
     @OneToMany(mappedBy = "produto")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<ItemProduto> itensProduto;
 
     @ManyToMany

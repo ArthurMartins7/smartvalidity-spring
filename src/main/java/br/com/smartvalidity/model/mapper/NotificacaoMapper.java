@@ -29,10 +29,6 @@ public final class NotificacaoMapper {
         dto.setDescricao(alerta.getDescricao());
         dto.setTipo(alerta.getTipo());
         dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDiasAntecedencia(alerta.getDiasAntecedencia());
-        dto.setAtivo(alerta.getAtivo());
-        dto.setRecorrente(alerta.getRecorrente());
-        dto.setConfiguracaoRecorrencia(alerta.getConfiguracaoRecorrencia());
         dto.setDataCriacaoAlerta(alerta.getDataHoraCriacao());
 
 

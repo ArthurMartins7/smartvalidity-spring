@@ -41,29 +41,11 @@ public class Alerta {
     @Column(name = "data_hora_disparo")
     private LocalDateTime dataHoraDisparo;
 
-    @Column(name = "dias_antecedencia")
-    private Integer diasAntecedencia;
-
-    @Column(nullable = false)
-    private Boolean ativo = true;
-
     @Column(nullable = false)
     private Boolean excluido = false;
 
-    @Column(nullable = false)
-    private Boolean recorrente = false;
-
-    @Column(name = "configuracao_recorrencia")
-    private String configuracaoRecorrencia;
-
     @Column(name = "data_hora_criacao", nullable = false)
     private LocalDateTime dataHoraCriacao;
-
-    @Column(name = "is_disparo_recorrente", nullable = false)
-    private Boolean disparoRecorrente = false;
-    
-    @Column(name = "frequencia_disparo")
-    private String frequenciaDisparo;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario_criador")

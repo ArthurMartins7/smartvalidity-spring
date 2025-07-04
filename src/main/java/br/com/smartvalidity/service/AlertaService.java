@@ -64,10 +64,6 @@ public class AlertaService {
                     alerta.setTitulo(dto.getTitulo());
                     alerta.setDescricao(dto.getDescricao());
                     alerta.setDataHoraDisparo(dto.getDataHoraDisparo());
-                    alerta.setDisparoRecorrente(dto.isDisparoRecorrente());
-                    if (dto.getFrequenciaDisparo() != null) {
-                        alerta.setFrequenciaDisparo(dto.getFrequenciaDisparo().name());
-                    }
                     return AlertaDTO.Response.fromEntity(alertaRepository.save(alerta));
                 });
     }
@@ -93,7 +89,6 @@ public class AlertaService {
 
             // Exclusão lógica: marcar como excluído
             alerta.setExcluido(true);
-            alerta.setAtivo(false); // Também desativar
             alertaRepository.save(alerta);
             
             log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
@@ -124,15 +119,6 @@ public class AlertaService {
             log.info("Definindo data/hora de disparo...");
             alerta.setDataHoraDisparo(alertaDTO.getDataHoraDisparo());
             log.info("Data/hora definida: {}", alerta.getDataHoraDisparo());
-            
-            alerta.setDiasAntecedencia(alertaDTO.getDiasAntecedencia());
-            alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
-            alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
-            alerta.setAtivo(true);
-            
-            // Definir campos de disparo recorrente com valores padrão
-            alerta.setDisparoRecorrente(false);
-            alerta.setFrequenciaDisparo(null);
             
             log.info("Processando usuário criador...");
             if (usuarioCriadorId != null) {
@@ -213,17 +199,6 @@ public class AlertaService {
             alerta.setTitulo(alertaDTO.getTitulo());
             alerta.setDescricao(alertaDTO.getDescricao());
             alerta.setDataHoraDisparo(alertaDTO.getDataHoraDisparo());
-            alerta.setDiasAntecedencia(alertaDTO.getDiasAntecedencia());
-            alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
-            alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
-
-            // Definir campos de disparo recorrente com valores padrão
-            alerta.setDisparoRecorrente(false);
-            alerta.setFrequenciaDisparo(null);
-
-            if (alertaDTO.getAtivo() != null) {
-                alerta.setAtivo(alertaDTO.getAtivo());
-            }
             
             if (alertaDTO.getUsuariosIds() != null) {
                 Set<Usuario> usuariosAlerta = new HashSet<>();
@@ -254,35 +229,6 @@ public class AlertaService {
             throw new SmartValidityException("Erro ao atualizar alerta: " + e.getMessage());
         }
     }
-    
-    /**
-     * Alterna o status ativo de um alerta
-     * RESPONSABILIDADE SERVICE: Lógica de negócio para alteração de status
-     * PRINCÍPIO MVC: Isola CONTROLLER da lógica de negócio e acesso a dados
-     */
-    public AlertaDTO.Listagem toggleAtivo(Integer id) throws SmartValidityException {
-        try {
-            Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
-                    .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
-
-            // Aplicar lógica de negócio: inverter status ativo
-            Boolean novoStatus = !Boolean.TRUE.equals(alerta.getAtivo());
-            alerta.setAtivo(novoStatus);
-
-            // Persistir alteração
-            alerta = alertaRepository.save(alerta);
-
-            log.info("Status do alerta {} alterado para: {}", id, novoStatus);
-            return AlertaMapper.toListagemDTO(alerta);
-            
-        } catch (SmartValidityException e) {
-            log.error("Erro ao alterar status do alerta {}: {}", id, e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Erro inesperado ao alterar status do alerta {}: {}", id, e.getMessage(), e);
-            throw new SmartValidityException("Erro interno ao alterar status do alerta: " + e.getMessage());
-        }
-    }
 
     public List<AlertaDTO.Listagem> filtrarAlertas(AlertaDTO.Filtro filtro) {
         List<Alerta> todos = alertaRepository.findAllNotDeleted();
@@ -298,12 +244,6 @@ public class AlertaService {
         }
         if (filtro.getTipo() != null) {
             stream = stream.filter(a -> filtro.getTipo().equals(a.getTipo()));
-        }
-        if (filtro.getAtivo() != null) {
-            stream = stream.filter(a -> filtro.getAtivo().equals(a.getAtivo()));
-        }
-        if (filtro.getRecorrente() != null) {
-            stream = stream.filter(a -> filtro.getRecorrente().equals(a.getRecorrente()));
         }
         if (filtro.getUsuarioCriador() != null && !filtro.getUsuarioCriador().isBlank()) {
             String termo = filtro.getUsuarioCriador().toLowerCase();
@@ -365,12 +305,6 @@ public class AlertaService {
         }
         if (filtro.getTipo() != null) {
             stream = stream.filter(a -> filtro.getTipo().equals(a.getTipo()));
-        }
-        if (filtro.getAtivo() != null) {
-            stream = stream.filter(a -> filtro.getAtivo().equals(a.getAtivo()));
-        }
-        if (filtro.getRecorrente() != null) {
-            stream = stream.filter(a -> filtro.getRecorrente().equals(a.getRecorrente()));
         }
         if (filtro.getUsuarioCriador() != null && !filtro.getUsuarioCriador().isBlank()) {
             String termo = filtro.getUsuarioCriador().toLowerCase();

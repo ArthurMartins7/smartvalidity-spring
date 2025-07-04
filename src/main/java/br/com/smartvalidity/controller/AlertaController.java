@@ -95,13 +95,6 @@ public class AlertaController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}/toggle-ativo")
-    @Operation(summary = "Alternar status ativo do alerta")
-    public ResponseEntity<AlertaDTO.Listagem> toggleAtivo(@PathVariable Integer id) throws SmartValidityException {
-        AlertaDTO.Listagem response = alertaService.toggleAtivo(id);
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/filtro")
     @Operation(summary = "Listar alertas com filtros")
     public ResponseEntity<List<AlertaDTO.Listagem>> listarComFiltro(@RequestBody AlertaDTO.Filtro filtro) {

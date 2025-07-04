@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import br.com.smartvalidity.model.entity.Alerta;
-import br.com.smartvalidity.model.enums.FrequenciaDisparo;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,10 +18,6 @@ public class AlertaDTO {
         private String descricao;
         private LocalDateTime dataHoraDisparo;
         private TipoAlerta tipo;
-        private Integer diasAntecedencia;
-        private Boolean ativo;
-        private Boolean recorrente;
-        private String configuracaoRecorrencia;
         private LocalDateTime dataCriacao;
         private LocalDateTime dataEnvio;
         private String usuarioCriador; // Nome do usuário criador
@@ -43,9 +38,6 @@ public class AlertaDTO {
         private LocalDateTime dataHoraDisparo;
         @NotNull
         private TipoAlerta tipo;
-        private Integer diasAntecedencia;
-        private Boolean recorrente = false;
-        private String configuracaoRecorrencia;
         private List<String> usuariosIds; //
         private List<String> produtosIds; //
     }
@@ -56,10 +48,6 @@ public class AlertaDTO {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-        private Integer diasAntecedencia;
-        private Boolean ativo;
-        private Boolean recorrente;
-        private String configuracaoRecorrencia;
         private List<String> usuariosIds;
         private List<String> produtosIds;
     }
@@ -68,8 +56,6 @@ public class AlertaDTO {
     public static class Filtro {
         private String titulo;
         private TipoAlerta tipo;
-        private Boolean ativo;
-        private Boolean recorrente;
         private LocalDateTime dataInicialDisparo;
         private LocalDateTime dataFinalDisparo;
         private String usuarioCriador;
@@ -87,18 +73,12 @@ public class AlertaDTO {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-        private boolean disparoRecorrente;
-        private FrequenciaDisparo frequenciaDisparo;
 
         public Alerta toEntity() {
             Alerta alerta = new Alerta();
             alerta.setTitulo(this.titulo);
             alerta.setDescricao(this.descricao);
             alerta.setDataHoraDisparo(this.dataHoraDisparo);
-            alerta.setDisparoRecorrente(this.disparoRecorrente);
-            if (this.frequenciaDisparo != null) {
-                alerta.setFrequenciaDisparo(this.frequenciaDisparo.name());
-            }
             return alerta;
         }
     }
@@ -109,8 +89,6 @@ public class AlertaDTO {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-        private boolean disparoRecorrente;
-        private FrequenciaDisparo frequenciaDisparo;
 
         public static Response fromEntity(Alerta alerta) {
             Response dto = new Response();
@@ -118,14 +96,6 @@ public class AlertaDTO {
             dto.setTitulo(alerta.getTitulo());
             dto.setDescricao(alerta.getDescricao());
             dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-            dto.setDisparoRecorrente(alerta.getDisparoRecorrente() != null ? alerta.getDisparoRecorrente() : false);
-            if (alerta.getFrequenciaDisparo() != null) {
-                try {
-                    dto.setFrequenciaDisparo(FrequenciaDisparo.valueOf(alerta.getFrequenciaDisparo()));
-                } catch (IllegalArgumentException e) {
-                    dto.setFrequenciaDisparo(null);
-                }
-            }
             return dto;
         }
     }

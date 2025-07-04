@@ -16,10 +16,6 @@ public class NotificacaoDTO {
         private String descricao;
         private LocalDateTime dataHoraDisparo;
         private TipoAlerta tipo;
-        private Integer diasAntecedencia;
-        private Boolean ativo;
-        private Boolean recorrente;
-        private String configuracaoRecorrencia;
         private LocalDateTime dataCriacaoAlerta;
         private LocalDateTime dataCriacaoNotificacao;
         private LocalDateTime dataHoraLeitura;

@@ -29,10 +29,6 @@ public final class AlertaMapper {
         dto.setDescricao(alerta.getDescricao());
         dto.setTipo(alerta.getTipo());
         dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDiasAntecedencia(alerta.getDiasAntecedencia());
-        dto.setAtivo(alerta.getAtivo());
-        dto.setRecorrente(alerta.getRecorrente());
-        dto.setConfiguracaoRecorrencia(alerta.getConfiguracaoRecorrencia());
         dto.setDataCriacao(alerta.getDataHoraCriacao());
 
         if (alerta.getItemProduto() != null) {

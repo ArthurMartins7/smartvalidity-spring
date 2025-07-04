@@ -72,8 +72,8 @@ public class AlertaScheduler {
                 }
 
                 if (tipoAlerta != null) {
-                    // Verificar se já existe alerta ativo para este item e tipo
-                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndAtivoTrueAndExcluidoFalse(item, tipoAlerta);
+                    // Verificar se já existe alerta não excluído para este item e tipo
+                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndExcluidoFalse(item, tipoAlerta);
                     
                     if (!alertaJaExiste) {
                         criarAlertaAutomatico(item, tipoAlerta);
@@ -99,8 +99,6 @@ public class AlertaScheduler {
             
             // Informações básicas do alerta
             alerta.setTipo(tipoAlerta);
-            alerta.setAtivo(true);
-            alerta.setRecorrente(false);
             alerta.setItemProduto(itemProduto);
             alerta.setDataHoraDisparo(LocalDateTime.now());
 
@@ -163,18 +161,18 @@ public class AlertaScheduler {
         log.info("=== Iniciando limpeza de alertas antigos ===");
         
         try {
-            // Desativar alertas de itens que foram inspecionados
+            // Excluir logicamente alertas de itens que foram inspecionados
             List<Alerta> alertasDeItensInspecionados = alertaRepository
-                .findByItemProdutoInspecionadoTrueAndAtivoTrueAndExcluidoFalse();
+                .findByItemProdutoInspecionadoTrueAndExcluidoFalse();
             
-            int alertasDesativados = 0;
+            int alertasExcluidos = 0;
             for (Alerta alerta : alertasDeItensInspecionados) {
-                alerta.setAtivo(false);
+                alerta.setExcluido(true);
                 alertaRepository.save(alerta);
-                alertasDesativados++;
+                alertasExcluidos++;
             }
             
-            log.info("Limpeza concluída. {} alertas desativados (itens inspecionados)", alertasDesativados);
+            log.info("Limpeza concluída. {} alertas excluídos logicamente (itens inspecionados)", alertasExcluidos);
             
         } catch (Exception e) {
             log.error("Erro durante limpeza de alertas antigos: {}", e.getMessage(), e);

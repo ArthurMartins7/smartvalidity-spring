@@ -16,27 +16,21 @@ import br.com.smartvalidity.model.enums.TipoAlerta;
 public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
     
     /**
-     * Verificar se já existe um alerta ativo para um item-produto específico e tipo
+     * Verificar se já existe um alerta não excluído para um item-produto específico e tipo
      */
-    boolean existsByItemProdutoAndTipoAndAtivoTrueAndExcluidoFalse(ItemProduto itemProduto, TipoAlerta tipo);
+    boolean existsByItemProdutoAndTipoAndExcluidoFalse(ItemProduto itemProduto, TipoAlerta tipo);
     
     /**
-     * Buscar alertas de itens que foram inspecionados e ainda estão ativos (não excluídos)
+     * Buscar alertas de itens que foram inspecionados e ainda não estão excluídos
      */
-    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.ativo = true AND a.excluido = false")
-    List<Alerta> findByItemProdutoInspecionadoTrueAndAtivoTrueAndExcluidoFalse();
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false")
+    List<Alerta> findByItemProdutoInspecionadoTrueAndExcluidoFalse();
     
     /**
      * Buscar alertas de um usuário específico (não excluídos)
      */
-    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
-    List<Alerta> findByUsuarioAndAtivoTrueAndExcluidoFalse(@Param("usuario") Usuario usuario);
-    
-    /**
-     * Buscar alertas ainda não ativados cujo horário de disparo já foi alcançado (não excluídos)
-     */
-    @Query("SELECT a FROM Alerta a WHERE a.ativo = false AND a.dataHoraDisparo <= :dataHora AND a.excluido = false")
-    List<Alerta> findByAtivoFalseAndDataHoraDisparoLessThanEqualAndExcluidoFalse(@Param("dataHora") java.time.LocalDateTime dataHora);
+    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
+    List<Alerta> findByUsuarioAndExcluidoFalse(@Param("usuario") Usuario usuario);
 
     /**
      * Buscar alerta por ID apenas se não estiver excluído
