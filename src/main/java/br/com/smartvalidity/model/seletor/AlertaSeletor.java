@@ -30,8 +30,12 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
         List<Predicate> predicates = new ArrayList<>();
 
         if (stringValida(titulo)) {
-            predicates.add(cb.like(cb.lower(root.get("titulo")), 
-                "%" + titulo.toLowerCase() + "%"));
+            // Busca pelo termo no título OU na descrição
+            Predicate tituloPredicate = cb.like(cb.lower(root.get("titulo")),
+                    "%" + titulo.toLowerCase() + "%");
+            Predicate descricaoPredicate = cb.like(cb.lower(root.get("descricao")),
+                    "%" + titulo.toLowerCase() + "%");
+            predicates.add(cb.or(tituloPredicate, descricaoPredicate));
         }
 
         if (tipo != null) {
