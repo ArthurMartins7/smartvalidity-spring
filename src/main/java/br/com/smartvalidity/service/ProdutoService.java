@@ -28,18 +28,10 @@ public class ProdutoService {
         return produtoRepository.findAll();
     }
     
-    /**
-     * Busca apenas produtos que possuem itens-produto não inspecionados
-     * Para uso em alertas personalizados
-     */
     public List<Produto> buscarProdutosComItensNaoInspecionados() {
         return produtoRepository.findProdutosComItensNaoInspecionados();
     }
 
-    /**
-     * Busca produtos com itens não inspecionados filtrando por termo de busca
-     * Para uso em busca dinâmica de alertas
-     */
     public List<Produto> buscarPorTermoComItensNaoInspecionados(String termo, int limite) {
         if (termo == null || termo.trim().isEmpty()) {
             return List.of();
@@ -67,7 +59,7 @@ public class ProdutoService {
             dto.setUnidadeMedida(produto.getUnidadeMedida());
             dto.setQuantidade(produto.getQuantidade());
 
-            // Categoria com id e nome (permitir valores nulos)
+            // categoria com id e nome
             if (produto.getCategoria() != null) {
                 java.util.Map<String, Object> categoria = new java.util.HashMap<>();
                 categoria.put("id", produto.getCategoria().getId());
@@ -75,7 +67,7 @@ public class ProdutoService {
                 dto.setCategoria(categoria);
             }
 
-            // Fornecedores com endereço incluso (permitir valores nulos)
+            // fornecedores com endereço incluso
             if (produto.getFornecedores() != null) {
                 List<java.util.Map<String, Object>> fornecedores = produto.getFornecedores().stream().map(f -> {
                     java.util.Map<String, Object> enderecoMap = null;

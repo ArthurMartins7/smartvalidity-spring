@@ -65,4 +65,4 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
             predicates.add(cb.lessThanOrEqualTo(root.get(nomeAtributo), dataFinal));
         }
     }
-} 
+}

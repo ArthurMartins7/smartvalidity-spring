@@ -35,10 +35,6 @@ public class ItemProdutoService {
         return itemProdutoRepository.findByProdutoId(produtoId);
     }
     
-    /**
-     * Busca itens-produto não inspecionados de um produto específico
-     * Para uso em alertas personalizados
-     */
     public List<ItemProduto> buscarItensProdutoNaoInspecionadosPorProduto(String produtoId) {
         return itemProdutoRepository.findByProdutoIdAndInspecionadoFalse(produtoId);
     }
@@ -136,13 +132,6 @@ public class ItemProdutoService {
 
     }
 
-    /**
-     * Salva um item que foi marcado como inspecionado, com tratamento transacional específico
-     * 
-     * @param itemProduto O item de produto a ser salvo como inspecionado
-     * @return O item de produto salvo
-     * @throws SmartValidityException Se ocorrer algum erro durante o salvamento
-     */
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     public ItemProduto salvarItemInspecionado(ItemProduto itemProduto) throws SmartValidityException {
         try {
@@ -175,21 +164,13 @@ public class ItemProdutoService {
             if (e instanceof SmartValidityException) {
                 throw (SmartValidityException) e;
             }
-            // Logar o erro para diagnóstico
+            // Loga o erro para diagnóstico
             System.err.println("Erro ao salvar item inspecionado: " + e.getMessage());
             e.printStackTrace();
             throw new SmartValidityException("Erro ao salvar item inspecionado: " + e.getMessage());
         }
     }
 
-    /**
-     * Salva múltiplos itens de produto baseado na quantidade especificada
-     * 
-     * @param itemProduto O item de produto base para criar múltiplos registros
-     * @param quantidade A quantidade de itens a serem criados
-     * @return Lista dos itens de produto criados
-     * @throws SmartValidityException Se ocorrer algum erro durante o salvamento
-     */
     public List<ItemProduto> salvarMultiplos(final ItemProduto itemProduto, final Integer quantidade) throws SmartValidityException {
         if (itemProduto == null) {
             throw new SmartValidityException("ItemProduto não pode ser nulo");
@@ -229,34 +210,22 @@ public class ItemProdutoService {
         return itensCriados;
     }
 
-    /**
-     * Salva um item-produto a partir de um DTO (método para controller)
-     */
     public ItemProduto salvar(ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
         ItemProduto itemProduto = converterDTOParaEntidade(itemProdutoDTO);
         return salvar(itemProduto);
     }
 
-    /**
-     * Atualiza um item-produto a partir de um DTO (método para controller)
-     */
     public ItemProduto atualizar(String id, ItemProdutoDTO itemProdutoDTO) throws SmartValidityException {
         ItemProduto itemProdutoAtualizado = converterDTOParaEntidade(itemProdutoDTO);
         itemProdutoAtualizado.setId(id);
         return atualizar(id, itemProdutoAtualizado);
     }
 
-    /**
-     * Salva múltiplos itens-produto a partir de um DTO (método para controller)
-     */
     public List<ItemProduto> salvarMultiplos(ItemProdutoDTO itemProdutoDTO, Integer quantidade) throws SmartValidityException {
         ItemProduto itemProduto = converterDTOParaEntidade(itemProdutoDTO);
         return salvarMultiplos(itemProduto, quantidade);
     }
 
-    /**
-     * Converte DTO para entidade (responsabilidade do service)
-     */
     private ItemProduto converterDTOParaEntidade(ItemProdutoDTO dto) {
         ItemProduto itemProduto = new ItemProduto();
         itemProduto.setLote(dto.getLote());

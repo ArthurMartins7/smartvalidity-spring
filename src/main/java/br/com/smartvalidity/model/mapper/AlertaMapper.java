@@ -7,18 +7,12 @@ import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.entity.Usuario;
 
-/**
- * Conversões entre a entidade {@link Alerta} e seus DTOs.
- * Implementação manual e enxuta para evitar dependências externas.
- */
+
 public final class AlertaMapper {
 
     private AlertaMapper() {
     }
 
-    /**
-     * Converte a entidade {@link Alerta} para {@link AlertaDTO.Listagem}.
-     */
     public static AlertaDTO.Listagem toListagemDTO(Alerta alerta) {
         if (alerta == null) {
             return null;
@@ -64,4 +58,4 @@ public final class AlertaMapper {
 
         return dto;
     }
-} 
+}

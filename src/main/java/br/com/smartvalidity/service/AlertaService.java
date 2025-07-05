@@ -68,29 +68,24 @@ public class AlertaService {
                 });
     }
 
-    /**
-     * Exclui um alerta logicamente (mantém notificações existentes)
-     * RESPONSABILIDADE SERVICE: Lógica de negócio para exclusão lógica
-     * PRINCÍPIO MVC: Preserva integridade das notificações já criadas
-     */
+
     @org.springframework.transaction.annotation.Transactional
     public void delete(Integer id) throws SmartValidityException {
         log.info("Iniciando exclusão lógica do alerta ID: {}", id);
         
         try {
-            // Verificar se o alerta existe e não está excluído
+            
             Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
                 .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
-
+                
             log.info("Alerta encontrado: {} (Tipo: {})", alerta.getTitulo(), alerta.getTipo());
 
-            // Regra de negócio: só excluir se item-produto estiver inspecionado
             validarItemProdutoInspecionado(alerta.getItemProduto());
 
-            // Exclusão lógica: marcar como excluído
             alerta.setExcluido(true);
+
             alertaRepository.save(alerta);
-            
+
             log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
             
         } catch (SmartValidityException e) {

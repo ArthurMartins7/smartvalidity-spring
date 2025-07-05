@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 public class AlertaDTO {
-
     @Data
     public static class Listagem {
         private Integer id;
@@ -20,14 +19,13 @@ public class AlertaDTO {
         private TipoAlerta tipo;
         private LocalDateTime dataCriacao;
         private LocalDateTime dataEnvio;
-        private String usuarioCriador; // Nome do usuário criador
-        private List<String> usuariosAlerta; // Nomes dos usuários
-        private List<String> produtosAlerta; // Nomes dos produtos
-        private List<String> usuariosAlertaIds; // IDs dos usuários
-        private List<String> produtosAlertaIds; // IDs dos produtos
-        private Boolean lida; // Status de leitura
+        private String usuarioCriador;
+        private List<String> usuariosAlerta;
+        private List<String> produtosAlerta;
+        private List<String> usuariosAlertaIds;
+        private List<String> produtosAlertaIds;
+        private Boolean lida;
     }
-
     @Data
     public static class Cadastro {
         @NotBlank
@@ -38,10 +36,9 @@ public class AlertaDTO {
         private LocalDateTime dataHoraDisparo;
         @NotNull
         private TipoAlerta tipo;
-        private List<String> usuariosIds; //
-        private List<String> produtosIds; //
+        private List<String> usuariosIds;
+        private List<String> produtosIds;
     }
-
     @Data
     public static class Edicao {
         private Integer id;
@@ -51,7 +48,6 @@ public class AlertaDTO {
         private List<String> usuariosIds;
         private List<String> produtosIds;
     }
-
     @Data
     public static class Filtro {
         private String titulo;
@@ -67,13 +63,11 @@ public class AlertaDTO {
             return limite > 0 && pagina > 0;
         }
     }
-
     @Data
     public static class Request {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-
         public Alerta toEntity() {
             Alerta alerta = new Alerta();
             alerta.setTitulo(this.titulo);
@@ -82,14 +76,12 @@ public class AlertaDTO {
             return alerta;
         }
     }
-
     @Data
     public static class Response {
         private Integer id;
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-
         public static Response fromEntity(Alerta alerta) {
             Response dto = new Response();
             dto.setId(alerta.getId());
@@ -99,4 +91,4 @@ public class AlertaDTO {
             return dto;
         }
     }
-} 
+}

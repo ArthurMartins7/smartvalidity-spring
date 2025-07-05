@@ -171,7 +171,7 @@ public class NotificacaoService {
         
         AlertaDTO.Listagem dto = AlertaMapper.toListagemDTO(notificacao.getAlerta());
         
-        // Usar ID da notificação, não do alerta
+        // usa o id da notificação e não o do alerta
         dto.setId(notificacao.getId().intValue());
         dto.setDataCriacao(notificacao.getDataHoraCriacao());
         dto.setLida(notificacao.getLida());
@@ -199,10 +199,10 @@ public class NotificacaoService {
                                              .orElse(null);
 
             if (notificacao == null) {
-                return false; // Não encontrada
+                return false;
             }
 
-            // Validação: verificar se item-produto foi inspecionado
+            // verifica se oitem-produto foi inspecionado
             ItemProduto itemProduto = null;
             if (notificacao.getAlerta() != null) {
                 itemProduto = notificacao.getAlerta().getItemProduto();
@@ -223,11 +223,6 @@ public class NotificacaoService {
             return false;
         }
     }
-
-    /**
-     * MÉTODOS CONVENIENTES PARA ADERÊNCIA MVC
-     * Encapsulam autenticação para evitar lógica de negócio no Controller
-     */
     
     public List<AlertaDTO.Listagem> buscarNotificacoesDoUsuarioAutenticado() throws SmartValidityException {
         Usuario usuario = authenticationService.getUsuarioAutenticado();

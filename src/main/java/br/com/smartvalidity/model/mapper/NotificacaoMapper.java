@@ -11,7 +11,6 @@ public final class NotificacaoMapper {
     private NotificacaoMapper() {
     }
 
-
     public static NotificacaoDTO.Listagem toListagemDTO(Notificacao notificacao) {
         if (notificacao == null || notificacao.getAlerta() == null) {
             return null;
@@ -68,4 +67,4 @@ public final class NotificacaoMapper {
 
         return dto;
     }
-} 
+}

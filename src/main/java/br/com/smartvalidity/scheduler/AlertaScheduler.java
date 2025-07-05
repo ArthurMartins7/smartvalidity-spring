@@ -37,17 +37,13 @@ public class AlertaScheduler {
     @Autowired
     private NotificacaoService notificacaoService;
 
-    /**
-     * Executa de 2 em 2 minutos para verificar itens próximos do vencimento
-     * e criar alertas automáticos conforme necessário
-     */
-    @Scheduled(fixedRate = 30000) // 30 segundos para teste rápido
+    @Scheduled(fixedRate = 30000) // 30 segundos
     @Transactional
     public void verificarVencimentosECriarAlertas() {
         log.info("=== Iniciando verificação de vencimentos ===");
         
-        try {
-            // Buscar todos os itens-produto não inspecionados
+        try {  // Busca todos os itens-produto não inspecionados
+           
             List<ItemProduto> itensNaoInspecionados = itemProdutoRepository.findByInspecionadoFalse();
             log.info("Encontrados {} itens não inspecionados", itensNaoInspecionados.size());
 
@@ -64,15 +60,15 @@ public class AlertaScheduler {
                 TipoAlerta tipoAlerta = null;
                 
                 if (dataVencimento.isEqual(ontem)) {
-                    tipoAlerta = TipoAlerta.VENCIMENTO_ATRASO; // Venceu ontem
+                    tipoAlerta = TipoAlerta.VENCIMENTO_ATRASO;
                 } else if (dataVencimento.isEqual(hoje)) {
-                    tipoAlerta = TipoAlerta.VENCIMENTO_HOJE; // Vence hoje
+                    tipoAlerta = TipoAlerta.VENCIMENTO_HOJE;
                 } else if (dataVencimento.isEqual(amanha)) {
-                    tipoAlerta = TipoAlerta.VENCIMENTO_AMANHA; // Vence amanhã
+                    tipoAlerta = TipoAlerta.VENCIMENTO_AMANHA;
                 }
 
-                if (tipoAlerta != null) {
-                    // Verificar se já existe alerta não excluído para este item e tipo
+                if (tipoAlerta != null) { // Verifica se já existe alerta não excluído para este item e tipo
+                    
                     boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndExcluidoFalse(item, tipoAlerta);
                     
                     if (!alertaJaExiste) {

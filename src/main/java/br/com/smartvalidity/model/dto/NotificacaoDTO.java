@@ -26,4 +26,4 @@ public class NotificacaoDTO {
         private List<String> produtosAlertaIds;
         private Boolean lida;
     }
-} 
+}
