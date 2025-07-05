@@ -35,6 +35,11 @@ public class UsuarioService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
+    private static final int TAMANHO_SENHA_CONVITE = 6;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return usuarioRepository.findByEmail(username).orElseThrow(
@@ -103,20 +108,22 @@ public class UsuarioService implements UserDetailsService {
 
         this.authorizationService.verifiarCredenciaisUsuario(id);
 
-        // Se é assinante, delete a empresa (cascade removerá usuários)
         if (usuario.getPerfilAcesso() == PerfilAcesso.ASSINANTE) {
             if (usuario.getEmpresa() != null) {
                 Empresa empresa = usuario.getEmpresa();
                 empresa.getUsuarios().clear();
-                empresaRepository.delete(empresa); // cascade remove assinante e colaboradores
+                empresaRepository.delete(empresa); 
             }
         } else {
-            // colaborador: apenas remover da empresa e excluir usuário
             if (usuario.getEmpresa() != null) {
                 usuario.getEmpresa().getUsuarios().remove(usuario);
             }
             usuarioRepository.delete(usuario);
         }
+    }
+
+    public boolean verificarSeExisteUsuarioAssinante() throws SmartValidityException {
+        return this.usuarioRepository.existsUsuarioByPerfilAcesso(PerfilAcesso.ASSINANTE);
     }
 
     public void verificarEmailJaUtilizado(String email, String idUsuarioAtual) throws SmartValidityException {
@@ -131,6 +138,48 @@ public class UsuarioService implements UserDetailsService {
         if (emailJaUtilizado) {
             throw new SmartValidityException("Não pode utilizar um e-mail já cadastrado!");
         }
+    }
+
+    /**
+     * Convida um novo usuário gerando uma senha provisória de 6 dígitos que é
+     * enviada por e-mail. A senha é criptografada antes de ser salva.
+     *
+     * @param usuario objeto usuário a ser persistido
+     * @return usuário salvo com senha criptografada
+     * @throws SmartValidityException caso e-mail já esteja em uso ou outro erro de regra
+     */
+    public Usuario convidarUsuario(Usuario usuario) throws SmartValidityException {
+        this.verificarEmailJaUtilizado(usuario.getEmail(), null);
+
+        String senhaGerada = gerarSenhaNumerica();
+
+        String senhaCodificada = passwordEncoder.encode(senhaGerada);
+        usuario.setSenha(senhaCodificada);
+
+        if (usuario.getPerfilAcesso() == null) {
+            usuario.setPerfilAcesso(PerfilAcesso.OPERADOR);
+        }
+
+        Usuario salvo = usuarioRepository.save(usuario);
+
+        emailService.enviarSenhaAleatoria(usuario.getEmail(), senhaGerada);
+
+        return salvo;
+    }
+
+    private String gerarSenhaNumerica() {
+        int max = (int) Math.pow(10, TAMANHO_SENHA_CONVITE);
+        int numero = new java.util.Random().nextInt(max);
+        return String.format("%0" + TAMANHO_SENHA_CONVITE + "d", numero);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void redefinirSenha(String email, String novaSenha) throws SmartValidityException {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new SmartValidityException("Usuário não encontrado"));
+
+        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(usuario);
     }
 
     public Usuario atualizarPerfilUsuario(Usuario usuarioDTO) throws SmartValidityException {

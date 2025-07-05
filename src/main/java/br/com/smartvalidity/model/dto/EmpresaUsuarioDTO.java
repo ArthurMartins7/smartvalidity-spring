@@ -1,10 +1,9 @@
 package br.com.smartvalidity.model.dto;
 
-import org.hibernate.validator.constraints.br.CNPJ;
-
 import br.com.smartvalidity.model.enums.PerfilAcesso;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.validator.constraints.br.CNPJ;
 import lombok.Data;
 
 @Data
@@ -29,6 +28,10 @@ public class EmpresaUsuarioDTO {
 
     @NotBlank(message = "O cargo não pode ser vazio ou apenas espaços em branco.")
     private String cargo;
+
+    // Código de verificação de e-mail (OTP)
+    @NotBlank(message = "O código de verificação não pode ser vazio.")
+    private String token;
 
     // Nenhum campo para perfil, pois será fixo como ASSINANTE
     public PerfilAcesso getPerfilAcessoAssinante() {
