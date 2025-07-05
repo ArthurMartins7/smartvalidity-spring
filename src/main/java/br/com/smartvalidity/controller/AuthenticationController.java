@@ -14,15 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.smartvalidity.auth.AuthenticationService;
 import br.com.smartvalidity.exception.SmartValidityException;
-import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
 import br.com.smartvalidity.model.dto.EmailOtpDTO;
+import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
 import br.com.smartvalidity.model.dto.OtpValidateDTO;
 import br.com.smartvalidity.model.dto.ResetPasswordDTO;
 import br.com.smartvalidity.model.entity.Empresa;
 import br.com.smartvalidity.model.entity.Usuario;
 import br.com.smartvalidity.service.EmpresaService;
-import br.com.smartvalidity.service.UsuarioService;
 import br.com.smartvalidity.service.OtpService;
+import br.com.smartvalidity.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
@@ -93,7 +93,7 @@ public class AuthenticationController {
 
     @PostMapping("/enviar-otp-email")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void enviarOtpEmail(@RequestBody @Valid EmailOtpDTO dto) {
+    public void enviarOtpEmail(@RequestBody @Valid EmailOtpDTO dto) throws SmartValidityException {
         otpService.enviarCodigoVerificacao(dto.getEmail());
     }
 
@@ -107,7 +107,7 @@ public class AuthenticationController {
 
     @PostMapping("/enviar-otp-esqueceu-senha")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void enviarOtpEsqueceuSenha(@RequestBody @Valid EmailOtpDTO dto) {
+    public void enviarOtpEsqueceuSenha(@RequestBody @Valid EmailOtpDTO dto) throws SmartValidityException {
         otpService.enviarCodigoEsqueceuSenha(dto.getEmail());
     }
 

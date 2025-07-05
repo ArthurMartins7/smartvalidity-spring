@@ -37,17 +37,17 @@ public class EmailService {
      */
     @Transactional
     public void enviarCodigoVerificacao(String email, OtpPurpose purpose) {
+
+
+
         String token = gerarCodigoNumerico();
 
-        // Remove tokens antigos para o mesmo e-mail e finalidade
         otpTokenRepository.deleteByEmailAndPurpose(email, purpose);
 
-        // Persiste novo token
         LocalDateTime expiraEm = LocalDateTime.now().plusMinutes(OTP_EXPIRATION_MINUTES);
         OtpToken otpToken = new OtpToken(email, token, expiraEm, purpose);
         otpTokenRepository.save(otpToken);
 
-        // Envia e-mail
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
         message.setSubject(definirAssunto(purpose));
@@ -79,8 +79,8 @@ public class EmailService {
      * Envia ao usuário a senha gerada no processo de convite.
      * NÃO grava nada em OtpToken.
      *
-     * @param email  e-mail de destino
-     * @param senhaGerada senha em texto puro que o usuário deverá usar no primeiro acesso
+     * @param email 
+     * @param senhaGerada 
      */
     public void enviarSenhaAleatoria(String email, String senhaGerada) {
         SimpleMailMessage message = new SimpleMailMessage();

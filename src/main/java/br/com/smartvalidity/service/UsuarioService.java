@@ -108,15 +108,13 @@ public class UsuarioService implements UserDetailsService {
 
         this.authorizationService.verifiarCredenciaisUsuario(id);
 
-        // Se é assinante, delete a empresa (cascade removerá usuários)
         if (usuario.getPerfilAcesso() == PerfilAcesso.ASSINANTE) {
             if (usuario.getEmpresa() != null) {
                 Empresa empresa = usuario.getEmpresa();
                 empresa.getUsuarios().clear();
-                empresaRepository.delete(empresa); // cascade remove assinante e colaboradores
+                empresaRepository.delete(empresa); 
             }
         } else {
-            // colaborador: apenas remover da empresa e excluir usuário
             if (usuario.getEmpresa() != null) {
                 usuario.getEmpresa().getUsuarios().remove(usuario);
             }
@@ -151,24 +149,19 @@ public class UsuarioService implements UserDetailsService {
      * @throws SmartValidityException caso e-mail já esteja em uso ou outro erro de regra
      */
     public Usuario convidarUsuario(Usuario usuario) throws SmartValidityException {
-        // Verifica se e-mail já está cadastrado
         this.verificarEmailJaUtilizado(usuario.getEmail(), null);
 
-        // Gera senha aleatória numérica
         String senhaGerada = gerarSenhaNumerica();
 
-        // Codifica a senha gerada e define no usuário
         String senhaCodificada = passwordEncoder.encode(senhaGerada);
         usuario.setSenha(senhaCodificada);
 
-        // Define perfil padrão se não informado
         if (usuario.getPerfilAcesso() == null) {
             usuario.setPerfilAcesso(PerfilAcesso.OPERADOR);
         }
 
         Usuario salvo = usuarioRepository.save(usuario);
 
-        // Envia e-mail com a senha (texto puro)
         emailService.enviarSenhaAleatoria(usuario.getEmail(), senhaGerada);
 
         return salvo;
@@ -180,7 +173,6 @@ public class UsuarioService implements UserDetailsService {
         return String.format("%0" + TAMANHO_SENHA_CONVITE + "d", numero);
     }
 
-    // Método para redefinir senha quando usuário esquece a senha
     @org.springframework.transaction.annotation.Transactional
     public void redefinirSenha(String email, String novaSenha) throws SmartValidityException {
         Usuario usuario = usuarioRepository.findByEmail(email)
