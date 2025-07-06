@@ -7,6 +7,7 @@ import java.util.List;
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -29,6 +30,7 @@ public class AlertaDTO {
         private Boolean itemInspecionado;
         private Integer diasVencidos;
         private Date dataVencimentoItem;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
     }
     @Data
     public static class Cadastro {
@@ -37,20 +39,20 @@ public class AlertaDTO {
         @NotBlank
         private String descricao;
         @NotNull
-        private LocalDateTime dataHoraDisparo;
-        @NotNull
         private TipoAlerta tipo;
+        @NotEmpty
         private List<String> usuariosIds;
         private List<String> produtosIds;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
     }
     @Data
     public static class Edicao {
         private Integer id;
         private String titulo;
         private String descricao;
-        private LocalDateTime dataHoraDisparo;
         private List<String> usuariosIds;
         private List<String> produtosIds;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
     }
     @Data
     public static class Filtro {
@@ -63,6 +65,7 @@ public class AlertaDTO {
         private int limite = 10;
         private String sortBy = "dataCriacao";
         private String sortDirection = "desc";
+        // Campos de recorrência removidos - alertas personalizados são mais simples
         public boolean temPaginacao() {
             return limite > 0 && pagina > 0;
         }
@@ -72,11 +75,13 @@ public class AlertaDTO {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
         public Alerta toEntity() {
             Alerta alerta = new Alerta();
             alerta.setTitulo(this.titulo);
             alerta.setDescricao(this.descricao);
             alerta.setDataHoraDisparo(this.dataHoraDisparo);
+            // Lógica de recorrência removida - alertas personalizados são mais simples
             return alerta;
         }
     }
@@ -86,12 +91,14 @@ public class AlertaDTO {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
         public static Response fromEntity(Alerta alerta) {
             Response dto = new Response();
             dto.setId(alerta.getId());
             dto.setTitulo(alerta.getTitulo());
             dto.setDescricao(alerta.getDescricao());
             dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
+            // Lógica de recorrência removida - alertas personalizados são mais simples
             return dto;
         }
     }

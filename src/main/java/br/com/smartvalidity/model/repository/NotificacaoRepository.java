@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.Notificacao;
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.TipoAlerta;
 
 
 public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> {
@@ -30,6 +31,9 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
 
     @Query("SELECT n FROM Notificacao n WHERE n.usuario = :usuario AND n.alerta.itemProduto.inspecionado = true ORDER BY n.dataHoraCriacao DESC")
     List<Notificacao> findByUsuarioAndProdutoInspecionado(@Param("usuario") Usuario usuario);
+
+    @Query("SELECT n FROM Notificacao n WHERE n.usuario = :usuario AND n.alerta.tipo = :tipo ORDER BY n.dataHoraCriacao DESC")
+    List<Notificacao> findByUsuarioAndAlertaTipoOrderByDataHoraCriacaoDesc(@Param("usuario") Usuario usuario, @Param("tipo") TipoAlerta tipo);
 
     @Query("UPDATE Notificacao n SET n.lida = true, n.dataHoraLeitura = CURRENT_TIMESTAMP WHERE n.usuario = :usuario AND n.lida = false")
     @Modifying

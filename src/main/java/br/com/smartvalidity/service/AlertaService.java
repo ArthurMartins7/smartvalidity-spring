@@ -1,5 +1,6 @@
 package br.com.smartvalidity.service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,13 @@ public class AlertaService {
                 .toList();
     }
 
+    public List<AlertaDTO.Listagem> buscarAlertasPersonalizados() {
+        List<Alerta> alertasPersonalizados = alertaRepository.findByTipoAndExcluidoFalse(TipoAlerta.PERSONALIZADO);
+        return alertasPersonalizados.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
     public Optional<AlertaDTO.Response> findById(Integer id) {
         return alertaRepository.findByIdAndExcluidoFalse(id).map(AlertaDTO.Response::fromEntity);
     }
@@ -103,7 +111,14 @@ public class AlertaService {
 
             alertaRepository.save(alerta);
 
-            log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
+            // Para alertas personalizados, excluir também as notificações relacionadas
+            if (alerta.getTipo() == TipoAlerta.PERSONALIZADO) {
+                log.info("Excluindo notificações relacionadas ao alerta personalizado ID: {}", id);
+                notificacaoService.excluirNotificacoesPorAlerta(alerta);
+                log.info("Alerta personalizado {} excluído logicamente com notificações removidas.", id);
+            } else {
+                log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
+            }
             
         } catch (SmartValidityException e) {
             log.error("Erro de validação ao excluir alerta {}: {}", id, e.getMessage());
@@ -117,9 +132,14 @@ public class AlertaService {
     public AlertaDTO.Listagem criarAlerta(AlertaDTO.Cadastro alertaDTO, String usuarioCriadorId) throws SmartValidityException {
         log.info("=== Criando alerta personalizado ===");
         log.info("Dados recebidos: {}", alertaDTO);
-        log.info("Data/hora disparo recebida: {} (tipo: {})", 
-            alertaDTO.getDataHoraDisparo(), 
-            alertaDTO.getDataHoraDisparo() != null ? alertaDTO.getDataHoraDisparo().getClass().getSimpleName() : "null");
+        // Data/hora de disparo removida - alertas personalizados são disparados imediatamente
+        
+        // Validação: pelo menos um colaborador deve ser selecionado
+        if (alertaDTO.getUsuariosIds() == null || alertaDTO.getUsuariosIds().isEmpty()) {
+            throw new SmartValidityException("Pelo menos um colaborador deve ser selecionado para o alerta");
+        }
+        
+        // Validação de recorrência removida - alertas personalizados são mais simples
         
         try {
             log.info("Criando entidade Alerta...");
@@ -128,9 +148,11 @@ public class AlertaService {
             alerta.setDescricao(alertaDTO.getDescricao());
             alerta.setTipo(TipoAlerta.PERSONALIZADO);
             
-            log.info("Definindo data/hora de disparo...");
-            alerta.setDataHoraDisparo(alertaDTO.getDataHoraDisparo());
+            log.info("Definindo data/hora de disparo como agora (alertas personalizados são disparados imediatamente)...");
+            alerta.setDataHoraDisparo(LocalDateTime.now());
             log.info("Data/hora definida: {}", alerta.getDataHoraDisparo());
+            
+            // Configuração de recorrência removida - alertas personalizados são mais simples
             
             log.info("Processando usuário criador...");
             if (usuarioCriadorId != null) {
@@ -155,16 +177,36 @@ public class AlertaService {
             Set<Produto> produtosAlerta = new HashSet<>();
             if (alertaDTO.getProdutosIds() != null && !alertaDTO.getProdutosIds().isEmpty()) {
                 for (String produtoId : alertaDTO.getProdutosIds()) {
-                    Produto produto = produtoService.buscarPorId(produtoId);
-                    produtosAlerta.add(produto);
-                    
-                    log.info("Produto vinculado ao alerta: {} (ID: {})", produto.getDescricao(), produto.getId());
-                    
-                    List<ItemProduto> itensNaoInspecionados = itemProdutoService
-                        .buscarItensProdutoNaoInspecionadosPorProduto(produtoId);
-                    
-                    log.info("Encontrados {} itens-produto não inspecionados para o produto {}", 
-                        itensNaoInspecionados.size(), produto.getDescricao());
+                    try {
+                        Produto produto = produtoService.buscarPorId(produtoId);
+                        produtosAlerta.add(produto);
+                        
+                        log.info("Produto vinculado ao alerta: {} (ID: {})", produto.getDescricao(), produto.getId());
+                        
+                        List<ItemProduto> itensNaoInspecionados = itemProdutoService
+                            .buscarItensProdutoNaoInspecionadosPorProduto(produto.getId());
+                        
+                        log.info("Encontrados {} itens-produto não inspecionados para o produto {}", 
+                            itensNaoInspecionados.size(), produto.getDescricao());
+                    } catch (Exception e) {
+                        log.error("Erro ao buscar produto com ID '{}': {}", produtoId, e.getMessage());
+                        // Tentar buscar por outros critérios se o ID não for válido
+                        List<Produto> produtosEncontrados = produtoService.buscarPorTermoComItensNaoInspecionados(produtoId, 1);
+                        if (!produtosEncontrados.isEmpty()) {
+                            Produto produto = produtosEncontrados.get(0);
+                            produtosAlerta.add(produto);
+                            log.info("Produto encontrado por termo: {} -> {} (ID: {})", 
+                                produtoId, produto.getDescricao(), produto.getId());
+                            
+                            List<ItemProduto> itensNaoInspecionados = itemProdutoService
+                                .buscarItensProdutoNaoInspecionadosPorProduto(produto.getId());
+                            
+                            log.info("Encontrados {} itens-produto não inspecionados para o produto {}", 
+                                itensNaoInspecionados.size(), produto.getDescricao());
+                        } else {
+                            log.warn("Produto não encontrado com ID ou termo: {}", produtoId);
+                        }
+                    }
                 }
             }
             alerta.setProdutosAlerta(produtosAlerta);
@@ -173,6 +215,7 @@ public class AlertaService {
             alerta = alertaRepository.save(alerta);
             log.info("Alerta salvo com ID: {}", alerta.getId());
             
+            // Notificações são criadas imediatamente para alertas personalizados
             log.info("Criando notificações para o alerta...");
             notificacaoService.criarNotificacoesParaAlerta(alerta);
             
@@ -208,29 +251,61 @@ public class AlertaService {
                 throw new SmartValidityException("Apenas alertas personalizados podem ser editados");
             }
             
-            alerta.setTitulo(alertaDTO.getTitulo());
-            alerta.setDescricao(alertaDTO.getDescricao());
-            alerta.setDataHoraDisparo(alertaDTO.getDataHoraDisparo());
+            // Validação de recorrência removida - alertas personalizados são mais simples
             
+            // Atualiza campos básicos
+            if (alertaDTO.getTitulo() != null) {
+                alerta.setTitulo(alertaDTO.getTitulo());
+            }
+            if (alertaDTO.getDescricao() != null) {
+                alerta.setDescricao(alertaDTO.getDescricao());
+            }
+            // dataHoraDisparo não é alterado em alertas personalizados - sempre mantém o original
+            
+            // Lógica de recorrência removida - alertas personalizados são mais simples
+            
+            // Atualiza usuários apenas se fornecidos
             if (alertaDTO.getUsuariosIds() != null) {
                 Set<Usuario> usuariosAlerta = new HashSet<>();
-                for (String usuarioId : alertaDTO.getUsuariosIds()) {
-                    Usuario usuario = usuarioService.buscarPorId(usuarioId);
-                    usuariosAlerta.add(usuario);
+                if (!alertaDTO.getUsuariosIds().isEmpty()) {
+                    for (String usuarioId : alertaDTO.getUsuariosIds()) {
+                        Usuario usuario = usuarioService.buscarPorId(usuarioId);
+                        usuariosAlerta.add(usuario);
+                    }
                 }
                 alerta.setUsuariosAlerta(usuariosAlerta);
             }
             
+            // Atualiza produtos apenas se fornecidos
             if (alertaDTO.getProdutosIds() != null) {
                 Set<Produto> produtosAlerta = new HashSet<>();
-                for (String produtoId : alertaDTO.getProdutosIds()) {
-                    Produto produto = produtoService.buscarPorId(produtoId);
-                    produtosAlerta.add(produto);
+                if (!alertaDTO.getProdutosIds().isEmpty()) {
+                    for (String produtoId : alertaDTO.getProdutosIds()) {
+                        try {
+                            Produto produto = produtoService.buscarPorId(produtoId);
+                            produtosAlerta.add(produto);
+                        } catch (Exception e) {
+                            log.error("Erro ao buscar produto com ID '{}': {}", produtoId, e.getMessage());
+                            // Tentar buscar por outros critérios se o ID não for válido
+                            List<Produto> produtosEncontrados = produtoService.buscarPorTermoComItensNaoInspecionados(produtoId, 1);
+                            if (!produtosEncontrados.isEmpty()) {
+                                produtosAlerta.add(produtosEncontrados.get(0));
+                                log.info("Produto encontrado por termo: {} -> {}", produtoId, produtosEncontrados.get(0).getId());
+                            } else {
+                                log.warn("Produto não encontrado com ID ou termo: {}", produtoId);
+                            }
+                        }
+                    }
                 }
                 alerta.setProdutosAlerta(produtosAlerta);
             }
             
             alerta = alertaRepository.save(alerta);
+            
+            // Criar notificações para usuários (novos e existentes)
+            // O método criarNotificacoesParaAlerta já possui proteção contra duplicação
+            log.info("Criando/atualizando notificações para o alerta...");
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
             
             log.info("Alerta {} atualizado com sucesso", id);
             
@@ -385,4 +460,8 @@ public class AlertaService {
             throw new SmartValidityException("Erro ao excluir alertas relacionados ao produto inspecionado: " + e.getMessage());
         }
     }
+
+    /**
+     * Métodos de recorrência removidos - alertas personalizados são mais simples
+     */
 } 

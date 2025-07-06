@@ -40,6 +40,10 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
     @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
     List<Alerta> findAlertasJaResolvidos();
 
+    List<Alerta> findByTipoAndExcluidoFalse(TipoAlerta tipo);
+
+    // Métodos para alertas recorrentes removidos - alertas personalizados são mais simples
+
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM alerta_usuario WHERE id_alerta = :alertaId", nativeQuery = true)

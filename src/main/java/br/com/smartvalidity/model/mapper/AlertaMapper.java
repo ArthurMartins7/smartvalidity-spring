@@ -30,6 +30,8 @@ public final class AlertaMapper {
         dto.setDataCriacao(alerta.getDataHoraCriacao() != null ? 
             Timestamp.valueOf(alerta.getDataHoraCriacao()) : null);
 
+        // Campos de recorrência removidos - alertas personalizados são mais simples
+
         if (alerta.getItemProduto() != null) {
             String nomeProduto = alerta.getItemProduto().getProduto() != null
                     ? alerta.getItemProduto().getProduto().getDescricao()

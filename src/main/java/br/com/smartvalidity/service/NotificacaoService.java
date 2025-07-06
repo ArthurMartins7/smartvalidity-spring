@@ -16,6 +16,7 @@ import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.ItemProduto;
 import br.com.smartvalidity.model.entity.Notificacao;
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.mapper.AlertaMapper;
 import br.com.smartvalidity.model.mapper.NotificacaoMapper;
 import br.com.smartvalidity.model.repository.NotificacaoRepository;
@@ -35,26 +36,48 @@ public class NotificacaoService {
 
     @Transactional
     public void criarNotificacoesParaAlerta(Alerta alerta) {
+        log.info("=== Iniciando criação de notificações ===");
+        log.info("Alerta ID: {}, Título: {}", alerta.getId(), alerta.getTitulo());
+        
         if (alerta.getUsuariosAlerta() == null || alerta.getUsuariosAlerta().isEmpty()) {
             log.warn("Alerta {} não possui usuários associados", alerta.getId());
             return;
         }
 
+        log.info("Usuários associados ao alerta: {}", alerta.getUsuariosAlerta().size());
         int notificacoesCriadas = 0;
+        int notificacoesJaExistentes = 0;
+        
         for (Usuario usuario : alerta.getUsuariosAlerta()) {
-
-            if (!notificacaoRepository.existsByAlertaIdAndUsuarioId(alerta.getId(), usuario.getId())) {
-                Notificacao notificacao = new Notificacao();
-                notificacao.setAlerta(alerta);
-                notificacao.setUsuario(usuario);
-                notificacao.setLida(false);
-                
-                notificacaoRepository.save(notificacao);
-                notificacoesCriadas++;
+            log.info("Processando usuário: {} (ID: {})", usuario.getNome(), usuario.getId());
+            
+            boolean jaExiste = notificacaoRepository.existsByAlertaIdAndUsuarioId(alerta.getId(), usuario.getId());
+            log.info("Notificação já existe para este usuário/alerta? {}", jaExiste);
+            
+            if (!jaExiste) {
+                try {
+                    Notificacao notificacao = new Notificacao();
+                    notificacao.setAlerta(alerta);
+                    notificacao.setUsuario(usuario);
+                    notificacao.setLida(false);
+                    
+                    Notificacao notificacaoSalva = notificacaoRepository.save(notificacao);
+                    log.info("Notificação criada com ID: {} para usuário {}", 
+                        notificacaoSalva.getId(), usuario.getNome());
+                    notificacoesCriadas++;
+                } catch (Exception e) {
+                    log.error("Erro ao criar notificação para usuário {}: {}", usuario.getNome(), e.getMessage(), e);
+                }
+            } else {
+                notificacoesJaExistentes++;
+                log.info("Notificação já existe para usuário {}", usuario.getNome());
             }
         }
         
-        log.info("Criadas {} notificações para o alerta {}", notificacoesCriadas, alerta.getId());
+        log.info("=== Resultado da criação de notificações ===");
+        log.info("Criadas: {} notificações", notificacoesCriadas);
+        log.info("Já existentes: {} notificações", notificacoesJaExistentes);
+        log.info("Total de usuários processados: {}", alerta.getUsuariosAlerta().size());
     }
 
 
@@ -407,6 +430,69 @@ public class NotificacaoService {
             return count;
         } catch (Exception e) {
             log.warn("Erro ao contar notificações pendentes do usuário {}: {}", usuario.getId(), e.getMessage());
+            return 0L;
+        }
+    }
+
+    public List<AlertaDTO.Listagem> buscarNotificacoesPersonalizadasDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return buscarNotificacoesPersonalizadas(usuario);
+    }
+
+    /**
+     * Busca notificações de alertas personalizados de um usuário.
+     * 
+     * @param usuario O usuário
+     * @return Lista de notificações de alertas personalizados
+     */
+    public List<AlertaDTO.Listagem> buscarNotificacoesPersonalizadas(Usuario usuario) {
+        try {
+            List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioAndAlertaTipoOrderByDataHoraCriacaoDesc(usuario, TipoAlerta.PERSONALIZADO);
+            return notificacoes.stream()
+                    .map(this::convertNotificacaoToAlertaDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificações personalizadas do usuário {}: {}", usuario.getId(), e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Conta todas as notificações não lidas do usuário (pendentes + personalizadas não lidas).
+     * Usado para o contador do sininho no cabeçalho.
+     */
+    public Long contarNotificacoesNaoLidasTotalDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return contarNotificacoesNaoLidasTotal(usuario);
+    }
+
+    /**
+     * Conta todas as notificações não lidas do usuário (pendentes + personalizadas não lidas).
+     */
+    public Long contarNotificacoesNaoLidasTotal(Usuario usuario) {
+        try {
+            // Contar notificações pendentes (produtos não inspecionados)
+            Long pendentes = contarNotificacoesPendentes(usuario);
+            
+            // Contar notificações personalizadas não lidas
+            Long personalizadasNaoLidas = notificacaoRepository.countByUsuarioAndLidaFalse(usuario);
+            List<Notificacao> notificacoesPersonalizadas = notificacaoRepository.findByUsuarioAndAlertaTipoOrderByDataHoraCriacaoDesc(usuario, TipoAlerta.PERSONALIZADO);
+            Long personalizadasNaoLidasFiltradas = notificacoesPersonalizadas.stream()
+                    .filter(n -> !n.getLida())
+                    .count();
+            
+            log.debug("Contador sininho - Usuário {}: {} pendentes + {} personalizadas não lidas = {} total", 
+                usuario.getId(), pendentes, personalizadasNaoLidasFiltradas, pendentes + personalizadasNaoLidasFiltradas);
+            
+            return pendentes + personalizadasNaoLidasFiltradas;
+        } catch (Exception e) {
+            log.warn("Erro ao contar notificações não lidas total do usuário {}: {}", usuario.getId(), e.getMessage());
             return 0L;
         }
     }

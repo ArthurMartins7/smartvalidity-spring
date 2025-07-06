@@ -19,6 +19,7 @@ import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.model.repository.ItemProdutoRepository;
 import br.com.smartvalidity.model.repository.UsuarioRepository;
+import br.com.smartvalidity.service.AlertaService;
 import br.com.smartvalidity.service.NotificacaoService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +38,9 @@ public class AlertaScheduler {
 
     @Autowired
     private NotificacaoService notificacaoService;
+
+    @Autowired
+    private AlertaService alertaService;
 
     @Scheduled(fixedRate = 30000) // 30 segundos
     @Transactional
@@ -83,6 +87,11 @@ public class AlertaScheduler {
             log.error("Erro durante verificação de vencimentos: {}", e.getMessage(), e);
         }
     }
+
+    /**
+     * Processamento de alertas recorrentes removido - alertas personalizados são mais simples
+     * Apenas alertas automáticos de vencimento são mantidos
+     */
 
     /**
      * Determina o tipo de alerta baseado na data de vencimento

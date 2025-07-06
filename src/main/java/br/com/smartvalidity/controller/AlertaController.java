@@ -54,7 +54,7 @@ public class AlertaController {
     @Operation(summary = "Criar alerta personalizado", 
                description = "Cria um novo alerta personalizado com vinculação automática de itens-produto")
     public ResponseEntity<?> criarAlerta(
-            @RequestBody AlertaDTO.Cadastro alertaDTO,
+            @Valid @RequestBody AlertaDTO.Cadastro alertaDTO,
             @RequestParam(required = false) String usuarioCriadorId) {
         
         try {
@@ -147,6 +147,12 @@ public class AlertaController {
     @GetMapping("/ja-resolvidos")
     public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasJaResolvidos() {
         List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasJaResolvidos();
+        return ResponseEntity.ok(alertas);
+    }
+
+    @GetMapping("/personalizados")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasPersonalizados() {
+        List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasPersonalizados();
         return ResponseEntity.ok(alertas);
     }
 } 

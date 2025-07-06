@@ -47,6 +47,8 @@ public class Alerta {
     @Column(name = "data_hora_criacao", nullable = false)
     private LocalDateTime dataHoraCriacao;
 
+    // Campos de recorrência removidos - alertas personalizados são mais simples
+
     @ManyToOne
     @JoinColumn(name = "id_usuario_criador")
     private Usuario usuarioCriador;
@@ -76,5 +78,7 @@ public class Alerta {
         if (dataHoraCriacao == null) {
             dataHoraCriacao = LocalDateTime.now();
         }
+        
+        // Lógica de recorrência removida - alertas personalizados são mais simples
     }
 }
