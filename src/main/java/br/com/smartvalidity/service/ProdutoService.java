@@ -27,7 +27,7 @@ public class ProdutoService {
     public List<Produto> buscarTodos() {
         return produtoRepository.findAll();
     }
-    
+
     public List<Produto> buscarProdutosComItensNaoInspecionados() {
         return produtoRepository.findProdutosComItensNaoInspecionados();
     }
@@ -36,8 +36,8 @@ public class ProdutoService {
         if (termo == null || termo.trim().isEmpty()) {
             return List.of();
         }
-        org.springframework.data.domain.PageRequest pageable = 
-            org.springframework.data.domain.PageRequest.of(0, limite);
+        org.springframework.data.domain.PageRequest pageable =
+                org.springframework.data.domain.PageRequest.of(0, limite);
         return produtoRepository.findProdutosComItensNaoInspecionadosPorTermo(termo.trim(), pageable);
     }
 
@@ -99,9 +99,21 @@ public class ProdutoService {
         }).toList();
     }
 
+    public Produto salvar(Produto produto) throws SmartValidityException {
+        if (produto == null) {
+            throw new SmartValidityException("Produto não pode ser nulo");
+        }
 
+        if (produto.getId() == null) {
+            if (produtoRepository.existsByCodigoBarras(produto.getCodigoBarras())) {
+                throw new SmartValidityException("Já existe um produto cadastrado com este código de barras.");
+            }
+        } else {
+            if (produtoRepository.existsByCodigoBarrasAndIdNot(produto.getCodigoBarras(), produto.getId())) {
+                throw new SmartValidityException("Já existe outro produto com este código de barras.");
+            }
+        }
 
-    public Produto salvar(Produto produto) {
         return produtoRepository.save(produto);
     }
 
@@ -133,9 +145,15 @@ public class ProdutoService {
         return produtoRepository.count(seletor);
     }
 
-
     public Produto atualizar(String id, Produto produtoAtualizado) throws SmartValidityException {
         Produto produto = buscarPorId(id);
+
+        // Se o código de barras foi alterado, verifica unicidade
+        if (produtoAtualizado.getCodigoBarras() != null &&
+                !produtoAtualizado.getCodigoBarras().equals(produto.getCodigoBarras()) &&
+                produtoRepository.existsByCodigoBarrasAndIdNot(produtoAtualizado.getCodigoBarras(), id)) {
+            throw new SmartValidityException("Já existe outro produto com este código de barras.");
+        }
 
         produto.setCodigoBarras(produtoAtualizado.getCodigoBarras());
         produto.setDescricao(produtoAtualizado.getDescricao());
