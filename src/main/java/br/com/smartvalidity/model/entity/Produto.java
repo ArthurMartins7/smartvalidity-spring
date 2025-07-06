@@ -17,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 @Entity
@@ -29,7 +30,8 @@ public class Produto {
     private String id;
 
     @NotBlank(message = "O campo 'código de barras' não pode ser vazio ou apenas espaços em branco.")
-    @EAN
+    @EAN(message = "O código de barras deve estar no formato EAN-13 (13 dígitos).")
+    @Column(unique = true, nullable = false)
     private String codigoBarras;
 
     @NotBlank(message = "O campo 'descrição' não pode ser vazio ou apenas espaços em branco.")
@@ -42,6 +44,7 @@ public class Produto {
     private String unidadeMedida;
 
     @NotNull(message = "A quantidade não pode ser nula.")
+    @Min(value = 1, message = "A quantidade deve ser maior ou igual a 1.")
     @Column(nullable = false)
     private Integer quantidade;
 
