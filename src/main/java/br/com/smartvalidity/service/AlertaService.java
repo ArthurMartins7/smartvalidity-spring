@@ -302,6 +302,10 @@ public class AlertaService {
             
             alerta = alertaRepository.save(alerta);
             
+            // Resetar o status de lida das notificações existentes para que apareçam como não lidas
+            log.info("Resetando status de lida das notificações existentes...");
+            notificacaoService.resetarStatusLidaNotificacoesPorAlerta(alerta);
+            
             // Criar notificações para usuários (novos e existentes)
             // O método criarNotificacoesParaAlerta já possui proteção contra duplicação
             log.info("Criando/atualizando notificações para o alerta...");

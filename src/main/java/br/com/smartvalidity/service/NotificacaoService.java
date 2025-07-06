@@ -496,4 +496,57 @@ public class NotificacaoService {
             return 0L;
         }
     }
+
+    /**
+     * Reseta o status de lida das notificações relacionadas a um alerta específico.
+     * Este método é chamado quando um alerta personalizado é editado,
+     * fazendo com que as notificações voltem a aparecer como não lidas.
+     * 
+     * @param alerta O alerta cujas notificações devem ter o status resetado
+     * @throws SmartValidityException Se houver erro durante o reset
+     */
+    @Transactional
+    public void resetarStatusLidaNotificacoesPorAlerta(Alerta alerta) throws SmartValidityException {
+        if (alerta == null) {
+            log.warn("Alerta é null, não há notificações para resetar");
+            return;
+        }
+
+        log.info("Iniciando reset do status de lida para notificações do Alerta ID: {}", alerta.getId());
+
+        try {
+            // Busca todas as notificações relacionadas ao alerta
+            List<Notificacao> notificacoesRelacionadas = notificacaoRepository.findByAlerta(alerta);
+
+            if (notificacoesRelacionadas.isEmpty()) {
+                log.info("Nenhuma notificação encontrada para o Alerta ID: {}", alerta.getId());
+                return;
+            }
+
+            int notificacoesResetadas = 0;
+            for (Notificacao notificacao : notificacoesRelacionadas) {
+                if (notificacao.getLida()) {
+                    log.info("Resetando status de lida da notificação ID: {} do usuário: {}", 
+                        notificacao.getId(), 
+                        notificacao.getUsuario() != null ? notificacao.getUsuario().getNome() : "Desconhecido");
+                    
+                    // Reset o status de lida
+                    notificacao.setLida(false);
+                    notificacao.setDataHoraLeitura(null);
+                    notificacaoRepository.save(notificacao);
+                    notificacoesResetadas++;
+                } else {
+                    log.info("Notificação ID: {} já está como não lida", notificacao.getId());
+                }
+            }
+
+            log.info("Reset concluído: {} notificações resetadas para o Alerta ID: {}", 
+                notificacoesResetadas, alerta.getId());
+
+        } catch (Exception e) {
+            log.error("Erro ao resetar status de lida das notificações para Alerta ID {}: {}", 
+                alerta.getId(), e.getMessage(), e);
+            throw new SmartValidityException("Erro ao resetar status de lida das notificações relacionadas ao alerta: " + e.getMessage());
+        }
+    }
 } 
