@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,33 +39,22 @@ public class NotificacaoController {
         }
     }
 
-    @GetMapping("/nao-lidas")
-    public ResponseEntity<List<AlertaDTO.Listagem>> buscarNotificacaoNaoLidas() throws SmartValidityException {
-        List<AlertaDTO.Listagem> notificacoes = notificacaoService.buscarNotificacaoNaoLidasDoUsuarioAutenticado();
+    @GetMapping("/pendentes")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarNotificacoesPendentes() throws SmartValidityException {
+        List<AlertaDTO.Listagem> notificacoes = notificacaoService.buscarNotificacoesPendentesDoUsuarioAutenticado();
         return ResponseEntity.ok(notificacoes);
     }
 
-    @GetMapping("/count-nao-lidas")
-    public ResponseEntity<Long> contarNotificacaoNaoLidas() throws SmartValidityException {
-        Long count = notificacaoService.contarNotificacaoNaoLidasDoUsuarioAutenticado();
+    @GetMapping("/ja-resolvidas")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarNotificacoesJaResolvidas() throws SmartValidityException {
+        List<AlertaDTO.Listagem> notificacoes = notificacaoService.buscarNotificacoesProdutosInspecionadosDoUsuarioAutenticado();
+        return ResponseEntity.ok(notificacoes);
+    }
+
+    @GetMapping("/count-pendentes")
+    public ResponseEntity<Long> contarNotificacoesPendentes() throws SmartValidityException {
+        Long count = notificacaoService.contarNotificacoesPendentesDoUsuarioAutenticado();
         return ResponseEntity.ok(count);
-    }
-
-    @PutMapping("/{id}/marcar-lida")
-    public ResponseEntity<Void> marcarNotificacaoComoLida(@PathVariable Long id) throws SmartValidityException {
-        boolean sucesso = notificacaoService.marcarComoLidaDoUsuarioAutenticado(id);
-        
-        if (sucesso) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PutMapping("/marcar-todas-lidas")
-    public ResponseEntity<Void> marcarTodasNotificacoesComoLidas() throws SmartValidityException {
-        notificacaoService.marcarTodasComoLidasDoUsuarioAutenticado();
-        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")

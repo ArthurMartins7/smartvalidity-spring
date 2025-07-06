@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.ItemProduto;
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.PerfilAcesso;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import br.com.smartvalidity.model.repository.AlertaRepository;
 import br.com.smartvalidity.model.repository.ItemProdutoRepository;
@@ -42,47 +43,83 @@ public class AlertaScheduler {
     public void verificarVencimentosECriarAlertas() {
         log.info("=== Iniciando verificação de vencimentos ===");
         
-        try {  // Busca todos os itens-produto não inspecionados
-           
+        try {
             List<ItemProduto> itensNaoInspecionados = itemProdutoRepository.findByInspecionadoFalse();
             log.info("Encontrados {} itens não inspecionados", itensNaoInspecionados.size());
 
             LocalDate hoje = LocalDate.now();
             LocalDate amanha = hoje.plusDays(1);
-            LocalDate ontem = hoje.minusDays(1);
 
             int alertasCriados = 0;
+            int alertasAtualizados = 0;
 
             for (ItemProduto item : itensNaoInspecionados) {
                 LocalDate dataVencimento = item.getDataVencimento().toLocalDate();
                 
-                // Verificar se deve criar alerta
-                TipoAlerta tipoAlerta = null;
+                // Determinar o tipo de alerta baseado na data
+                TipoAlerta tipoAlerta = determinarTipoAlerta(dataVencimento, hoje);
                 
-                if (dataVencimento.isEqual(ontem)) {
-                    tipoAlerta = TipoAlerta.VENCIMENTO_ATRASO;
-                } else if (dataVencimento.isEqual(hoje)) {
-                    tipoAlerta = TipoAlerta.VENCIMENTO_HOJE;
-                } else if (dataVencimento.isEqual(amanha)) {
-                    tipoAlerta = TipoAlerta.VENCIMENTO_AMANHA;
-                }
-
-                if (tipoAlerta != null) { // Verifica se já existe alerta não excluído para este item e tipo
+                if (tipoAlerta != null) {
+                    // Verificar se já existe um alerta para este item-produto
+                    var alertaExistente = alertaRepository.findFirstByItemProdutoAndExcluidoFalse(item);
                     
-                    boolean alertaJaExiste = alertaRepository.existsByItemProdutoAndTipoAndExcluidoFalse(item, tipoAlerta);
-                    
-                    if (!alertaJaExiste) {
+                    if (alertaExistente.isPresent()) {
+                        // Atualizar alerta existente se o tipo mudou
+                        if (atualizarAlertaSeNecessario(alertaExistente.get(), tipoAlerta, item)) {
+                            alertasAtualizados++;
+                        }
+                    } else {
+                        // Criar novo alerta
                         criarAlertaAutomatico(item, tipoAlerta);
                         alertasCriados++;
                     }
                 }
             }
 
-            log.info("Verificação concluída. {} novos alertas criados", alertasCriados);
+            log.info("Verificação concluída. {} novos alertas criados, {} alertas atualizados", 
+                alertasCriados, alertasAtualizados);
             
         } catch (Exception e) {
             log.error("Erro durante verificação de vencimentos: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Determina o tipo de alerta baseado na data de vencimento
+     */
+    private TipoAlerta determinarTipoAlerta(LocalDate dataVencimento, LocalDate hoje) {
+        if (dataVencimento.isBefore(hoje)) {
+            return TipoAlerta.VENCIMENTO_ATRASO;
+        } else if (dataVencimento.isEqual(hoje)) {
+            return TipoAlerta.VENCIMENTO_HOJE;
+        } else if (dataVencimento.isEqual(hoje.plusDays(1))) {
+            return TipoAlerta.VENCIMENTO_AMANHA;
+        }
+        return null; // Não precisa de alerta ainda
+    }
+
+    /**
+     * Atualiza um alerta existente se necessário
+     * @return true se o alerta foi atualizado, false caso contrário
+     */
+    @Transactional
+    private boolean atualizarAlertaSeNecessario(Alerta alerta, TipoAlerta novoTipo, ItemProduto itemProduto) {
+        if (alerta.getTipo() != novoTipo) {
+            // Tipo mudou, atualizar o alerta
+            alerta.setTipo(novoTipo);
+            atualizarTituloEDescricao(alerta, novoTipo, itemProduto);
+            alerta.setDataHoraDisparo(LocalDateTime.now()); // Atualizar timestamp
+            
+            alertaRepository.save(alerta);
+            
+            log.info("Alerta atualizado: {} → {} para item {} (Lote: {})", 
+                alerta.getTipo(), novoTipo, 
+                itemProduto.getProduto() != null ? itemProduto.getProduto().getDescricao() : "Produto", 
+                itemProduto.getLote());
+            
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -98,7 +135,52 @@ public class AlertaScheduler {
             alerta.setItemProduto(itemProduto);
             alerta.setDataHoraDisparo(LocalDateTime.now());
 
-            // Definir título e descrição baseado no tipo
+            // Definir título e descrição usando método comum
+            atualizarTituloEDescricao(alerta, tipoAlerta, itemProduto);
+
+            // Adicionar apenas ASSINANTES e ADMINS para receber o alerta
+            List<Usuario> todosUsuarios = usuarioRepository.findAll();
+            Set<Usuario> usuariosAlerta = new HashSet<>();
+            Set<Usuario> usuariosNotificacao = new HashSet<>();
+            
+            for (Usuario usuario : todosUsuarios) {
+                // ASSINANTES e ADMINS recebem alertas e notificações
+                if (usuario.getPerfilAcesso() == PerfilAcesso.ASSINANTE || 
+                    usuario.getPerfilAcesso() == PerfilAcesso.ADMIN) {
+                    usuariosAlerta.add(usuario);
+                }
+                // TODOS os usuários (incluindo OPERADORES) recebem notificações
+                usuariosNotificacao.add(usuario);
+            }
+            
+            alerta.setUsuariosAlerta(usuariosAlerta);
+
+            // Salvar o alerta
+            alertaRepository.save(alerta);
+            
+            // Criar notificações individuais para TODOS os usuários
+            // Temporariamente substituir usuários do alerta para incluir todos
+            Set<Usuario> usuariosOriginais = alerta.getUsuariosAlerta();
+            alerta.setUsuariosAlerta(usuariosNotificacao);
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
+            // Restaurar usuários originais do alerta
+            alerta.setUsuariosAlerta(usuariosOriginais);
+            
+            String produtoNome = itemProduto.getProduto() != null ? 
+                itemProduto.getProduto().getDescricao() : "Produto";
+            log.info("Alerta automático criado: {} para item {} (Lote: {})", 
+                tipoAlerta, produtoNome, itemProduto.getLote());
+                
+        } catch (Exception e) {
+            log.error("Erro ao criar alerta automático para item {}: {}", 
+                itemProduto.getId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Atualiza o título e descrição de um alerta com base no tipo de alerta
+     */
+    private void atualizarTituloEDescricao(Alerta alerta, TipoAlerta tipoAlerta, ItemProduto itemProduto) {
             String produtoNome = itemProduto.getProduto() != null ? 
                 itemProduto.getProduto().getDescricao() : "Produto";
             
@@ -119,59 +201,10 @@ public class AlertaScheduler {
                     
                 case VENCIMENTO_ATRASO:
                     alerta.setTitulo("Produto vencido");
-                    alerta.setDescricao(String.format("O item '%s' (Lote: %s) venceu ontem (%s). Remova do estoque imediatamente!", 
+                alerta.setDescricao(String.format("O item '%s' (Lote: %s) está vencido desde %s. Remova do estoque imediatamente!", 
                         produtoNome, itemProduto.getLote(), 
                         itemProduto.getDataVencimento().toLocalDate().toString()));
                     break;
-            }
-
-            // Adicionar todos os usuários do sistema para receber o alerta
-            List<Usuario> todosUsuarios = usuarioRepository.findAll();
-            Set<Usuario> usuariosAlerta = new HashSet<>();
-            for (Usuario usuario : todosUsuarios) {
-                usuariosAlerta.add(usuario);
-            }
-            alerta.setUsuariosAlerta(usuariosAlerta);
-
-            // Salvar o alerta
-            alertaRepository.save(alerta);
-            
-            // Criar notificações individuais para cada usuário
-            notificacaoService.criarNotificacoesParaAlerta(alerta);
-            
-            log.info("Alerta automático criado: {} para item {} (Lote: {})", 
-                tipoAlerta, produtoNome, itemProduto.getLote());
-                
-        } catch (Exception e) {
-            log.error("Erro ao criar alerta automático para item {}: {}", 
-                itemProduto.getId(), e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Limpar alertas antigos resolvidos (executado diariamente às 2h da manhã)
-     */
-    @Scheduled(cron = "0 0 2 * * *")
-    @Transactional
-    public void limparAlertasAntigos() {
-        log.info("=== Iniciando limpeza de alertas antigos ===");
-        
-        try {
-            // Excluir logicamente alertas de itens que foram inspecionados
-            List<Alerta> alertasDeItensInspecionados = alertaRepository
-                .findByItemProdutoInspecionadoTrueAndExcluidoFalse();
-            
-            int alertasExcluidos = 0;
-            for (Alerta alerta : alertasDeItensInspecionados) {
-                alerta.setExcluido(true);
-                alertaRepository.save(alerta);
-                alertasExcluidos++;
-            }
-            
-            log.info("Limpeza concluída. {} alertas excluídos logicamente (itens inspecionados)", alertasExcluidos);
-            
-        } catch (Exception e) {
-            log.error("Erro durante limpeza de alertas antigos: {}", e.getMessage(), e);
         }
     }
 }

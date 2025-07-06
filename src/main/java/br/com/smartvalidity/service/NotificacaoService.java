@@ -1,5 +1,6 @@
 package br.com.smartvalidity.service;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -173,7 +174,8 @@ public class NotificacaoService {
         
         // usa o id da notificação e não o do alerta
         dto.setId(notificacao.getId().intValue());
-        dto.setDataCriacao(notificacao.getDataHoraCriacao());
+        dto.setDataCriacao(notificacao.getDataHoraCriacao() != null ? 
+            Timestamp.valueOf(notificacao.getDataHoraCriacao()) : null);
         dto.setLida(notificacao.getLida());
         
         return dto;
@@ -247,6 +249,33 @@ public class NotificacaoService {
         }
         return buscarNotificacaoNaoLidasDoUsuario(usuario);
     }
+
+    /**
+     * Busca notificações de alertas relacionados a produtos já inspecionados.
+     * Usado para o histórico de notificações de produtos inspecionados.
+     * 
+     * @param usuario O usuário
+     * @return Lista de notificações de produtos inspecionados
+     */
+    public List<AlertaDTO.Listagem> buscarNotificacoesProdutosInspecionados(Usuario usuario) {
+        try {
+            List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioAndProdutoInspecionado(usuario);
+            return notificacoes.stream()
+                    .map(this::convertNotificacaoToAlertaDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificações de produtos inspecionados do usuário {}: {}", usuario.getId(), e.getMessage());
+            return List.of();
+        }
+    }
+
+    public List<AlertaDTO.Listagem> buscarNotificacoesProdutosInspecionadosDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return buscarNotificacoesProdutosInspecionados(usuario);
+    }
     
     public Long contarNotificacaoNaoLidasDoUsuarioAutenticado() throws SmartValidityException {
         Usuario usuario = authenticationService.getUsuarioAutenticado();
@@ -278,5 +307,107 @@ public class NotificacaoService {
             throw new SmartValidityException("Usuário não autenticado");
         }
         return excluirNotificacao(id, usuario);
+    }
+
+    /**
+     * Exclui todas as notificações relacionadas a um alerta específico.
+     * Este método é chamado automaticamente quando um alerta é excluído
+     * logicamente após a inspeção do produto.
+     * 
+     * @param alerta O alerta cujas notificações devem ser excluídas
+     * @throws SmartValidityException Se houver erro durante a exclusão
+     */
+    @Transactional
+    public void excluirNotificacoesPorAlerta(Alerta alerta) throws SmartValidityException {
+        if (alerta == null) {
+            log.warn("Alerta é null, não há notificações para excluir");
+            return;
+        }
+
+        log.info("Iniciando exclusão de notificações para o Alerta ID: {}", alerta.getId());
+
+        try {
+            // Busca todas as notificações relacionadas ao alerta
+            List<Notificacao> notificacoesRelacionadas = notificacaoRepository.findByAlerta(alerta);
+
+            if (notificacoesRelacionadas.isEmpty()) {
+                log.info("Nenhuma notificação encontrada para o Alerta ID: {}", alerta.getId());
+                return;
+            }
+
+            int notificacoesExcluidas = 0;
+            for (Notificacao notificacao : notificacoesRelacionadas) {
+                log.info("Excluindo notificação ID: {} do usuário: {}", 
+                    notificacao.getId(), 
+                    notificacao.getUsuario() != null ? notificacao.getUsuario().getNome() : "Desconhecido");
+                
+                // Remove a notificação do banco de dados
+                notificacaoRepository.delete(notificacao);
+                notificacoesExcluidas++;
+            }
+
+            log.info("Excluídas {} notificações para o Alerta ID: {}", notificacoesExcluidas, alerta.getId());
+
+        } catch (Exception e) {
+            log.error("Erro ao excluir notificações para Alerta ID {}: {}", alerta.getId(), e.getMessage(), e);
+            throw new SmartValidityException("Erro ao excluir notificações relacionadas ao alerta: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Busca notificações pendentes (não resolvidas) do usuário autenticado.
+     * Uma notificação é considerada pendente quando o item-produto associado ainda não foi inspecionado.
+     */
+    public List<AlertaDTO.Listagem> buscarNotificacoesPendentesDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return buscarNotificacoesPendentes(usuario);
+    }
+
+    /**
+     * Busca notificações pendentes (não resolvidas) de um usuário.
+     * Uma notificação é considerada pendente quando o item-produto associado ainda não foi inspecionado.
+     */
+    public List<AlertaDTO.Listagem> buscarNotificacoesPendentes(Usuario usuario) {
+        try {
+            List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioOrderByDataHoraCriacaoDesc(usuario);
+            return notificacoes.stream()
+                    .map(this::convertNotificacaoToAlertaDTO)
+                    .filter(dto -> dto.getItemInspecionado() == Boolean.FALSE) // Apenas não inspecionados (pendentes)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("Erro ao buscar notificações pendentes do usuário {}: {}", usuario.getId(), e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Conta notificações pendentes (não resolvidas) do usuário autenticado.
+     */
+    public Long contarNotificacoesPendentesDoUsuarioAutenticado() throws SmartValidityException {
+        Usuario usuario = authenticationService.getUsuarioAutenticado();
+        if (usuario == null) {
+            throw new SmartValidityException("Usuário não autenticado");
+        }
+        return contarNotificacoesPendentes(usuario);
+    }
+
+    /**
+     * Conta notificações pendentes (não resolvidas) de um usuário.
+     */
+    public Long contarNotificacoesPendentes(Usuario usuario) {
+        try {
+            List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioOrderByDataHoraCriacaoDesc(usuario);
+            long count = notificacoes.stream()
+                    .map(this::convertNotificacaoToAlertaDTO)
+                    .filter(dto -> dto.getItemInspecionado() == Boolean.FALSE) // Apenas não inspecionados (pendentes)
+                    .count();
+            return count;
+        } catch (Exception e) {
+            log.warn("Erro ao contar notificações pendentes do usuário {}: {}", usuario.getId(), e.getMessage());
+            return 0L;
+        }
     }
 } 

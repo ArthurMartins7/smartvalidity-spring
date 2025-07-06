@@ -1,6 +1,7 @@
 package br.com.smartvalidity.model.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,6 +30,15 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
 
     @Query("SELECT a FROM Alerta a WHERE a.excluido = false ORDER BY a.dataHoraCriacao DESC")
     List<Alerta> findAllNotDeleted();
+
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto = :itemProduto AND a.excluido = false")
+    List<Alerta> findByItemProdutoAndExcluidoFalse(@Param("itemProduto") ItemProduto itemProduto);
+
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto = :itemProduto AND a.excluido = false")
+    Optional<Alerta> findFirstByItemProdutoAndExcluidoFalse(@Param("itemProduto") ItemProduto itemProduto);
+
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
+    List<Alerta> findAlertasJaResolvidos();
 
     @Modifying
     @Transactional

@@ -54,6 +54,23 @@ public class AlertaService {
                 .toList();
     }
 
+    public List<AlertaDTO.Listagem> buscarAlertasAtivos() {
+        List<Alerta> alertasAtivos = alertaRepository.findAllNotDeleted().stream()
+                .filter(alerta -> alerta.getItemProduto() == null || !alerta.getItemProduto().getInspecionado())
+                .toList();
+        
+        return alertasAtivos.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
+    public List<AlertaDTO.Listagem> buscarAlertasJaResolvidos() {
+        List<Alerta> alertasResolvidos = alertaRepository.findAlertasJaResolvidos();
+        return alertasResolvidos.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
     public Optional<AlertaDTO.Response> findById(Integer id) {
         return alertaRepository.findByIdAndExcluidoFalse(id).map(AlertaDTO.Response::fromEntity);
     }
@@ -318,6 +335,54 @@ public class AlertaService {
     private void validarItemProdutoInspecionado(ItemProduto itemProduto) throws SmartValidityException {
         if (itemProduto != null && Boolean.FALSE.equals(itemProduto.getInspecionado())) {
             throw new SmartValidityException("Não é possível excluir o alerta: o item-produto associado ainda não foi inspecionado.");
+        }
+    }
+
+    /**
+     * Exclui logicamente todos os alertas relacionados a um ItemProduto específico
+     * após a inspeção do produto. Este método é chamado automaticamente quando
+     * um produto é inspecionado no mural.
+     * 
+     * @param itemProduto O item produto que foi inspecionado
+     * @throws SmartValidityException Se houver erro durante a exclusão
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void excluirAlertasPorItemProdutoInspecionado(ItemProduto itemProduto) throws SmartValidityException {
+        if (itemProduto == null) {
+            log.warn("ItemProduto é null, não há alertas para excluir");
+            return;
+        }
+
+        log.info("Iniciando exclusão lógica de alertas para o ItemProduto ID: {}", itemProduto.getId());
+
+        try {
+            // Busca todos os alertas não excluídos relacionados ao item produto
+            List<Alerta> alertasRelacionados = alertaRepository.findByItemProdutoAndExcluidoFalse(itemProduto);
+
+            if (alertasRelacionados.isEmpty()) {
+                log.info("Nenhum alerta encontrado para o ItemProduto ID: {}", itemProduto.getId());
+                return;
+            }
+
+            int alertasExcluidos = 0;
+            for (Alerta alerta : alertasRelacionados) {
+                log.info("Excluindo logicamente alerta ID: {} ({})", alerta.getId(), alerta.getTitulo());
+                
+                // Marca o alerta como excluído
+                alerta.setExcluido(true);
+                alertaRepository.save(alerta);
+                
+                // Remove as notificações relacionadas a este alerta
+                notificacaoService.excluirNotificacoesPorAlerta(alerta);
+                
+                alertasExcluidos++;
+            }
+
+            log.info("Excluídos logicamente {} alertas para o ItemProduto ID: {}", alertasExcluidos, itemProduto.getId());
+
+        } catch (Exception e) {
+            log.error("Erro ao excluir alertas para ItemProduto ID {}: {}", itemProduto.getId(), e.getMessage(), e);
+            throw new SmartValidityException("Erro ao excluir alertas relacionados ao produto inspecionado: " + e.getMessage());
         }
     }
 } 

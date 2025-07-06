@@ -1,6 +1,7 @@
 package br.com.smartvalidity.model.dto;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import br.com.smartvalidity.model.entity.Alerta;
@@ -15,16 +16,19 @@ public class AlertaDTO {
         private Integer id;
         private String titulo;
         private String descricao;
-        private LocalDateTime dataHoraDisparo;
+        private Date dataHoraDisparo;
         private TipoAlerta tipo;
-        private LocalDateTime dataCriacao;
-        private LocalDateTime dataEnvio;
+        private Date dataCriacao;
+        private Date dataEnvio;
         private String usuarioCriador;
         private List<String> usuariosAlerta;
         private List<String> produtosAlerta;
         private List<String> usuariosAlertaIds;
         private List<String> produtosAlertaIds;
         private Boolean lida;
+        private Boolean itemInspecionado;
+        private Integer diasVencidos;
+        private Date dataVencimentoItem;
     }
     @Data
     public static class Cadastro {

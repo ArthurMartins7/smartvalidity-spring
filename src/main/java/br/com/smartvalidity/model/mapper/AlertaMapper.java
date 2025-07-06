@@ -1,5 +1,8 @@
 package br.com.smartvalidity.model.mapper;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import br.com.smartvalidity.model.dto.AlertaDTO;
@@ -22,8 +25,10 @@ public final class AlertaMapper {
         dto.setTitulo(alerta.getTitulo());
         dto.setDescricao(alerta.getDescricao());
         dto.setTipo(alerta.getTipo());
-        dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDataCriacao(alerta.getDataHoraCriacao());
+        dto.setDataHoraDisparo(alerta.getDataHoraDisparo() != null ? 
+            Timestamp.valueOf(alerta.getDataHoraDisparo()) : null);
+        dto.setDataCriacao(alerta.getDataHoraCriacao() != null ? 
+            Timestamp.valueOf(alerta.getDataHoraCriacao()) : null);
 
         if (alerta.getItemProduto() != null) {
             String nomeProduto = alerta.getItemProduto().getProduto() != null
@@ -31,6 +36,17 @@ public final class AlertaMapper {
                     : null;
             if (nomeProduto != null) {
                 dto.setProdutosAlerta(List.of(nomeProduto));
+            }
+            dto.setItemInspecionado(alerta.getItemProduto().getInspecionado());
+            
+            if (alerta.getItemProduto().getDataVencimento() != null) {
+                LocalDate dataVencimento = alerta.getItemProduto().getDataVencimento().toLocalDate();
+                LocalDate hoje = LocalDate.now();
+                
+                long diasVencidos = ChronoUnit.DAYS.between(dataVencimento, hoje);
+                dto.setDiasVencidos((int) diasVencidos);
+                
+                dto.setDataVencimentoItem(Timestamp.valueOf(alerta.getItemProduto().getDataVencimento()));
             }
         }
 

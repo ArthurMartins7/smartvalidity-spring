@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.Notificacao;
 import br.com.smartvalidity.model.entity.Usuario;
 
@@ -24,6 +25,11 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
     Optional<Notificacao> findByIdAndUsuario(Long id, Usuario usuario);
 
     boolean existsByAlertaIdAndUsuarioId(Integer alertaId, String usuarioId);
+
+    List<Notificacao> findByAlerta(Alerta alerta);
+
+    @Query("SELECT n FROM Notificacao n WHERE n.usuario = :usuario AND n.alerta.itemProduto.inspecionado = true ORDER BY n.dataHoraCriacao DESC")
+    List<Notificacao> findByUsuarioAndProdutoInspecionado(@Param("usuario") Usuario usuario);
 
     @Query("UPDATE Notificacao n SET n.lida = true, n.dataHoraLeitura = CURRENT_TIMESTAMP WHERE n.usuario = :usuario AND n.lida = false")
     @Modifying

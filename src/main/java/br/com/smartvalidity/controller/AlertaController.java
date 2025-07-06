@@ -131,4 +131,22 @@ public class AlertaController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    @GetMapping
+    public ResponseEntity<List<AlertaDTO.Response>> listarTodos() {
+        List<AlertaDTO.Response> alertas = alertaService.findAll();
+        return ResponseEntity.ok(alertas);
+    }
+
+    @GetMapping("/ativos")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasAtivos() {
+        List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasAtivos();
+        return ResponseEntity.ok(alertas);
+    }
+
+    @GetMapping("/ja-resolvidos")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasJaResolvidos() {
+        List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasJaResolvidos();
+        return ResponseEntity.ok(alertas);
+    }
 } 
