@@ -329,7 +329,6 @@ public class AlertaService {
         if (filtro.getTitulo() != null && !filtro.getTitulo().isBlank()) {
             String termo = filtro.getTitulo().toLowerCase();
             stream = stream.filter(a ->
-                (a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo)) ||
                 (a.getDescricao() != null && a.getDescricao().toLowerCase().contains(termo))
             );
         }
@@ -390,7 +389,6 @@ public class AlertaService {
         if (filtro.getTitulo() != null && !filtro.getTitulo().isBlank()) {
             String termo = filtro.getTitulo().toLowerCase();
             stream = stream.filter(a ->
-                (a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo)) ||
                 (a.getDescricao() != null && a.getDescricao().toLowerCase().contains(termo))
             );
         }
