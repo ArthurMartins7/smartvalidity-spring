@@ -41,6 +41,12 @@ public final class AlertaMapper {
             }
             dto.setItemInspecionado(alerta.getItemProduto().getInspecionado());
             
+            if (Boolean.TRUE.equals(alerta.getItemProduto().getInspecionado()) && 
+                alerta.getTipo() != null && 
+                alerta.getTipo() != br.com.smartvalidity.model.enums.TipoAlerta.PERSONALIZADO) {
+                dto.setMotivoInspecao(alerta.getItemProduto().getMotivoInspecao());
+            }
+            
             if (alerta.getItemProduto().getDataVencimento() != null) {
                 LocalDate dataVencimento = alerta.getItemProduto().getDataVencimento().toLocalDate();
                 LocalDate hoje = LocalDate.now();

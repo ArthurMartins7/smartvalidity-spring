@@ -25,5 +25,7 @@ public class NotificacaoDTO {
         private List<String> usuariosAlertaIds;
         private List<String> produtosAlertaIds;
         private Boolean lida;
+        private Boolean itemInspecionado;
+        private String motivoInspecao;
     }
 }

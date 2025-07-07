@@ -29,7 +29,7 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
 
     List<Notificacao> findByAlerta(Alerta alerta);
 
-    @Query("SELECT n FROM Notificacao n WHERE n.usuario = :usuario AND n.alerta.itemProduto.inspecionado = true ORDER BY n.dataHoraCriacao DESC")
+    @Query("SELECT n FROM Notificacao n WHERE n.usuario = :usuario AND n.alerta.itemProduto.inspecionado = true ORDER BY n.alerta.itemProduto.dataHoraInspecao DESC")
     List<Notificacao> findByUsuarioAndProdutoInspecionado(@Param("usuario") Usuario usuario);
 
     @Query("SELECT n FROM Notificacao n WHERE n.usuario = :usuario AND n.alerta.tipo = :tipo ORDER BY n.dataHoraCriacao DESC")

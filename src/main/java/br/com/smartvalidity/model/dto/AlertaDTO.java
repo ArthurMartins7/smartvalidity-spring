@@ -28,6 +28,7 @@ public class AlertaDTO {
         private List<String> produtosAlertaIds;
         private Boolean lida;
         private Boolean itemInspecionado;
+        private String motivoInspecao;
         private Integer diasVencidos;
         private Date dataVencimentoItem;
         // Campos de recorrência removidos - alertas personalizados são mais simples

@@ -38,6 +38,12 @@ public final class NotificacaoMapper {
             if (nomeProduto != null) {
                 dto.setProdutosAlerta(java.util.List.of(nomeProduto));
             }
+            
+            dto.setItemInspecionado(alerta.getItemProduto().getInspecionado());
+            
+            if (Boolean.TRUE.equals(alerta.getItemProduto().getInspecionado())) {
+                dto.setMotivoInspecao(alerta.getItemProduto().getMotivoInspecao());
+            }
         }
 
 
