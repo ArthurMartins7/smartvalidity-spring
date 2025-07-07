@@ -37,7 +37,7 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
     @Query("SELECT a FROM Alerta a WHERE a.itemProduto = :itemProduto AND a.excluido = false")
     Optional<Alerta> findFirstByItemProdutoAndExcluidoFalse(@Param("itemProduto") ItemProduto itemProduto);
 
-    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false ORDER BY a.itemProduto.dataHoraInspecao DESC")
     List<Alerta> findAlertasJaResolvidos();
 
     List<Alerta> findByTipoAndExcluidoFalse(TipoAlerta tipo);
