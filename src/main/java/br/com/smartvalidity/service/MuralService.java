@@ -425,7 +425,14 @@ public class MuralService {
     
 
     public List<String> getMarcasDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && StringUtils.hasText(item.getProduto().getMarca()))
                 .map(item -> item.getProduto().getMarca())
                 .distinct()
@@ -434,7 +441,14 @@ public class MuralService {
     }
     
     public List<String> getCorredoresDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && 
                         item.getProduto().getCategoria() != null && 
                         item.getProduto().getCategoria().getCorredor() != null && 
@@ -446,7 +460,14 @@ public class MuralService {
     }
     
     public List<String> getCategoriasDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && 
                         item.getProduto().getCategoria() != null && 
                         StringUtils.hasText(item.getProduto().getCategoria().getNome()))
@@ -457,7 +478,14 @@ public class MuralService {
     }
     
     public List<String> getFornecedoresDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && 
                         item.getProduto().getFornecedores() != null && 
                         !item.getProduto().getFornecedores().isEmpty() &&
@@ -469,7 +497,14 @@ public class MuralService {
     }
     
     public List<String> getLotesDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> StringUtils.hasText(item.getLote()))
                 .map(item -> item.getLote())
                 .distinct()
@@ -642,11 +677,15 @@ public class MuralService {
 
     public List<String> getUsuariosInspecaoDisponiveis() {
         try {
+            if (usuariosComInspecaoRelevante.isEmpty()) {
             return usuarioService.listarTodos().stream()
                 .map(usuario -> usuario.getNome())
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
+            }
+            
+            return usuariosComInspecaoRelevante;
         } catch (Exception e) {
             logger.warn("Erro ao obter usuários para inspeção: {}", e.getMessage());
             return new ArrayList<>();
