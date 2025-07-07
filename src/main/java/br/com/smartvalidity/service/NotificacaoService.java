@@ -233,7 +233,7 @@ public class NotificacaoService {
                 itemProduto = notificacao.getAlerta().getItemProduto();
             }
             if (itemProduto != null && Boolean.FALSE.equals(itemProduto.getInspecionado())) {
-                throw new SmartValidityException("Não é possível excluir a notificação: o item-produto associado ainda não foi inspecionado.");
+                throw new SmartValidityException("Não é possível excluir a notificação: o produto associado ainda não foi inspecionado.");
             }
 
             notificacaoRepository.delete(notificacao);
@@ -377,10 +377,6 @@ public class NotificacaoService {
         }
     }
 
-    /**
-     * Busca notificações pendentes (não resolvidas) do usuário autenticado.
-     * Uma notificação é considerada pendente quando o item-produto associado ainda não foi inspecionado.
-     */
     public List<AlertaDTO.Listagem> buscarNotificacoesPendentesDoUsuarioAutenticado() throws SmartValidityException {
         Usuario usuario = authenticationService.getUsuarioAutenticado();
         if (usuario == null) {
@@ -389,10 +385,6 @@ public class NotificacaoService {
         return buscarNotificacoesPendentes(usuario);
     }
 
-    /**
-     * Busca notificações pendentes (não resolvidas) de um usuário.
-     * Uma notificação é considerada pendente quando o item-produto associado ainda não foi inspecionado.
-     */
     public List<AlertaDTO.Listagem> buscarNotificacoesPendentes(Usuario usuario) {
         try {
             List<Notificacao> notificacoes = notificacaoRepository.findByUsuarioOrderByDataHoraCriacaoDesc(usuario);

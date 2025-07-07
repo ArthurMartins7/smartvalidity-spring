@@ -413,7 +413,7 @@ public class AlertaService {
 
     private void validarItemProdutoInspecionado(ItemProduto itemProduto) throws SmartValidityException {
         if (itemProduto != null && Boolean.FALSE.equals(itemProduto.getInspecionado())) {
-            throw new SmartValidityException("Não é possível excluir o alerta: o item-produto associado ainda não foi inspecionado.");
+            throw new SmartValidityException("Não é possível excluir o alerta: o produto associado ainda não foi inspecionado.");
         }
     }
 
