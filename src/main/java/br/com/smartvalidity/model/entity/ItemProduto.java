@@ -1,10 +1,20 @@
 package br.com.smartvalidity.model.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import br.com.smartvalidity.model.enums.SituacaoValidade;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table
@@ -18,10 +28,6 @@ public class ItemProduto {
     @NotNull(message = "O lote não pode ser nulo.")
     @Column(nullable = false)
     private String lote;
-
-    @NotNull(message = "A quantidade não pode ser nula.")
-    @Column(nullable = false)
-    private Integer quantidade;
 
     @NotNull(message = "O preço de venda não pode ser nulo.")
     @Column(name = "preco_venda", nullable = false)
@@ -38,6 +44,21 @@ public class ItemProduto {
     @NotNull(message = "A data de recebimento não pode ser nula.")
     @Column(name = "data_recebimento", nullable = false)
     private LocalDateTime dataRecebimento;
+    
+    @Column(nullable = false)
+    private Boolean inspecionado = false;
+    
+    @Column(name = "motivo_inspecao")
+    private String motivoInspecao;
+    
+    @Column(name = "usuario_inspecao")
+    private String usuarioInspecao;
+    
+    @Column(name = "data_hora_inspecao")
+    private LocalDateTime dataHoraInspecao;
+
+    @Enumerated(EnumType.STRING)
+    private SituacaoValidade situacaoValidade;
 
     @ManyToOne
     @JoinColumn(name = "id_produto", nullable = false)

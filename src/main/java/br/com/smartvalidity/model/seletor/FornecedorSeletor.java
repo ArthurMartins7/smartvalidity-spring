@@ -2,10 +2,8 @@ package br.com.smartvalidity.model.seletor;
 
 import br.com.smartvalidity.model.entity.Endereco;
 import br.com.smartvalidity.model.entity.Fornecedor;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import br.com.smartvalidity.model.entity.Produto;
+import jakarta.persistence.criteria.*;
 import lombok.Data;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -19,6 +17,8 @@ public class FornecedorSeletor extends BaseSeletor implements Specification<Forn
     private String telefone;
     private String cnpj;
     private Endereco endereco;
+    private String descricaoProduto;
+
 
 
     @Override
@@ -41,6 +41,13 @@ public class FornecedorSeletor extends BaseSeletor implements Specification<Forn
         if (this.getEndereco() != null) {
             predicates.add(cb.equal(root.get("endereco"), this.getEndereco()));
         }
+
+        if (this.getDescricaoProduto() != null && !this.getDescricaoProduto().trim().isEmpty()) {
+            Join<Fornecedor, Produto> joinProduto = root.join("produtos");
+            predicates.add(cb.like(cb.lower(joinProduto.get("descricao")), "%"
+                    + this.getDescricaoProduto().toLowerCase() + "%"));
+        }
+
 
         return cb.and(predicates.toArray(new Predicate[0]));
     }

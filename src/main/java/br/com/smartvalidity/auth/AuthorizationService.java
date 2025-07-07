@@ -19,7 +19,7 @@ public class AuthorizationService {
     public void verificarPerfilAcesso() throws SmartValidityException {
         Usuario usuarioAutenticado = authenticationService.getUsuarioAutenticado();
 
-        if (usuarioAutenticado.getPerfilAcesso() != PerfilAcesso.ADMIN) {
+        if (usuarioAutenticado.getPerfilAcesso() == PerfilAcesso.OPERADOR) {
             throw new SmartValidityException("Usuário sem permissão de acesso!");
         }
     }
@@ -30,8 +30,12 @@ public class AuthorizationService {
 
         Usuario usuarioAutenticado = authenticationService.getUsuarioAutenticado();
 
-        if (usuarioAutenticado.getId() != usuarioURL.getId()) {
+        if (usuarioAutenticado.getId() != usuarioURL.getId() && usuarioAutenticado.getPerfilAcesso() != PerfilAcesso.ASSINANTE) {
             throw new SmartValidityException("Somente o portador da conta pode executar essa ação!");
         }
+    }
+
+    public Usuario getUsuarioAutenticado() throws SmartValidityException {
+        return authenticationService.getUsuarioAutenticado();
     }
 }

@@ -40,6 +40,12 @@ public class CategoriaController {
         return ResponseEntity.ok(categoriaAtualizada);
     }
 
+    @GetMapping("/{id}/corredor")
+    public ResponseEntity<String> buscarCorredorId(@PathVariable String id) throws SmartValidityException {
+        Categoria categoria = categoriaService.buscarPorId(id);
+        return ResponseEntity.ok(categoria.getCorredor().getId());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable String id) throws SmartValidityException {
         categoriaService.excluir(id);

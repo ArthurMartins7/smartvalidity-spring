@@ -15,9 +15,21 @@ public class GlobalExceptionHandler {
 
     //Solução 2: Interceptar todas as SmartValidityException lançadas
     //Fonte: https://www.geeksforgeeks.org/exception-handling-in-spring-boot/
+
+    /*
+    // Implementação ORIGINAL – retornava texto puro (não-JSON)
     @ExceptionHandler(SmartValidityException.class)
     public ResponseEntity<String> handleOPomboException(SmartValidityException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+    */
+
+    @ExceptionHandler(SmartValidityException.class)
+    public ResponseEntity<Map<String, String>> handleSmartValidityException(SmartValidityException ex) {
+        // Novo formato: corpo JSON padronizado
+        Map<String, String> body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
