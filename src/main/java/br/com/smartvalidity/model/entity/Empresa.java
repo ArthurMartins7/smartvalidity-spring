@@ -30,7 +30,7 @@ public class Empresa {
     @Column(unique = true, nullable = false)
     private String cnpj;
 
-    @NotBlank(message = "A raão social não pode ser vazia ou apenas espaços em branco.")
+    @NotBlank(message = "A razão social não pode ser vazia ou apenas espaços em branco.")
     private String razaoSocial;
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)

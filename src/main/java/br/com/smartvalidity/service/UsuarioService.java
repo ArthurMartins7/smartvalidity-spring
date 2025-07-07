@@ -95,7 +95,6 @@ public class UsuarioService implements UserDetailsService {
         this.verificarEmailJaUtilizado(usuarioDTO.getEmail(), usuarioEditado.getId());
 
         usuarioEditado.setPerfilAcesso(Optional.ofNullable(usuarioDTO.getPerfilAcesso()).orElse(usuarioEditado.getPerfilAcesso()));
-        //usuarioEditado.setCpf(Optional.ofNullable(usuarioDTO.getCpf()).orElse(usuarioEditado.getCpf()));
         usuarioEditado.setNome(Optional.ofNullable(usuarioDTO.getNome()).orElse(usuarioEditado.getNome()));
         usuarioEditado.setEmail(Optional.ofNullable(usuarioDTO.getEmail()).orElse(usuarioEditado.getEmail()));
         usuarioEditado.setSenha(Optional.ofNullable(usuarioDTO.getSenha()).orElse(usuarioEditado.getSenha()));
