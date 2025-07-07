@@ -60,6 +60,11 @@ public class OtpService {
         enviarCodigo(email, OtpPurpose.ESQUECEU_SENHA);
     }
 
+    /** Dispara código OTP para alteração de senha */
+    public void enviarCodigoAlterarSenha(String email) throws SmartValidityException {
+        enviarCodigo(email, OtpPurpose.ALTERAR_SENHA);
+    }
+
    
     @Transactional
     public void validarCodigo(String email, String token) throws SmartValidityException {
@@ -101,5 +106,33 @@ public class OtpService {
         usuarioService.redefinirSenha(email, novaSenha);
 
         otpTokenRepository.deleteByEmailAndPurpose(email, OtpPurpose.ESQUECEU_SENHA);
+    }
+
+    // -------------------- ALTERAR SENHA (usuario logado) --------------------
+
+    /** Valida código para alteração de senha (não remove token) */
+    @Transactional
+    public void validarCodigoAlterarSenha(String email, String token) throws SmartValidityException {
+        OtpToken otp = otpTokenRepository.findByEmailAndTokenAndPurpose(email, token, OtpPurpose.ALTERAR_SENHA)
+                .orElseThrow(() -> new SmartValidityException("Código inválido"));
+        if (otp.isExpired()) {
+            throw new SmartValidityException("Código expirado");
+        }
+    }
+
+    /** Altera a senha validando o OTP e removendo o token usado */
+    @Transactional
+    public void alterarSenha(String email, String token, String novaSenha) throws SmartValidityException {
+        OtpToken otp = otpTokenRepository.findByEmailAndTokenAndPurpose(email, token, OtpPurpose.ALTERAR_SENHA)
+                .orElseThrow(() -> new SmartValidityException("Código inválido"));
+        if (otp.isExpired()) {
+            throw new SmartValidityException("Código expirado");
+        }
+
+        // Atualiza senha
+        usuarioService.redefinirSenha(email, novaSenha);
+
+        // Remove tokens utilizados
+        otpTokenRepository.deleteByEmailAndPurpose(email, OtpPurpose.ALTERAR_SENHA);
     }
 } 

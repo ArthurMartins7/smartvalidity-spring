@@ -122,4 +122,29 @@ public class AuthenticationController {
     public void resetarSenha(@RequestBody @Valid ResetPasswordDTO dto) throws SmartValidityException {
         otpService.redefinirSenha(dto.getEmail(), dto.getToken(), dto.getNovaSenha());
     }
+
+    @GetMapping("/assinante")
+    public Usuario buscarAssinante() throws SmartValidityException {
+        return usuarioService.buscarAssinante();
+    }
+
+    // --------------------- OTP: Alterar Senha (usuário logado) ---------------------
+
+    @PostMapping("/enviar-otp-alterar-senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void enviarOtpAlterarSenha(@RequestBody @Valid EmailOtpDTO dto) throws SmartValidityException {
+        otpService.enviarCodigoAlterarSenha(dto.getEmail());
+    }
+
+    @PostMapping("/validar-otp-alterar-senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void validarOtpAlterarSenha(@RequestBody @Valid OtpValidateDTO dto) throws SmartValidityException {
+        otpService.validarCodigoAlterarSenha(dto.getEmail(), dto.getToken());
+    }
+
+    @PostMapping("/alterar-senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void alterarSenha(@RequestBody @Valid ResetPasswordDTO dto) throws SmartValidityException {
+        otpService.alterarSenha(dto.getEmail(), dto.getToken(), dto.getNovaSenha());
+    }
 }

@@ -10,7 +10,9 @@ import br.com.smartvalidity.exception.SmartValidityException;
 import br.com.smartvalidity.model.dto.EmpresaUsuarioDTO;
 import br.com.smartvalidity.model.entity.Empresa;
 import br.com.smartvalidity.model.entity.Usuario;
+import br.com.smartvalidity.model.enums.OtpPurpose;
 import br.com.smartvalidity.model.enums.PerfilAcesso;
+import br.com.smartvalidity.model.enums.StatusUsuario;
 import br.com.smartvalidity.model.repository.EmpresaRepository;
 import jakarta.transaction.Transactional;
 
@@ -56,6 +58,7 @@ public class EmpresaService {
         assinante.setSenha(passwordEncoder.encode(dto.getSenha()));
         assinante.setPerfilAcesso(PerfilAcesso.ASSINANTE);
         assinante.setEmpresa(empresa);
+        assinante.setStatus(StatusUsuario.ATIVO);
 
         // Associação empresa ⇄ usuários
         empresa.setUsuarios(new ArrayList<>());
@@ -65,7 +68,7 @@ public class EmpresaService {
         Empresa salva = empresaRepository.save(empresa);
 
         // Limpa tokens de verificação
-        otpService.removerTokens(dto.getEmail(), br.com.smartvalidity.model.enums.OtpPurpose.VERIFICAR_EMAIL);
+        otpService.removerTokens(dto.getEmail(), OtpPurpose.VERIFICAR_EMAIL);
 
         return salva;
     }

@@ -30,7 +30,7 @@ public class AuthorizationService {
 
         Usuario usuarioAutenticado = authenticationService.getUsuarioAutenticado();
 
-        if (usuarioAutenticado.getId() != usuarioURL.getId()) {
+        if (usuarioAutenticado.getId() != usuarioURL.getId() && usuarioAutenticado.getPerfilAcesso() != PerfilAcesso.ASSINANTE) {
             throw new SmartValidityException("Somente o portador da conta pode executar essa ação!");
         }
     }
