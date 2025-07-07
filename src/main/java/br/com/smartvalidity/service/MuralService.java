@@ -677,6 +677,21 @@ public class MuralService {
 
     public List<String> getUsuariosInspecaoDisponiveis() {
         try {
+            LocalDateTime hoje = LocalDateTime.now();
+            LocalDateTime limite = hoje.plusDays(15);
+            
+            // Buscar usuários que inspecionaram produtos que vencerão nos próximos 15 dias
+            List<String> usuariosComInspecaoRelevante = itemProdutoService.buscarTodos().stream()
+                    .filter(item -> {
+                        LocalDateTime vencimento = item.getDataVencimento();
+                        return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                    })
+                    .filter(item -> item.getInspecionado() && StringUtils.hasText(item.getUsuarioInspecao()))
+                    .map(item -> item.getUsuarioInspecao())
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+            
             if (usuariosComInspecaoRelevante.isEmpty()) {
             return usuarioService.listarTodos().stream()
                 .map(usuario -> usuario.getNome())
