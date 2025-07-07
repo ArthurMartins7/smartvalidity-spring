@@ -1,6 +1,7 @@
 package br.com.smartvalidity.model.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,44 +16,34 @@ import br.com.smartvalidity.model.enums.TipoAlerta;
 
 public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
     
-    /**
-     * Verificar se já existe um alerta ativo para um item-produto específico e tipo
-     */
-    boolean existsByItemProdutoAndTipoAndAtivoTrueAndExcluidoFalse(ItemProduto itemProduto, TipoAlerta tipo);
-    
-    /**
-     * Buscar alertas de itens que foram inspecionados e ainda estão ativos (não excluídos)
-     */
-    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.ativo = true AND a.excluido = false")
-    List<Alerta> findByItemProdutoInspecionadoTrueAndAtivoTrueAndExcluidoFalse();
-    
-    /**
-     * Buscar alertas de um usuário específico (não excluídos)
-     */
-    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.ativo = true AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
-    List<Alerta> findByUsuarioAndAtivoTrueAndExcluidoFalse(@Param("usuario") Usuario usuario);
-    
-    /**
-     * Buscar alertas ainda não ativados cujo horário de disparo já foi alcançado (não excluídos)
-     */
-    @Query("SELECT a FROM Alerta a WHERE a.ativo = false AND a.dataHoraDisparo <= :dataHora AND a.excluido = false")
-    List<Alerta> findByAtivoFalseAndDataHoraDisparoLessThanEqualAndExcluidoFalse(@Param("dataHora") java.time.LocalDateTime dataHora);
 
-    /**
-     * Buscar alerta por ID apenas se não estiver excluído
-     */
+    boolean existsByItemProdutoAndTipoAndExcluidoFalse(ItemProduto itemProduto, TipoAlerta tipo);
+    
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false")
+    List<Alerta> findByItemProdutoInspecionadoTrueAndExcluidoFalse();
+    
+    @Query("SELECT a FROM Alerta a JOIN a.usuariosAlerta u WHERE u = :usuario AND a.excluido = false ORDER BY a.dataHoraCriacao DESC")
+    List<Alerta> findByUsuarioAndExcluidoFalse(@Param("usuario") Usuario usuario);
+
     @Query("SELECT a FROM Alerta a WHERE a.id = :id AND a.excluido = false")
     java.util.Optional<Alerta> findByIdAndExcluidoFalse(@Param("id") Integer id);
 
-    /**
-     * Buscar todos os alertas não excluídos
-     */
     @Query("SELECT a FROM Alerta a WHERE a.excluido = false ORDER BY a.dataHoraCriacao DESC")
     List<Alerta> findAllNotDeleted();
 
-    /*
-     * Excluir registros das tabelas de junção para evitar violação de FK ao remover um alerta
-     */
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto = :itemProduto AND a.excluido = false")
+    List<Alerta> findByItemProdutoAndExcluidoFalse(@Param("itemProduto") ItemProduto itemProduto);
+
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto = :itemProduto AND a.excluido = false")
+    Optional<Alerta> findFirstByItemProdutoAndExcluidoFalse(@Param("itemProduto") ItemProduto itemProduto);
+
+    @Query("SELECT a FROM Alerta a WHERE a.itemProduto.inspecionado = true AND a.excluido = false ORDER BY a.itemProduto.dataHoraInspecao DESC")
+    List<Alerta> findAlertasJaResolvidos();
+
+    List<Alerta> findByTipoAndExcluidoFalse(TipoAlerta tipo);
+
+    // Métodos para alertas recorrentes removidos - alertas personalizados são mais simples
+
     @Modifying
     @Transactional
     @Query(value = "DELETE FROM alerta_usuario WHERE id_alerta = :alertaId", nativeQuery = true)
@@ -62,4 +53,4 @@ public interface AlertaRepository extends JpaRepository<Alerta, Integer> {
     @Transactional
     @Query(value = "DELETE FROM alerta_produto WHERE id_alerta = :alertaId", nativeQuery = true)
     void deleteProdutosAlerta(@Param("alertaId") Integer alertaId);
-} 
+}

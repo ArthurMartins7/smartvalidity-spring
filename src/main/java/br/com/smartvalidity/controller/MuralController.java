@@ -21,17 +21,6 @@ import br.com.smartvalidity.model.dto.MuralDTO;
 import br.com.smartvalidity.service.MuralService;
 import lombok.Data;
 
-/**
- * Controller REST para operações do mural de validade.
- * 
- * Responsabilidades MVC:
- * - Receber requisições HTTP e delegar para a camada de serviço
- * - Converter dados entre formato REST e objetos de domínio
- * - Tratar respostas e códigos de status HTTP
- * - Não contém lógica de negócio (delegada para MuralService)
- * 
- * @author SmartValidity Team
- */
 @RestController
 @RequestMapping("/mural")
 @CrossOrigin(origins = "*")

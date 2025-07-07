@@ -19,8 +19,6 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
 
     private String titulo;
     private TipoAlerta tipo;
-    private Boolean ativo;
-    private Boolean recorrente;
     private LocalDateTime dataInicialDisparo;
     private LocalDateTime dataFinalDisparo;
     private String usuarioCriador;
@@ -30,20 +28,16 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
         List<Predicate> predicates = new ArrayList<>();
 
         if (stringValida(titulo)) {
-            predicates.add(cb.like(cb.lower(root.get("titulo")), 
-                "%" + titulo.toLowerCase() + "%"));
+            // Busca pelo termo no título OU na descrição
+            Predicate tituloPredicate = cb.like(cb.lower(root.get("titulo")),
+                    "%" + titulo.toLowerCase() + "%");
+            Predicate descricaoPredicate = cb.like(cb.lower(root.get("descricao")),
+                    "%" + titulo.toLowerCase() + "%");
+            predicates.add(cb.or(tituloPredicate, descricaoPredicate));
         }
 
         if (tipo != null) {
             predicates.add(cb.equal(root.get("tipo"), tipo));
-        }
-
-        if (ativo != null) {
-            predicates.add(cb.equal(root.get("ativo"), ativo));
-        }
-
-        if (recorrente != null) {
-            predicates.add(cb.equal(root.get("recorrente"), recorrente));
         }
 
         if (dataInicialDisparo != null || dataFinalDisparo != null) {
@@ -71,4 +65,4 @@ public class AlertaSeletor extends BaseSeletor implements Specification<Alerta> 
             predicates.add(cb.lessThanOrEqualTo(root.get(nomeAtributo), dataFinal));
         }
     }
-} 
+}

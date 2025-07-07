@@ -1,5 +1,8 @@
 package br.com.smartvalidity.model.mapper;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import br.com.smartvalidity.model.dto.AlertaDTO;
@@ -7,18 +10,12 @@ import br.com.smartvalidity.model.entity.Alerta;
 import br.com.smartvalidity.model.entity.Produto;
 import br.com.smartvalidity.model.entity.Usuario;
 
-/**
- * Conversões entre a entidade {@link Alerta} e seus DTOs.
- * Implementação manual e enxuta para evitar dependências externas.
- */
+
 public final class AlertaMapper {
 
     private AlertaMapper() {
     }
 
-    /**
-     * Converte a entidade {@link Alerta} para {@link AlertaDTO.Listagem}.
-     */
     public static AlertaDTO.Listagem toListagemDTO(Alerta alerta) {
         if (alerta == null) {
             return null;
@@ -28,12 +25,12 @@ public final class AlertaMapper {
         dto.setTitulo(alerta.getTitulo());
         dto.setDescricao(alerta.getDescricao());
         dto.setTipo(alerta.getTipo());
-        dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDiasAntecedencia(alerta.getDiasAntecedencia());
-        dto.setAtivo(alerta.getAtivo());
-        dto.setRecorrente(alerta.getRecorrente());
-        dto.setConfiguracaoRecorrencia(alerta.getConfiguracaoRecorrencia());
-        dto.setDataCriacao(alerta.getDataHoraCriacao());
+        dto.setDataHoraDisparo(alerta.getDataHoraDisparo() != null ? 
+            Timestamp.valueOf(alerta.getDataHoraDisparo()) : null);
+        dto.setDataCriacao(alerta.getDataHoraCriacao() != null ? 
+            Timestamp.valueOf(alerta.getDataHoraCriacao()) : null);
+
+        // Campos de recorrência removidos - alertas personalizados são mais simples
 
         if (alerta.getItemProduto() != null) {
             String nomeProduto = alerta.getItemProduto().getProduto() != null
@@ -41,6 +38,23 @@ public final class AlertaMapper {
                     : null;
             if (nomeProduto != null) {
                 dto.setProdutosAlerta(List.of(nomeProduto));
+            }
+            dto.setItemInspecionado(alerta.getItemProduto().getInspecionado());
+            
+            if (Boolean.TRUE.equals(alerta.getItemProduto().getInspecionado()) && 
+                alerta.getTipo() != null && 
+                alerta.getTipo() != br.com.smartvalidity.model.enums.TipoAlerta.PERSONALIZADO) {
+                dto.setMotivoInspecao(alerta.getItemProduto().getMotivoInspecao());
+            }
+            
+            if (alerta.getItemProduto().getDataVencimento() != null) {
+                LocalDate dataVencimento = alerta.getItemProduto().getDataVencimento().toLocalDate();
+                LocalDate hoje = LocalDate.now();
+                
+                long diasVencidos = ChronoUnit.DAYS.between(dataVencimento, hoje);
+                dto.setDiasVencidos((int) diasVencidos);
+                
+                dto.setDataVencimentoItem(Timestamp.valueOf(alerta.getItemProduto().getDataVencimento()));
             }
         }
 
@@ -68,4 +82,4 @@ public final class AlertaMapper {
 
         return dto;
     }
-} 
+}

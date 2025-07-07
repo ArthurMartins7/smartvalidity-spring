@@ -29,9 +29,6 @@ public class ExcelService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    /**
-     * Gera um arquivo Excel com os dados do mural
-     */
     public byte[] gerarExcelMural(List<MuralDTO.Listagem> itens, String titulo) throws SmartValidityException {
         logger.info("Iniciando geracao de relatorio Excel: {}", titulo);
         logger.debug("Quantidade de itens para o relatorio: {}", itens.size());

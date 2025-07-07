@@ -15,13 +15,7 @@ public interface ItemProdutoRepository extends JpaRepository<ItemProduto, String
 
     List<ItemProduto> findByLote(String lote);
     
-    /**
-     * Buscar todos os itens-produto que ainda não foram inspecionados
-     */
     List<ItemProduto> findByInspecionadoFalse();
     
-    /**
-     * Buscar itens-produto não inspecionados de um produto específico
-     */
     List<ItemProduto> findByProdutoIdAndInspecionadoFalse(String produtoId);
 }

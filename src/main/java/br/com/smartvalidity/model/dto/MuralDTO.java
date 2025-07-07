@@ -8,14 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Classe que centraliza todos os DTOs relacionados ao mural
- */
-public class MuralDTO {
 
-    /**
-     * DTO para listagem de itens no mural
-     */
+public class MuralDTO {
     @Data
     @Builder
     @NoArgsConstructor
@@ -39,9 +33,6 @@ public class MuralDTO {
         private LocalDateTime dataHoraInspecao;
     }
 
-    /**
-     * DTO para informações do produto
-     */
     @Data
     @Builder
     @NoArgsConstructor
@@ -54,16 +45,11 @@ public class MuralDTO {
         private String marca;
         private String unidadeMedida;
     }
-
-    /**
-     * DTO para filtros do mural
-     */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Filtro {
-        // Campos que suportam múltiplos valores
         private List<String> corredores;
         private List<String> categorias;
         private List<String> fornecedores;
@@ -71,8 +57,6 @@ public class MuralDTO {
         private List<String> lotes;
         private List<String> motivosInspecao;
         private List<String> usuariosInspecao;
-        
-        // Campos legados para compatibilidade com frontend atual
         private String corredor;
         private String categoria;
         private String fornecedor;
@@ -80,23 +64,17 @@ public class MuralDTO {
         private String lote;
         private String motivoInspecao;
         private String usuarioInspecao;
-        
-        // Campos de data
         private LocalDateTime dataVencimentoInicio;
         private LocalDateTime dataVencimentoFim;
         private LocalDateTime dataFabricacaoInicio;
         private LocalDateTime dataFabricacaoFim;
         private LocalDateTime dataRecebimentoInicio;
         private LocalDateTime dataRecebimentoFim;
-        
-        // Outros campos
         private Boolean inspecionado;
         private String searchTerm;
         private String sortBy;
         private String sortDirection;
-        private String status; // Pode ser: "proximo", "hoje", "vencido"
-        
-        // Campos para paginação
+        private String status;
         private Integer pagina;
         private Integer limite;
         
@@ -104,7 +82,6 @@ public class MuralDTO {
             return this.limite != null && this.limite > 0 && this.pagina != null && this.pagina > 0;
         }
         
-        // Métodos auxiliares para obter valores (prioriza arrays sobre valores únicos)
         public List<String> getCorredoresEfetivos() {
             if (corredores != null && !corredores.isEmpty()) {
                 return corredores;
@@ -176,9 +153,6 @@ public class MuralDTO {
         }
     }
 
-    /**
-     * DTO para requisição de inspeção
-     */
     @Data
     @Builder
     @NoArgsConstructor
@@ -188,10 +162,6 @@ public class MuralDTO {
         private String motivoCustomizado;
         private String usuarioInspecao;
     }
-
-    /**
-     * DTO para resposta de inspeção em lote
-     */
     @Data
     @Builder
     @NoArgsConstructor
@@ -203,26 +173,20 @@ public class MuralDTO {
         private String usuarioInspecao;
     }
 
-    /**
-     * DTO para requisição de relatório
-     */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RelatorioRequest {
-        private String tipo; // "SELECIONADOS", "PAGINA", "TODOS"
-        private List<String> ids; // Para relatório de itens selecionados
-        private MuralDTO.Filtro filtro; // Filtros aplicados
-        private String status; // Status atual (proximo, hoje, vencido)
+        private String tipo;
+        private List<String> ids;
+        private MuralDTO.Filtro filtro;
+        private String status;
     }
 
-    /**
-     * Enum para tipos de relatório
-     */
     public enum TipoRelatorio {
         SELECIONADOS,
         PAGINA,
         TODOS
     }
-} 
+}

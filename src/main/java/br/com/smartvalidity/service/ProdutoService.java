@@ -27,25 +27,17 @@ public class ProdutoService {
     public List<Produto> buscarTodos() {
         return produtoRepository.findAll();
     }
-    
-    /**
-     * Busca apenas produtos que possuem itens-produto não inspecionados
-     * Para uso em alertas personalizados
-     */
+
     public List<Produto> buscarProdutosComItensNaoInspecionados() {
         return produtoRepository.findProdutosComItensNaoInspecionados();
     }
 
-    /**
-     * Busca produtos com itens não inspecionados filtrando por termo de busca
-     * Para uso em busca dinâmica de alertas
-     */
     public List<Produto> buscarPorTermoComItensNaoInspecionados(String termo, int limite) {
         if (termo == null || termo.trim().isEmpty()) {
             return List.of();
         }
-        org.springframework.data.domain.PageRequest pageable = 
-            org.springframework.data.domain.PageRequest.of(0, limite);
+        org.springframework.data.domain.PageRequest pageable =
+                org.springframework.data.domain.PageRequest.of(0, limite);
         return produtoRepository.findProdutosComItensNaoInspecionadosPorTermo(termo.trim(), pageable);
     }
 
@@ -67,7 +59,7 @@ public class ProdutoService {
             dto.setUnidadeMedida(produto.getUnidadeMedida());
             dto.setQuantidade(produto.getQuantidade());
 
-            // Categoria com id e nome (permitir valores nulos)
+            // categoria com id e nome
             if (produto.getCategoria() != null) {
                 java.util.Map<String, Object> categoria = new java.util.HashMap<>();
                 categoria.put("id", produto.getCategoria().getId());
@@ -75,7 +67,7 @@ public class ProdutoService {
                 dto.setCategoria(categoria);
             }
 
-            // Fornecedores com endereço incluso (permitir valores nulos)
+            // fornecedores com endereço incluso
             if (produto.getFornecedores() != null) {
                 List<java.util.Map<String, Object>> fornecedores = produto.getFornecedores().stream().map(f -> {
                     java.util.Map<String, Object> enderecoMap = null;
@@ -107,9 +99,21 @@ public class ProdutoService {
         }).toList();
     }
 
+    public Produto salvar(Produto produto) throws SmartValidityException {
+        if (produto == null) {
+            throw new SmartValidityException("Produto não pode ser nulo");
+        }
 
+        if (produto.getId() == null) {
+            if (produtoRepository.existsByCodigoBarras(produto.getCodigoBarras())) {
+                throw new SmartValidityException("Já existe um produto cadastrado com este código de barras.");
+            }
+        } else {
+            if (produtoRepository.existsByCodigoBarrasAndIdNot(produto.getCodigoBarras(), produto.getId())) {
+                throw new SmartValidityException("Já existe outro produto com este código de barras.");
+            }
+        }
 
-    public Produto salvar(Produto produto) {
         return produtoRepository.save(produto);
     }
 
@@ -141,9 +145,15 @@ public class ProdutoService {
         return produtoRepository.count(seletor);
     }
 
-
     public Produto atualizar(String id, Produto produtoAtualizado) throws SmartValidityException {
         Produto produto = buscarPorId(id);
+
+        // Se o código de barras foi alterado, verifica unicidade
+        if (produtoAtualizado.getCodigoBarras() != null &&
+                !produtoAtualizado.getCodigoBarras().equals(produto.getCodigoBarras()) &&
+                produtoRepository.existsByCodigoBarrasAndIdNot(produtoAtualizado.getCodigoBarras(), id)) {
+            throw new SmartValidityException("Já existe outro produto com este código de barras.");
+        }
 
         produto.setCodigoBarras(produtoAtualizado.getCodigoBarras());
         produto.setDescricao(produtoAtualizado.getDescricao());

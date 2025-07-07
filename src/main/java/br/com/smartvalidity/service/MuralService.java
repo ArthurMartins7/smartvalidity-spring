@@ -172,7 +172,7 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro por motivo de inspeção (suporta múltiplos valores)
+        // filtro por motivo de inspeção
         List<String> motivosInspecao = filtro.getMotivosInspecaoEfetivos();
         if (!motivosInspecao.isEmpty()) {
             resultado = resultado.stream()
@@ -182,12 +182,12 @@ public class MuralService {
                         
                         for (String motivo : motivosInspecao) {
                             if ("Outro".equals(motivo)) {
-                                // Para motivo "Outro", inclui todos que não são "Avaria/Quebra" nem "Promoção"
+                                // para o motivo "outro" inclui todos que não são "avaria/quebra" nem "promoção"
                                 if (!motivoItem.equals("Avaria/Quebra") && !motivoItem.equals("Promoção")) {
                                     return true;
                                 }
                             } else {
-                                // Para motivos específicos, verifica igualdade
+                                // para motivos específicos (outro), verifica igualdade
                                 if (motivo.equals(motivoItem)) {
                                     return true;
                                 }
@@ -198,7 +198,7 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
 
-        // Filtro por usuário de inspeção (suporta múltiplos valores)
+        // filtro de usuário que fez a inspeção
         List<String> usuariosInspecao = filtro.getUsuariosInspecaoEfetivos();
         if (!usuariosInspecao.isEmpty()) {
             resultado = resultado.stream()
@@ -220,7 +220,7 @@ public class MuralService {
     private List<MuralDTO.Listagem> aplicarFiltrosTexto(List<MuralDTO.Listagem> itens, MuralDTO.Filtro filtro) {
         List<MuralDTO.Listagem> resultado = new ArrayList<>(itens);
         
-        // Filtro por marca (suporta múltiplos valores)
+        // filtro de marca
         List<String> marcas = filtro.getMarcasEfetivas();
         if (!marcas.isEmpty()) {
             resultado = resultado.stream()
@@ -229,7 +229,7 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro por corredor (suporta múltiplos valores)
+        // corredor
         List<String> corredores = filtro.getCorredoresEfetivos();
         if (!corredores.isEmpty()) {
             resultado = resultado.stream()
@@ -237,7 +237,7 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro por categoria (suporta múltiplos valores)
+        // categoria
         List<String> categorias = filtro.getCategoriasEfetivas();
         if (!categorias.isEmpty()) {
             resultado = resultado.stream()
@@ -245,7 +245,7 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro por fornecedor (suporta múltiplos valores)
+        // fornecedor
         List<String> fornecedores = filtro.getFornecedoresEfetivos();
         if (!fornecedores.isEmpty()) {
             resultado = resultado.stream()
@@ -253,7 +253,7 @@ public class MuralService {
                     .collect(Collectors.toList());
         }
         
-        // Filtro por lote (suporta múltiplos valores)
+        // lote
         List<String> lotes = filtro.getLotesEfetivos();
         if (!lotes.isEmpty()) {
             resultado = resultado.stream()
@@ -425,7 +425,14 @@ public class MuralService {
     
 
     public List<String> getMarcasDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && StringUtils.hasText(item.getProduto().getMarca()))
                 .map(item -> item.getProduto().getMarca())
                 .distinct()
@@ -434,7 +441,14 @@ public class MuralService {
     }
     
     public List<String> getCorredoresDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && 
                         item.getProduto().getCategoria() != null && 
                         item.getProduto().getCategoria().getCorredor() != null && 
@@ -446,7 +460,14 @@ public class MuralService {
     }
     
     public List<String> getCategoriasDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && 
                         item.getProduto().getCategoria() != null && 
                         StringUtils.hasText(item.getProduto().getCategoria().getNome()))
@@ -457,7 +478,14 @@ public class MuralService {
     }
     
     public List<String> getFornecedoresDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> item.getProduto() != null && 
                         item.getProduto().getFornecedores() != null && 
                         !item.getProduto().getFornecedores().isEmpty() &&
@@ -469,7 +497,14 @@ public class MuralService {
     }
     
     public List<String> getLotesDisponiveis() {
+        LocalDateTime hoje = LocalDateTime.now();
+        LocalDateTime limite = hoje.plusDays(15);
+        
         return itemProdutoService.buscarTodos().stream()
+                .filter(item -> {
+                    LocalDateTime vencimento = item.getDataVencimento();
+                    return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                })
                 .filter(item -> StringUtils.hasText(item.getLote()))
                 .map(item -> item.getLote())
                 .distinct()
@@ -640,19 +675,32 @@ public class MuralService {
         return itensFiltrados.size();
     }
 
-    /**
-     * Obtém a lista de usuários disponíveis para inspeção.
-     * Responsabilidade: Agregação de dados de diferentes serviços para o mural.
-     * 
-     * @return Lista de nomes de usuários
-     */
     public List<String> getUsuariosInspecaoDisponiveis() {
         try {
+            LocalDateTime hoje = LocalDateTime.now();
+            LocalDateTime limite = hoje.plusDays(15);
+            
+            // Buscar usuários que inspecionaram produtos que vencerão nos próximos 15 dias
+            List<String> usuariosComInspecaoRelevante = itemProdutoService.buscarTodos().stream()
+                    .filter(item -> {
+                        LocalDateTime vencimento = item.getDataVencimento();
+                        return vencimento.isAfter(hoje) && vencimento.isBefore(limite.plusDays(1));
+                    })
+                    .filter(item -> item.getInspecionado() && StringUtils.hasText(item.getUsuarioInspecao()))
+                    .map(item -> item.getUsuarioInspecao())
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+            
+            if (usuariosComInspecaoRelevante.isEmpty()) {
             return usuarioService.listarTodos().stream()
                 .map(usuario -> usuario.getNome())
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
+            }
+            
+            return usuariosComInspecaoRelevante;
         } catch (Exception e) {
             logger.warn("Erro ao obter usuários para inspeção: {}", e.getMessage());
             return new ArrayList<>();
@@ -678,13 +726,11 @@ public class MuralService {
             .collect(Collectors.toList());
     }
 
-    /**
-     * Gera o título do relatório com base no tipo e status
-     */
+
     private String gerarTituloRelatorio(String status, String tipo, int quantidade) {
         StringBuilder titulo = new StringBuilder();
         
-        // Define o título base com base no status
+        // define título base com base no status:
         switch (status) {
             case "proximo":
                 titulo.append("Relatório de Produtos Próximos do Vencimento");
@@ -699,7 +745,7 @@ public class MuralService {
                 titulo.append("Relatório de Produtos");
         }
         
-        // Adiciona informação sobre a quantidade de itens
+        // adiciona info sobre a quantidade de itens:
         switch (tipo) {
             case "SELECIONADOS":
                 titulo.append(String.format(" (%d item(ns) selecionado(s))", quantidade));
@@ -715,9 +761,6 @@ public class MuralService {
         return titulo.toString();
     }
 
-    /**
-     * Valida se todos os itens pertencem ao status/aba informado
-     */
     private void validarItensPertencemAoStatus(List<MuralDTO.Listagem> itens, String status) throws SmartValidityException {
         if (status == null || status.isEmpty()) return;
         for (MuralDTO.Listagem item : itens) {
@@ -727,9 +770,6 @@ public class MuralService {
         }
     }
 
-    /**
-     * Gera relatório Excel com base nos parâmetros fornecidos
-     */
     public byte[] gerarRelatorioExcel(MuralDTO.RelatorioRequest request) throws SmartValidityException {
         logger.info("Iniciando geracao de relatorio. Tipo: {}, Status: {}", request.getTipo(), request.getStatus());
         List<MuralDTO.Listagem> itens;
@@ -742,13 +782,11 @@ public class MuralService {
                     }
                     logger.debug("Gerando relatorio para {} itens selecionados", request.getIds().size());
                     itens = buscarPorIds(request.getIds());
-                    // Validação: todos os itens devem pertencer ao status/aba
                     validarItensPertencemAoStatus(itens, request.getStatus());
                     break;
                 case "PAGINA":
                     logger.debug("Gerando relatorio para itens da pagina atual. Filtros: {}", request.getFiltro());
                     itens = buscarComFiltro(request.getFiltro());
-                    // Validação: todos os itens devem pertencer ao status/aba
                     validarItensPertencemAoStatus(itens, request.getStatus());
                     break;
                 case "TODOS":
@@ -757,7 +795,6 @@ public class MuralService {
                     filtroSemPaginacao.setPagina(null);
                     filtroSemPaginacao.setLimite(null);
                     itens = buscarComFiltro(filtroSemPaginacao);
-                    // Validação: todos os itens devem pertencer ao status/aba
                     validarItensPertencemAoStatus(itens, request.getStatus());
                     break;
                 default:
@@ -782,8 +819,7 @@ public class MuralService {
         }
     }
 
-    public void cancelarSelecao(List<String> ids) {
-        // Implemente aqui a lógica de negócio para cancelar seleção, se necessário.
-        // Exemplo: itemProdutoService.cancelarSelecao(ids);
+    public void cancelarSelecao(List<String> ids) { // to do
+
     }
-} 
+}

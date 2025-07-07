@@ -54,7 +54,7 @@ public class AlertaController {
     @Operation(summary = "Criar alerta personalizado", 
                description = "Cria um novo alerta personalizado com vinculação automática de itens-produto")
     public ResponseEntity<?> criarAlerta(
-            @RequestBody AlertaDTO.Cadastro alertaDTO,
+            @Valid @RequestBody AlertaDTO.Cadastro alertaDTO,
             @RequestParam(required = false) String usuarioCriadorId) {
         
         try {
@@ -95,13 +95,6 @@ public class AlertaController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}/toggle-ativo")
-    @Operation(summary = "Alternar status ativo do alerta")
-    public ResponseEntity<AlertaDTO.Listagem> toggleAtivo(@PathVariable Integer id) throws SmartValidityException {
-        AlertaDTO.Listagem response = alertaService.toggleAtivo(id);
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/filtro")
     @Operation(summary = "Listar alertas com filtros")
     public ResponseEntity<List<AlertaDTO.Listagem>> listarComFiltro(@RequestBody AlertaDTO.Filtro filtro) {
@@ -126,9 +119,40 @@ public class AlertaController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir alerta")
-    public ResponseEntity<Void> excluirAlerta(@PathVariable Integer id) throws SmartValidityException {
-        alertaService.delete(id);
-        log.info("Alerta {} excluído com sucesso", id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> excluirAlerta(@PathVariable Integer id) {
+        try {
+            alertaService.delete(id);
+            log.info("Alerta {} excluído com sucesso", id);
+            return ResponseEntity.noContent().build();
+        } catch (SmartValidityException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Exclusão negada");
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AlertaDTO.Response>> listarTodos() {
+        List<AlertaDTO.Response> alertas = alertaService.findAll();
+        return ResponseEntity.ok(alertas);
+    }
+
+    @GetMapping("/ativos")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasAtivos() {
+        List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasAtivos();
+        return ResponseEntity.ok(alertas);
+    }
+
+    @GetMapping("/ja-resolvidos")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasJaResolvidos() {
+        List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasJaResolvidos();
+        return ResponseEntity.ok(alertas);
+    }
+
+    @GetMapping("/personalizados")
+    public ResponseEntity<List<AlertaDTO.Listagem>> buscarAlertasPersonalizados() {
+        List<AlertaDTO.Listagem> alertas = alertaService.buscarAlertasPersonalizados();
+        return ResponseEntity.ok(alertas);
     }
 } 

@@ -1,5 +1,6 @@
 package br.com.smartvalidity.service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,30 @@ public class AlertaService {
                 .toList();
     }
 
+    public List<AlertaDTO.Listagem> buscarAlertasAtivos() {
+        List<Alerta> alertasAtivos = alertaRepository.findAllNotDeleted().stream()
+                .filter(alerta -> alerta.getItemProduto() == null || !alerta.getItemProduto().getInspecionado())
+                .toList();
+        
+        return alertasAtivos.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
+    public List<AlertaDTO.Listagem> buscarAlertasJaResolvidos() {
+        List<Alerta> alertasResolvidos = alertaRepository.findAlertasJaResolvidos();
+        return alertasResolvidos.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
+    public List<AlertaDTO.Listagem> buscarAlertasPersonalizados() {
+        List<Alerta> alertasPersonalizados = alertaRepository.findByTipoAndExcluidoFalse(TipoAlerta.PERSONALIZADO);
+        return alertasPersonalizados.stream()
+                .map(AlertaMapper::toListagemDTO)
+                .toList();
+    }
+
     public Optional<AlertaDTO.Response> findById(Integer id) {
         return alertaRepository.findByIdAndExcluidoFalse(id).map(AlertaDTO.Response::fromEntity);
     }
@@ -64,36 +89,36 @@ public class AlertaService {
                     alerta.setTitulo(dto.getTitulo());
                     alerta.setDescricao(dto.getDescricao());
                     alerta.setDataHoraDisparo(dto.getDataHoraDisparo());
-                    alerta.setDisparoRecorrente(dto.isDisparoRecorrente());
-                    if (dto.getFrequenciaDisparo() != null) {
-                        alerta.setFrequenciaDisparo(dto.getFrequenciaDisparo().name());
-                    }
                     return AlertaDTO.Response.fromEntity(alertaRepository.save(alerta));
                 });
     }
 
-    /**
-     * Exclui um alerta logicamente (mantém notificações existentes)
-     * RESPONSABILIDADE SERVICE: Lógica de negócio para exclusão lógica
-     * PRINCÍPIO MVC: Preserva integridade das notificações já criadas
-     */
+
     @org.springframework.transaction.annotation.Transactional
     public void delete(Integer id) throws SmartValidityException {
         log.info("Iniciando exclusão lógica do alerta ID: {}", id);
         
         try {
-            // Verificar se o alerta existe e não está excluído
+            
             Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
                 .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
-
+                
             log.info("Alerta encontrado: {} (Tipo: {})", alerta.getTitulo(), alerta.getTipo());
 
-            // Exclusão lógica: marcar como excluído
+            validarItemProdutoInspecionado(alerta.getItemProduto());
+
             alerta.setExcluido(true);
-            alerta.setAtivo(false); // Também desativar
+
             alertaRepository.save(alerta);
-            
-            log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
+
+            // Para alertas personalizados, excluir também as notificações relacionadas
+            if (alerta.getTipo() == TipoAlerta.PERSONALIZADO) {
+                log.info("Excluindo notificações relacionadas ao alerta personalizado ID: {}", id);
+                notificacaoService.excluirNotificacoesPorAlerta(alerta);
+                log.info("Alerta personalizado {} excluído logicamente com notificações removidas.", id);
+            } else {
+                log.info("Alerta {} excluído logicamente com sucesso. Notificações preservadas.", id);
+            }
             
         } catch (SmartValidityException e) {
             log.error("Erro de validação ao excluir alerta {}: {}", id, e.getMessage());
@@ -107,9 +132,14 @@ public class AlertaService {
     public AlertaDTO.Listagem criarAlerta(AlertaDTO.Cadastro alertaDTO, String usuarioCriadorId) throws SmartValidityException {
         log.info("=== Criando alerta personalizado ===");
         log.info("Dados recebidos: {}", alertaDTO);
-        log.info("Data/hora disparo recebida: {} (tipo: {})", 
-            alertaDTO.getDataHoraDisparo(), 
-            alertaDTO.getDataHoraDisparo() != null ? alertaDTO.getDataHoraDisparo().getClass().getSimpleName() : "null");
+        // Data/hora de disparo removida - alertas personalizados são disparados imediatamente
+        
+        // Validação: pelo menos um colaborador deve ser selecionado
+        if (alertaDTO.getUsuariosIds() == null || alertaDTO.getUsuariosIds().isEmpty()) {
+            throw new SmartValidityException("Pelo menos um colaborador deve ser selecionado para o alerta");
+        }
+        
+        // Validação de recorrência removida - alertas personalizados são mais simples
         
         try {
             log.info("Criando entidade Alerta...");
@@ -118,18 +148,11 @@ public class AlertaService {
             alerta.setDescricao(alertaDTO.getDescricao());
             alerta.setTipo(TipoAlerta.PERSONALIZADO);
             
-            log.info("Definindo data/hora de disparo...");
-            alerta.setDataHoraDisparo(alertaDTO.getDataHoraDisparo());
+            log.info("Definindo data/hora de disparo como agora (alertas personalizados são disparados imediatamente)...");
+            alerta.setDataHoraDisparo(LocalDateTime.now());
             log.info("Data/hora definida: {}", alerta.getDataHoraDisparo());
             
-            alerta.setDiasAntecedencia(alertaDTO.getDiasAntecedencia());
-            alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
-            alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
-            alerta.setAtivo(true);
-            
-            // Definir campos de disparo recorrente com valores padrão
-            alerta.setDisparoRecorrente(false);
-            alerta.setFrequenciaDisparo(null);
+            // Configuração de recorrência removida - alertas personalizados são mais simples
             
             log.info("Processando usuário criador...");
             if (usuarioCriadorId != null) {
@@ -154,16 +177,36 @@ public class AlertaService {
             Set<Produto> produtosAlerta = new HashSet<>();
             if (alertaDTO.getProdutosIds() != null && !alertaDTO.getProdutosIds().isEmpty()) {
                 for (String produtoId : alertaDTO.getProdutosIds()) {
-                    Produto produto = produtoService.buscarPorId(produtoId);
-                    produtosAlerta.add(produto);
-                    
-                    log.info("Produto vinculado ao alerta: {} (ID: {})", produto.getDescricao(), produto.getId());
-                    
-                    List<ItemProduto> itensNaoInspecionados = itemProdutoService
-                        .buscarItensProdutoNaoInspecionadosPorProduto(produtoId);
-                    
-                    log.info("Encontrados {} itens-produto não inspecionados para o produto {}", 
-                        itensNaoInspecionados.size(), produto.getDescricao());
+                    try {
+                        Produto produto = produtoService.buscarPorId(produtoId);
+                        produtosAlerta.add(produto);
+                        
+                        log.info("Produto vinculado ao alerta: {} (ID: {})", produto.getDescricao(), produto.getId());
+                        
+                        List<ItemProduto> itensNaoInspecionados = itemProdutoService
+                            .buscarItensProdutoNaoInspecionadosPorProduto(produto.getId());
+                        
+                        log.info("Encontrados {} itens-produto não inspecionados para o produto {}", 
+                            itensNaoInspecionados.size(), produto.getDescricao());
+                    } catch (Exception e) {
+                        log.error("Erro ao buscar produto com ID '{}': {}", produtoId, e.getMessage());
+                        // Tentar buscar por outros critérios se o ID não for válido
+                        List<Produto> produtosEncontrados = produtoService.buscarPorTermoComItensNaoInspecionados(produtoId, 1);
+                        if (!produtosEncontrados.isEmpty()) {
+                            Produto produto = produtosEncontrados.get(0);
+                            produtosAlerta.add(produto);
+                            log.info("Produto encontrado por termo: {} -> {} (ID: {})", 
+                                produtoId, produto.getDescricao(), produto.getId());
+                            
+                            List<ItemProduto> itensNaoInspecionados = itemProdutoService
+                                .buscarItensProdutoNaoInspecionadosPorProduto(produto.getId());
+                            
+                            log.info("Encontrados {} itens-produto não inspecionados para o produto {}", 
+                                itensNaoInspecionados.size(), produto.getDescricao());
+                        } else {
+                            log.warn("Produto não encontrado com ID ou termo: {}", produtoId);
+                        }
+                    }
                 }
             }
             alerta.setProdutosAlerta(produtosAlerta);
@@ -172,6 +215,7 @@ public class AlertaService {
             alerta = alertaRepository.save(alerta);
             log.info("Alerta salvo com ID: {}", alerta.getId());
             
+            // Notificações são criadas imediatamente para alertas personalizados
             log.info("Criando notificações para o alerta...");
             notificacaoService.criarNotificacoesParaAlerta(alerta);
             
@@ -207,40 +251,65 @@ public class AlertaService {
                 throw new SmartValidityException("Apenas alertas personalizados podem ser editados");
             }
             
-            alerta.setTitulo(alertaDTO.getTitulo());
-            alerta.setDescricao(alertaDTO.getDescricao());
-            alerta.setDataHoraDisparo(alertaDTO.getDataHoraDisparo());
-            alerta.setDiasAntecedencia(alertaDTO.getDiasAntecedencia());
-            alerta.setRecorrente(alertaDTO.getRecorrente() != null ? alertaDTO.getRecorrente() : false);
-            alerta.setConfiguracaoRecorrencia(alertaDTO.getConfiguracaoRecorrencia());
-
-            // Definir campos de disparo recorrente com valores padrão
-            alerta.setDisparoRecorrente(false);
-            alerta.setFrequenciaDisparo(null);
-
-            if (alertaDTO.getAtivo() != null) {
-                alerta.setAtivo(alertaDTO.getAtivo());
-            }
+            // Validação de recorrência removida - alertas personalizados são mais simples
             
+            // Atualiza campos básicos
+            if (alertaDTO.getTitulo() != null) {
+                alerta.setTitulo(alertaDTO.getTitulo());
+            }
+            if (alertaDTO.getDescricao() != null) {
+                alerta.setDescricao(alertaDTO.getDescricao());
+            }
+            // dataHoraDisparo não é alterado em alertas personalizados - sempre mantém o original
+            
+            // Lógica de recorrência removida - alertas personalizados são mais simples
+            
+            // Atualiza usuários apenas se fornecidos
             if (alertaDTO.getUsuariosIds() != null) {
                 Set<Usuario> usuariosAlerta = new HashSet<>();
-                for (String usuarioId : alertaDTO.getUsuariosIds()) {
-                    Usuario usuario = usuarioService.buscarPorId(usuarioId);
-                    usuariosAlerta.add(usuario);
+                if (!alertaDTO.getUsuariosIds().isEmpty()) {
+                    for (String usuarioId : alertaDTO.getUsuariosIds()) {
+                        Usuario usuario = usuarioService.buscarPorId(usuarioId);
+                        usuariosAlerta.add(usuario);
+                    }
                 }
                 alerta.setUsuariosAlerta(usuariosAlerta);
             }
             
+            // Atualiza produtos apenas se fornecidos
             if (alertaDTO.getProdutosIds() != null) {
                 Set<Produto> produtosAlerta = new HashSet<>();
-                for (String produtoId : alertaDTO.getProdutosIds()) {
-                    Produto produto = produtoService.buscarPorId(produtoId);
-                    produtosAlerta.add(produto);
+                if (!alertaDTO.getProdutosIds().isEmpty()) {
+                    for (String produtoId : alertaDTO.getProdutosIds()) {
+                        try {
+                            Produto produto = produtoService.buscarPorId(produtoId);
+                            produtosAlerta.add(produto);
+                        } catch (Exception e) {
+                            log.error("Erro ao buscar produto com ID '{}': {}", produtoId, e.getMessage());
+                            // Tentar buscar por outros critérios se o ID não for válido
+                            List<Produto> produtosEncontrados = produtoService.buscarPorTermoComItensNaoInspecionados(produtoId, 1);
+                            if (!produtosEncontrados.isEmpty()) {
+                                produtosAlerta.add(produtosEncontrados.get(0));
+                                log.info("Produto encontrado por termo: {} -> {}", produtoId, produtosEncontrados.get(0).getId());
+                            } else {
+                                log.warn("Produto não encontrado com ID ou termo: {}", produtoId);
+                            }
+                        }
+                    }
                 }
                 alerta.setProdutosAlerta(produtosAlerta);
             }
             
             alerta = alertaRepository.save(alerta);
+            
+            // Resetar o status de lida das notificações existentes para que apareçam como não lidas
+            log.info("Resetando status de lida das notificações existentes...");
+            notificacaoService.resetarStatusLidaNotificacoesPorAlerta(alerta);
+            
+            // Criar notificações para usuários (novos e existentes)
+            // O método criarNotificacoesParaAlerta já possui proteção contra duplicação
+            log.info("Criando/atualizando notificações para o alerta...");
+            notificacaoService.criarNotificacoesParaAlerta(alerta);
             
             log.info("Alerta {} atualizado com sucesso", id);
             
@@ -251,35 +320,6 @@ public class AlertaService {
             throw new SmartValidityException("Erro ao atualizar alerta: " + e.getMessage());
         }
     }
-    
-    /**
-     * Alterna o status ativo de um alerta
-     * RESPONSABILIDADE SERVICE: Lógica de negócio para alteração de status
-     * PRINCÍPIO MVC: Isola CONTROLLER da lógica de negócio e acesso a dados
-     */
-    public AlertaDTO.Listagem toggleAtivo(Integer id) throws SmartValidityException {
-        try {
-            Alerta alerta = alertaRepository.findByIdAndExcluidoFalse(id)
-                    .orElseThrow(() -> new SmartValidityException("Alerta não encontrado com ID: " + id));
-
-            // Aplicar lógica de negócio: inverter status ativo
-            Boolean novoStatus = !Boolean.TRUE.equals(alerta.getAtivo());
-            alerta.setAtivo(novoStatus);
-
-            // Persistir alteração
-            alerta = alertaRepository.save(alerta);
-
-            log.info("Status do alerta {} alterado para: {}", id, novoStatus);
-            return AlertaMapper.toListagemDTO(alerta);
-            
-        } catch (SmartValidityException e) {
-            log.error("Erro ao alterar status do alerta {}: {}", id, e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Erro inesperado ao alterar status do alerta {}: {}", id, e.getMessage(), e);
-            throw new SmartValidityException("Erro interno ao alterar status do alerta: " + e.getMessage());
-        }
-    }
 
     public List<AlertaDTO.Listagem> filtrarAlertas(AlertaDTO.Filtro filtro) {
         List<Alerta> todos = alertaRepository.findAllNotDeleted();
@@ -288,16 +328,13 @@ public class AlertaService {
 
         if (filtro.getTitulo() != null && !filtro.getTitulo().isBlank()) {
             String termo = filtro.getTitulo().toLowerCase();
-            stream = stream.filter(a -> a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo));
+            stream = stream.filter(a ->
+                (a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo)) ||
+                (a.getDescricao() != null && a.getDescricao().toLowerCase().contains(termo))
+            );
         }
         if (filtro.getTipo() != null) {
             stream = stream.filter(a -> filtro.getTipo().equals(a.getTipo()));
-        }
-        if (filtro.getAtivo() != null) {
-            stream = stream.filter(a -> filtro.getAtivo().equals(a.getAtivo()));
-        }
-        if (filtro.getRecorrente() != null) {
-            stream = stream.filter(a -> filtro.getRecorrente().equals(a.getRecorrente()));
         }
         if (filtro.getUsuarioCriador() != null && !filtro.getUsuarioCriador().isBlank()) {
             String termo = filtro.getUsuarioCriador().toLowerCase();
@@ -352,16 +389,13 @@ public class AlertaService {
 
         if (filtro.getTitulo() != null && !filtro.getTitulo().isBlank()) {
             String termo = filtro.getTitulo().toLowerCase();
-            stream = stream.filter(a -> a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo));
+            stream = stream.filter(a ->
+                (a.getTitulo() != null && a.getTitulo().toLowerCase().contains(termo)) ||
+                (a.getDescricao() != null && a.getDescricao().toLowerCase().contains(termo))
+            );
         }
         if (filtro.getTipo() != null) {
             stream = stream.filter(a -> filtro.getTipo().equals(a.getTipo()));
-        }
-        if (filtro.getAtivo() != null) {
-            stream = stream.filter(a -> filtro.getAtivo().equals(a.getAtivo()));
-        }
-        if (filtro.getRecorrente() != null) {
-            stream = stream.filter(a -> filtro.getRecorrente().equals(a.getRecorrente()));
         }
         if (filtro.getUsuarioCriador() != null && !filtro.getUsuarioCriador().isBlank()) {
             String termo = filtro.getUsuarioCriador().toLowerCase();
@@ -376,4 +410,62 @@ public class AlertaService {
 
         return stream.count();
     }
+
+    private void validarItemProdutoInspecionado(ItemProduto itemProduto) throws SmartValidityException {
+        if (itemProduto != null && Boolean.FALSE.equals(itemProduto.getInspecionado())) {
+            throw new SmartValidityException("Não é possível excluir o alerta: o produto associado ainda não foi inspecionado.");
+        }
+    }
+
+    /**
+     * Exclui logicamente todos os alertas relacionados a um ItemProduto específico
+     * após a inspeção do produto. Este método é chamado automaticamente quando
+     * um produto é inspecionado no mural.
+     * 
+     * @param itemProduto O item produto que foi inspecionado
+     * @throws SmartValidityException Se houver erro durante a exclusão
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void excluirAlertasPorItemProdutoInspecionado(ItemProduto itemProduto) throws SmartValidityException {
+        if (itemProduto == null) {
+            log.warn("ItemProduto é null, não há alertas para excluir");
+            return;
+        }
+
+        log.info("Iniciando exclusão lógica de alertas para o ItemProduto ID: {}", itemProduto.getId());
+
+        try {
+            // Busca todos os alertas não excluídos relacionados ao item produto
+            List<Alerta> alertasRelacionados = alertaRepository.findByItemProdutoAndExcluidoFalse(itemProduto);
+
+            if (alertasRelacionados.isEmpty()) {
+                log.info("Nenhum alerta encontrado para o ItemProduto ID: {}", itemProduto.getId());
+                return;
+            }
+
+            int alertasExcluidos = 0;
+            for (Alerta alerta : alertasRelacionados) {
+                log.info("Excluindo logicamente alerta ID: {} ({})", alerta.getId(), alerta.getTitulo());
+                
+                // Marca o alerta como excluído
+                alerta.setExcluido(true);
+                alertaRepository.save(alerta);
+                
+                // Remove as notificações relacionadas a este alerta
+                notificacaoService.excluirNotificacoesPorAlerta(alerta);
+                
+                alertasExcluidos++;
+            }
+
+            log.info("Excluídos logicamente {} alertas para o ItemProduto ID: {}", alertasExcluidos, itemProduto.getId());
+
+        } catch (Exception e) {
+            log.error("Erro ao excluir alertas para ItemProduto ID {}: {}", itemProduto.getId(), e.getMessage(), e);
+            throw new SmartValidityException("Erro ao excluir alertas relacionados ao produto inspecionado: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Métodos de recorrência removidos - alertas personalizados são mais simples
+     */
 } 

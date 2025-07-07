@@ -11,7 +11,6 @@ public final class NotificacaoMapper {
     private NotificacaoMapper() {
     }
 
-
     public static NotificacaoDTO.Listagem toListagemDTO(Notificacao notificacao) {
         if (notificacao == null || notificacao.getAlerta() == null) {
             return null;
@@ -29,10 +28,6 @@ public final class NotificacaoMapper {
         dto.setDescricao(alerta.getDescricao());
         dto.setTipo(alerta.getTipo());
         dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-        dto.setDiasAntecedencia(alerta.getDiasAntecedencia());
-        dto.setAtivo(alerta.getAtivo());
-        dto.setRecorrente(alerta.getRecorrente());
-        dto.setConfiguracaoRecorrencia(alerta.getConfiguracaoRecorrencia());
         dto.setDataCriacaoAlerta(alerta.getDataHoraCriacao());
 
 
@@ -42,6 +37,12 @@ public final class NotificacaoMapper {
                     : null;
             if (nomeProduto != null) {
                 dto.setProdutosAlerta(java.util.List.of(nomeProduto));
+            }
+            
+            dto.setItemInspecionado(alerta.getItemProduto().getInspecionado());
+            
+            if (Boolean.TRUE.equals(alerta.getItemProduto().getInspecionado())) {
+                dto.setMotivoInspecao(alerta.getItemProduto().getMotivoInspecao());
             }
         }
 
@@ -72,4 +73,4 @@ public final class NotificacaoMapper {
 
         return dto;
     }
-} 
+}

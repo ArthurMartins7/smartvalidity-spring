@@ -1,37 +1,38 @@
 package br.com.smartvalidity.model.dto;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import br.com.smartvalidity.model.entity.Alerta;
-import br.com.smartvalidity.model.enums.FrequenciaDisparo;
 import br.com.smartvalidity.model.enums.TipoAlerta;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 public class AlertaDTO {
-
     @Data
     public static class Listagem {
         private Integer id;
         private String titulo;
         private String descricao;
-        private LocalDateTime dataHoraDisparo;
+        private Date dataHoraDisparo;
         private TipoAlerta tipo;
-        private Integer diasAntecedencia;
-        private Boolean ativo;
-        private Boolean recorrente;
-        private String configuracaoRecorrencia;
-        private LocalDateTime dataCriacao;
-        private LocalDateTime dataEnvio;
-        private String usuarioCriador; // Nome do usuário criador
-        private List<String> usuariosAlerta; // Nomes dos usuários
-        private List<String> produtosAlerta; // Nomes dos produtos
-        private List<String> usuariosAlertaIds; // IDs dos usuários
-        private List<String> produtosAlertaIds; // IDs dos produtos
+        private Date dataCriacao;
+        private Date dataEnvio;
+        private String usuarioCriador;
+        private List<String> usuariosAlerta;
+        private List<String> produtosAlerta;
+        private List<String> usuariosAlertaIds;
+        private List<String> produtosAlertaIds;
+        private Boolean lida;
+        private Boolean itemInspecionado;
+        private String motivoInspecao;
+        private Integer diasVencidos;
+        private Date dataVencimentoItem;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
     }
-
     @Data
     public static class Cadastro {
         @NotBlank
@@ -39,36 +40,25 @@ public class AlertaDTO {
         @NotBlank
         private String descricao;
         @NotNull
-        private LocalDateTime dataHoraDisparo;
-        @NotNull
         private TipoAlerta tipo;
-        private Integer diasAntecedencia;
-        private Boolean recorrente = false;
-        private String configuracaoRecorrencia;
-        private List<String> usuariosIds; //
-        private List<String> produtosIds; //
+        @NotEmpty
+        private List<String> usuariosIds;
+        private List<String> produtosIds;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
     }
-
     @Data
     public static class Edicao {
         private Integer id;
         private String titulo;
         private String descricao;
-        private LocalDateTime dataHoraDisparo;
-        private Integer diasAntecedencia;
-        private Boolean ativo;
-        private Boolean recorrente;
-        private String configuracaoRecorrencia;
         private List<String> usuariosIds;
         private List<String> produtosIds;
+        // Campos de recorrência removidos - alertas personalizados são mais simples
     }
-
     @Data
     public static class Filtro {
         private String titulo;
         private TipoAlerta tipo;
-        private Boolean ativo;
-        private Boolean recorrente;
         private LocalDateTime dataInicialDisparo;
         private LocalDateTime dataFinalDisparo;
         private String usuarioCriador;
@@ -76,56 +66,41 @@ public class AlertaDTO {
         private int limite = 10;
         private String sortBy = "dataCriacao";
         private String sortDirection = "desc";
+        // Campos de recorrência removidos - alertas personalizados são mais simples
         public boolean temPaginacao() {
             return limite > 0 && pagina > 0;
         }
     }
-
     @Data
     public static class Request {
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-        private boolean disparoRecorrente;
-        private FrequenciaDisparo frequenciaDisparo;
-
+        // Campos de recorrência removidos - alertas personalizados são mais simples
         public Alerta toEntity() {
             Alerta alerta = new Alerta();
             alerta.setTitulo(this.titulo);
             alerta.setDescricao(this.descricao);
             alerta.setDataHoraDisparo(this.dataHoraDisparo);
-            alerta.setDisparoRecorrente(this.disparoRecorrente);
-            if (this.frequenciaDisparo != null) {
-                alerta.setFrequenciaDisparo(this.frequenciaDisparo.name());
-            }
+            // Lógica de recorrência removida - alertas personalizados são mais simples
             return alerta;
         }
     }
-
     @Data
     public static class Response {
         private Integer id;
         private String titulo;
         private String descricao;
         private LocalDateTime dataHoraDisparo;
-        private boolean disparoRecorrente;
-        private FrequenciaDisparo frequenciaDisparo;
-
+        // Campos de recorrência removidos - alertas personalizados são mais simples
         public static Response fromEntity(Alerta alerta) {
             Response dto = new Response();
             dto.setId(alerta.getId());
             dto.setTitulo(alerta.getTitulo());
             dto.setDescricao(alerta.getDescricao());
             dto.setDataHoraDisparo(alerta.getDataHoraDisparo());
-            dto.setDisparoRecorrente(alerta.getDisparoRecorrente() != null ? alerta.getDisparoRecorrente() : false);
-            if (alerta.getFrequenciaDisparo() != null) {
-                try {
-                    dto.setFrequenciaDisparo(FrequenciaDisparo.valueOf(alerta.getFrequenciaDisparo()));
-                } catch (IllegalArgumentException e) {
-                    dto.setFrequenciaDisparo(null);
-                }
-            }
+            // Lógica de recorrência removida - alertas personalizados são mais simples
             return dto;
         }
     }
-} 
+}
