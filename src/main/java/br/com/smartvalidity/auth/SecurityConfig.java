@@ -64,7 +64,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Libera a origem do Angular
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://31.97.251.133", "http://validata.shop", "https://validata.shop")); // Libera a origem do Angular, IP externo e domínios Validata
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Métodos HTTP permitidos
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Access-Control-Allow-Origin",
                 "Access-Control-Allow-Headers", "Access-Control-Expose-Headers",
@@ -74,7 +74,7 @@ public class SecurityConfig {
         )); // Cabeçalhos permitidos
 
         configuration.setAllowCredentials(true); // Permite envio de credenciais (cookies, por exemplo)
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200/*"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200/*", "http://31.97.251.133/*", "http://validata.shop/*", "https://validata.shop/*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
