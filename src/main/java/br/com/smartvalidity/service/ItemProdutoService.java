@@ -62,6 +62,8 @@ public class ItemProdutoService {
 
         Produto produto = this.produtoService.buscarPorId(itemProduto.getProduto().getId());
         itemProduto.setProduto(produto);
+        // Validação da data de vencimento
+        validarDataVencimento(itemProduto.getDataVencimento());
         produto.setQuantidade(produto.getQuantidade() + 1);
         this.produtoService.salvar(produto);
         return itemProdutoRepository.save(itemProduto);
@@ -73,6 +75,8 @@ public class ItemProdutoService {
         itemProduto.setLote(itemProdutoAtualizado.getLote());
         itemProduto.setPrecoVenda(itemProdutoAtualizado.getPrecoVenda());
         itemProduto.setDataFabricacao(itemProdutoAtualizado.getDataFabricacao());
+        // Validação da data de vencimento
+        validarDataVencimento(itemProdutoAtualizado.getDataVencimento());
         itemProduto.setDataVencimento(itemProdutoAtualizado.getDataVencimento());
         itemProduto.setDataRecebimento(itemProdutoAtualizado.getDataRecebimento());
         itemProduto.setProduto(itemProdutoAtualizado.getProduto());
@@ -185,6 +189,8 @@ public class ItemProdutoService {
         }
 
         Produto produto = this.produtoService.buscarPorId(itemProduto.getProduto().getId());
+        // Validação da data de vencimento
+        validarDataVencimento(itemProduto.getDataVencimento());
         produto.setQuantidade(produto.getQuantidade() + quantidade);
         this.produtoService.salvar(produto);
         
@@ -239,5 +245,11 @@ public class ItemProdutoService {
         itemProduto.setDataHoraInspecao(dto.getDataHoraInspecao());
         itemProduto.setProduto(dto.getProduto());
         return itemProduto;
+    }
+
+    private void validarDataVencimento(java.time.LocalDateTime dataVencimento) throws SmartValidityException {
+        if (dataVencimento != null && dataVencimento.isBefore(java.time.LocalDateTime.now())) {
+            throw new SmartValidityException("Não é possivel dar entrada no estoque pois já passou da data de vencimento.");
+        }
     }
 }
